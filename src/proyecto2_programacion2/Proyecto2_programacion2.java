@@ -8,6 +8,7 @@ package proyecto2_programacion2;
  *
  * @author denam
  */
+import javax.swing.SwingUtilities;
 public class Proyecto2_programacion2 {
 
     /**
@@ -15,6 +16,11 @@ public class Proyecto2_programacion2 {
      */
     public static void main(String[] args) {
         // TODO code application logic here
+         SwingUtilities.invokeLater(() -> {
+            new GUIPantallaPrincipal().setVisible(true);
+        });
+        
+        
     }
     
 }
