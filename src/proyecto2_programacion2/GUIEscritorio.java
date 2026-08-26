@@ -28,7 +28,7 @@ public class GUIEscritorio extends JPanel {
 
     private Dimension pantalla;
 
-    public GUIEscritorio(CardLayout principal, JPanel cards) {
+    public GUIEscritorio(GUIPantallaPrincipal  padre, CardLayout principal, JPanel cards) {
         ImageIcon iconoFondo = new ImageIcon(
                 getClass().getResource("/imagenes/windows/fondoEscritorio.jpg")
         );
@@ -44,8 +44,8 @@ public class GUIEscritorio extends JPanel {
         setPreferredSize(new Dimension(pantalla.width, pantalla.height));
 
         initEscritorio();
-        initBotones(principal, cards);
-        initBarra(principal, cards);
+        initBotones(padre, principal, cards);
+        initBarra(padre, principal, cards);
         initApagar( principal,  cards) ;
 
         setVisible(true);
@@ -64,14 +64,17 @@ public class GUIEscritorio extends JPanel {
         add(escritorio, BorderLayout.CENTER);
     }
 
-    public void initBotones(CardLayout principal, JPanel cards) {
-        windows = crearBotonEscritorio("/imagenes/windows/iconosApp/windows.png", 50, 50);
-        insta = crearBotonEscritorio("/imagenes/windows/iconosApp/insta.png", 50, 150);
-        terminal = crearBotonEscritorio("/imagenes/windows/iconosApp/cmd.png", 50, 250);
-        reproductor = crearBotonEscritorio("/imagenes/windows/iconosApp/reproductor.png", 50, 350);
-        buscador = crearBotonEscritorio("/imagenes/windows/iconosApp/buscador.png", 150, 50);
-        visualizador = crearBotonEscritorio("/imagenes/windows/iconosApp/visualizador.png", 250, 250);
-        word = crearBotonEscritorio("/imagenes/windows/iconosApp/word.png", 150, 250);
+    public void initBotones(GUIPantallaPrincipal padre,CardLayout principal, JPanel cards) {
+        windows = crearBotonEscritorio("/imagenes/windows/iconosApp/windows.png", 50, 50, "");
+        insta = crearBotonEscritorio("/imagenes/windows/iconosApp/insta.png", 50, 150, "Insta+");
+        terminal = crearBotonEscritorio("/imagenes/windows/iconosApp/cmd.png", 50, 250, "CMD");
+        reproductor = crearBotonEscritorio("/imagenes/windows/iconosApp/reproductor.png", 50, 350, "reproductor");
+        buscador = crearBotonEscritorio("/imagenes/windows/iconosApp/buscador.png", 150, 50, "buscador");
+        visualizador = crearBotonEscritorio("/imagenes/windows/iconosApp/visualizador.png", 250, 250, "Visualizador");
+        word = crearBotonEscritorio("/imagenes/windows/iconosApp/word.png", 150, 250, "Word");
+        word.addActionListener(ev->{
+        new GUIpantallaWord(padre);
+        });
 
        
         escritorio.add(insta);
@@ -87,12 +90,12 @@ public class GUIEscritorio extends JPanel {
         });
     }
 
-    private JButton crearBotonEscritorio(String ruta, int x, int y) {
+    private JButton crearBotonEscritorio(String ruta, int x, int y, String nombre) {
         JButton boton = new JButton();
 
-        aplicarTamanoBotonYIcono(boton, ruta, 90, 90);
+        aplicarTamanoBotonYIcono(boton, ruta, 90, 90, nombre);
 
-        boton.setBounds(x, y, 90, 90);
+        boton.setBounds(x, y, 90, 120);
         boton.setFocusPainted(false);
         boton.setBorderPainted(false);
         boton.setContentAreaFilled(false);
@@ -107,8 +110,9 @@ public class GUIEscritorio extends JPanel {
         JButton boton = new JButton();
 
        
-        aplicarTamanoBotonYIcono(boton, ruta, 50, 50);
-
+        aplicarTamanoBotonYIcono(boton, ruta, 50, 50, null);
+        
+       
         boton.setFocusPainted(false);
         boton.setBorderPainted(false);
         boton.setContentAreaFilled(false);
@@ -118,11 +122,19 @@ public class GUIEscritorio extends JPanel {
         return boton;
     }
 
-    private void aplicarTamanoBotonYIcono(JButton boton, String ruta, int ancho, int alto) {
+    private void aplicarTamanoBotonYIcono(JButton boton, String ruta, int ancho, int alto, String nombre) {
         ImageIcon iconoOriginal = new ImageIcon(getClass().getResource(ruta));
         Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
         ImageIcon iconoEscalado = new ImageIcon(imagenEscalada);
-
+        
+        if (nombre != null){
+            boton.setText(nombre);
+            boton.setFont(new Font("Arial", Font.BOLD, 8));
+            boton.setForeground(Color.white);
+            boton.setHorizontalTextPosition(SwingConstants.CENTER);
+            boton.setVerticalTextPosition(SwingConstants.BOTTOM);
+        }
+        boton.setOpaque(false);
         boton.setIcon(iconoEscalado);
 
         Dimension size = new Dimension(ancho, alto);
@@ -160,7 +172,7 @@ public class GUIEscritorio extends JPanel {
         });
     }
 
-    public void initBarra(CardLayout principal, JPanel cards) {
+    public void initBarra(GUIPantallaPrincipal padre,CardLayout principal, JPanel cards) {
         JPanel barra = new JPanel();
         barra.setLayout(new FlowLayout(FlowLayout.LEADING, 12, 6));
         barra.setPreferredSize(new Dimension(pantalla.width, 60));
@@ -169,9 +181,20 @@ public class GUIEscritorio extends JPanel {
         JButton btnWindowsBarra = crearBotonBarra("/imagenes/windows/iconosApp/windows.png");
         JButton btnInstaBarra = crearBotonBarra("/imagenes/windows/iconosApp/insta.png");
         JButton btnTerminalBarra = crearBotonBarra("/imagenes/windows/iconosApp/cmd.png");
+        btnTerminalBarra.addActionListener(ev->{
+        new PanelCMD(padre);
+            
+        });
+        
+        
+        
+        
         JButton btnReproductorBarra = crearBotonBarra("/imagenes/windows/iconosApp/reproductor.png");
         JButton btnBuscadorBarra = crearBotonBarra("/imagenes/windows/iconosApp/buscador.png");
         JButton btnWordBarra = crearBotonBarra("/imagenes/windows/iconosApp/word.png");
+        btnWordBarra.addActionListener(ev->{
+        new GUIpantallaWord(padre);
+        });
 
         btnWindowsBarra.addActionListener(e -> {
             panelwindowsajustes.setVisible(!panelwindowsajustes.isVisible());

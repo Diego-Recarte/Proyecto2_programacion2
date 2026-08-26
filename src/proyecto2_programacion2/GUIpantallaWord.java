@@ -8,43 +8,39 @@ package proyecto2_programacion2;
  *
  * @author denam
  */
+
 import java.awt.*;
 import javax.swing.*;
-public class GUIPantallaPrincipal extends JFrame {
+public class GUIpantallaWord extends JDialog{
     private CardLayout cardLayout;
     private JPanel panelCards;
     
-    
-    
-    public GUIPantallaPrincipal(){
-        
-    
-    super("Windows +");
-    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
-    setSize(800, 500); 
-    setExtendedState(JFrame.MAXIMIZED_BOTH);
-    setLayout(new BorderLayout());
-    getContentPane().setBackground(Color.WHITE); 
-    setLocationRelativeTo(null); 
-    setUndecorated(true);
-    
-    InitCardLayout();
-    agregarCards();
-    
-    mostrarCard("escritorio");
-    setVisible(true);
-    }
-    
-    
-    public void agregarCards(){
-        GUILogin login = new GUILogin(cardLayout, panelCards);
-        agregarCard(login, "login");
-        
-        GUIEscritorio escritorio = new GUIEscritorio(this,cardLayout, panelCards);
-        agregarCard(escritorio, "escritorio");
+    public GUIpantallaWord  (GUIPantallaPrincipal Perfil){
+        super(Perfil, "Word", false);
 
-        GUICrearUsuarios crear = new GUICrearUsuarios();
-        agregarCard (crear, "crear");
+
+        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        setSize(1200, 800);
+      setLayout(new BorderLayout(10, 10));
+        getContentPane().setBackground(Color.WHITE);
+        setLocationRelativeTo(Perfil);
+        InitCardLayout();
+        agregarCards();
+        mostrarCard("nuevo");
+        setVisible(true);
+        
+       
+
+    }
+     public void agregarCards(){
+        GUIWordEditor editor = new GUIWordEditor(this, cardLayout, panelCards);
+        agregarCard(editor, "editor");
+        
+        GUIWordNuevo nuevo = new GUIWordNuevo (this, cardLayout, panelCards, editor);
+        agregarCard(nuevo, "nuevo");
+        
+        
+        
         
         
         
@@ -75,5 +71,4 @@ public class GUIPantallaPrincipal extends JFrame {
         panelCards.revalidate();
         panelCards.repaint(); 
     }
-
 }

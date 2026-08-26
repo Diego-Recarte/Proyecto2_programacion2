@@ -106,7 +106,7 @@ public class GUILogin extends JPanel {
 
         JButton btnIngresar = new JButton("Ingresar");
         btnIngresar.setFont(new Font("Arial", Font.BOLD, 15));
-        btnIngresar.setBackground(Color.GRAY);
+        btnIngresar.setBackground(Color.black);
         btnIngresar.setForeground(Color.WHITE);
         btnIngresar.setFocusable(false);
 
@@ -149,7 +149,6 @@ public class GUILogin extends JPanel {
         JButton btnExit = new JButton("Exit");
         btnExit.setFont(new Font("Arial", Font.BOLD, 14));
         btnExit.setOpaque(false);
-        btnExit.setForeground(Color.WHITE);
         btnExit.setFocusable(false);
 
         btnExit.addActionListener(e -> {
