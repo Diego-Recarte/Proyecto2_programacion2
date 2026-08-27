@@ -8,6 +8,8 @@ package proyecto2_programacion2;
  *
  * @author denam
  */
+
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -25,13 +27,13 @@ public class GUIEscritorio extends JPanel {
     private JButton buscador;
     private JButton visualizador;
     private JButton word;
+    private JButton btnUsuario;
 
     private Dimension pantalla;
 
-    public GUIEscritorio(GUIPantallaPrincipal  padre, CardLayout principal, JPanel cards) {
+    public GUIEscritorio(GUIPantallaPrincipal padre, CardLayout principal, JPanel cards) {
         ImageIcon iconoFondo = new ImageIcon(
-                getClass().getResource("/imagenes/windows/fondoEscritorio.jpg")
-        );
+                getClass().getResource("/datos/windows/Z/imagenes/windows/fondoEscritorio.jpg"));
 
         pantalla = Toolkit.getDefaultToolkit().getScreenSize();
         imagenFondo = iconoFondo.getImage().getScaledInstance(
@@ -46,7 +48,7 @@ public class GUIEscritorio extends JPanel {
         initEscritorio();
         initBotones(padre, principal, cards);
         initBarra(padre, principal, cards);
-        initApagar( principal,  cards) ;
+        initApagar(principal, cards);
 
         setVisible(true);
     }
@@ -57,6 +59,14 @@ public class GUIEscritorio extends JPanel {
         g.drawImage(imagenFondo, 0, 0, getWidth(), getHeight(), this);
     }
 
+    public void actualizarUsuarioActivo() {
+        if (btnUsuario != null) {
+            btnUsuario.setText(usuarioWinActivo.nombre);
+            btnUsuario.revalidate();
+            btnUsuario.repaint();
+        }
+    }
+
     public void initEscritorio() {
         escritorio = new JPanel(null);
         escritorio.setOpaque(false);
@@ -64,19 +74,17 @@ public class GUIEscritorio extends JPanel {
         add(escritorio, BorderLayout.CENTER);
     }
 
-    public void initBotones(GUIPantallaPrincipal padre,CardLayout principal, JPanel cards) {
-        windows = crearBotonEscritorio("/imagenes/windows/iconosApp/windows.png", 50, 50, "");
-        insta = crearBotonEscritorio("/imagenes/windows/iconosApp/insta.png", 50, 150, "Insta+");
-        terminal = crearBotonEscritorio("/imagenes/windows/iconosApp/cmd.png", 50, 250, "CMD");
-        reproductor = crearBotonEscritorio("/imagenes/windows/iconosApp/reproductor.png", 50, 350, "reproductor");
-        buscador = crearBotonEscritorio("/imagenes/windows/iconosApp/buscador.png", 150, 50, "buscador");
-        visualizador = crearBotonEscritorio("/imagenes/windows/iconosApp/visualizador.png", 250, 250, "Visualizador");
-        word = crearBotonEscritorio("/imagenes/windows/iconosApp/word.png", 150, 250, "Word");
-        word.addActionListener(ev->{
-        new GUIpantallaWord(padre);
-        });
+    public void initBotones(GUIPantallaPrincipal padre, CardLayout principal, JPanel cards) {
+        windows = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/windows.png", 50, 50, "");
+        insta = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/insta.png", 50, 150, "Insta+");
+        terminal = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/cmd.png", 50, 250, "CMD");
+        reproductor = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/reproductor.png", 50, 350, "reproductor");
+        buscador = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/buscador.png", 150, 50, "buscador");
+        visualizador = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/visualizador.png", 250, 250, "Visualizador");
+        word = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/word.png", 150, 250, "Word");
 
-       
+        word.addActionListener(ev -> new GUIpantallaWord(padre));
+
         escritorio.add(insta);
         escritorio.add(reproductor);
         escritorio.add(buscador);
@@ -85,9 +93,7 @@ public class GUIEscritorio extends JPanel {
 
         initWindows(principal, cards);
 
-        windows.addActionListener(e -> {
-            panelWindows.setVisible(!panelWindows.isVisible());
-        });
+        windows.addActionListener(e -> panelWindows.setVisible(!panelWindows.isVisible()));
     }
 
     private JButton crearBotonEscritorio(String ruta, int x, int y, String nombre) {
@@ -109,10 +115,8 @@ public class GUIEscritorio extends JPanel {
     private JButton crearBotonBarra(String ruta) {
         JButton boton = new JButton();
 
-       
         aplicarTamanoBotonYIcono(boton, ruta, 50, 50, null);
-        
-       
+
         boton.setFocusPainted(false);
         boton.setBorderPainted(false);
         boton.setContentAreaFilled(false);
@@ -126,14 +130,15 @@ public class GUIEscritorio extends JPanel {
         ImageIcon iconoOriginal = new ImageIcon(getClass().getResource(ruta));
         Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
         ImageIcon iconoEscalado = new ImageIcon(imagenEscalada);
-        
-        if (nombre != null){
+
+        if (nombre != null) {
             boton.setText(nombre);
             boton.setFont(new Font("Arial", Font.BOLD, 8));
             boton.setForeground(Color.white);
             boton.setHorizontalTextPosition(SwingConstants.CENTER);
             boton.setVerticalTextPosition(SwingConstants.BOTTOM);
         }
+
         boton.setOpaque(false);
         boton.setIcon(iconoEscalado);
 
@@ -172,34 +177,27 @@ public class GUIEscritorio extends JPanel {
         });
     }
 
-    public void initBarra(GUIPantallaPrincipal padre,CardLayout principal, JPanel cards) {
+    public void initBarra(GUIPantallaPrincipal padre, CardLayout principal, JPanel cards) {
         JPanel barra = new JPanel();
         barra.setLayout(new FlowLayout(FlowLayout.LEADING, 12, 6));
         barra.setPreferredSize(new Dimension(pantalla.width, 60));
         barra.setBackground(Color.DARK_GRAY);
 
-        JButton btnWindowsBarra = crearBotonBarra("/imagenes/windows/iconosApp/windows.png");
-        JButton btnInstaBarra = crearBotonBarra("/imagenes/windows/iconosApp/insta.png");
-        JButton btnTerminalBarra = crearBotonBarra("/imagenes/windows/iconosApp/cmd.png");
-        btnTerminalBarra.addActionListener(ev->{
-        new PanelCMD(padre);
-            
-        });
-        
-        
-        
-        
-        JButton btnReproductorBarra = crearBotonBarra("/imagenes/windows/iconosApp/reproductor.png");
-        JButton btnBuscadorBarra = crearBotonBarra("/imagenes/windows/iconosApp/buscador.png");
-        JButton btnWordBarra = crearBotonBarra("/imagenes/windows/iconosApp/word.png");
-        btnWordBarra.addActionListener(ev->{
-        new GUIpantallaWord(padre);
-        });
+        JButton btnWindowsBarra = crearBotonBarra("/datos/windows/Z/imagenes/windows/iconosApp/windows.png");
+        JButton btnInstaBarra = crearBotonBarra("/datos/windows/Z/imagenes/windows/iconosApp/insta.png");
+        JButton btnTerminalBarra = crearBotonBarra("/datos/windows/Z/imagenes/windows/iconosApp/cmd.png");
+        JButton btnReproductorBarra = crearBotonBarra("/datos/windows/Z/imagenes/windows/iconosApp/reproductor.png");
+        JButton btnBuscadorBarra = crearBotonBarra("/datos/windows/Z/imagenes/windows/iconosApp/buscador.png");
+        JButton btnWordBarra = crearBotonBarra("/datos/windows/Z/imagenes/windows/iconosApp/word.png");
+
+        btnTerminalBarra.addActionListener(ev -> new PanelCMD(padre));
+        btnWordBarra.addActionListener(ev -> new GUIpantallaWord(padre));
 
         btnWindowsBarra.addActionListener(e -> {
             panelwindowsajustes.setVisible(!panelwindowsajustes.isVisible());
             panelWindows.setVisible(false);
         });
+
         barra.add(Box.createHorizontalStrut(550));
         barra.add(btnWindowsBarra);
         barra.add(Box.createHorizontalStrut(30));
@@ -216,80 +214,76 @@ public class GUIEscritorio extends JPanel {
         panelWindows = new JPanel();
         panelWindows.setLayout(new BoxLayout(panelWindows, BoxLayout.Y_AXIS));
         panelWindows.setBackground(Color.WHITE);
-        panelWindows.setBounds(900, 660, 120, 80);
+        panelWindows.setBounds(900, 660, 120, 110);
         panelWindows.setVisible(false);
 
         JButton btnCerrarSesion = new JButton("Cerrar sesión");
         btnCerrarSesion.setBackground(Color.white);
         btnCerrarSesion.setBorderPainted(false);
         btnCerrarSesion.setHorizontalAlignment(SwingConstants.LEFT);
-        
+
         JButton btnApagar = new JButton("Apagar");
         btnApagar.setBackground(Color.white);
         btnApagar.setBorderPainted(false);
         btnApagar.setHorizontalAlignment(SwingConstants.LEFT);
-        
-        
+
         JButton btncrear = new JButton("Crear Usuario");
         btncrear.setBackground(Color.white);
         btncrear.setBorderPainted(false);
         btncrear.setHorizontalAlignment(SwingConstants.LEFT);
-        
-        
-        btncrear.addActionListener(e -> principal.show(cards, "login"));//*************************************
-        btnCerrarSesion.addActionListener(e -> principal.show(cards, "login"));
+
+        btncrear.addActionListener(e -> {
+            panelWindows.setVisible(false);
+            panelwindowsajustes.setVisible(false);
+            principal.show(cards, "crear");
+        });
+
+        btnCerrarSesion.addActionListener(e -> {
+            panelWindows.setVisible(false);
+            panelwindowsajustes.setVisible(false);
+            principal.show(cards, "login");
+        });
+
         btnApagar.addActionListener(e -> System.exit(0));
-        //***********************************************************************condicional
+
         panelWindows.add(btnCerrarSesion);
+        panelWindows.add(btncrear);
         panelWindows.add(btnApagar);
 
         escritorio.add(panelWindows);
     }
-    
-    public void initWindows(CardLayout principal, JPanel cards){
-        panelwindowsajustes= new JPanel();
+
+    public void initWindows(CardLayout principal, JPanel cards) {
+        panelwindowsajustes = new JPanel();
         panelwindowsajustes.setLayout(new BoxLayout(panelwindowsajustes, BoxLayout.X_AXIS));
-        panelwindowsajustes.setBackground(new Color(0, 0, 0,  200) );
+        panelwindowsajustes.setBackground(new Color(0, 0, 0, 200));
         panelwindowsajustes.setBounds(550, 740, 500, 50);
         panelwindowsajustes.setPreferredSize(new Dimension(550, 740));
         panelwindowsajustes.setVisible(false);
-        
-        
-        JButton Usuario = new JButton("Usuario"); //******* nombre del usuario que este dentro del escritorio
-        Usuario.setOpaque(false);
-        Usuario.setForeground(Color.white);
-        Usuario.setHorizontalAlignment(SwingConstants.CENTER);
-        Usuario.setFont(new Font("Arial", Font.BOLD, 20));
-        Usuario.setOpaque(false);
-        Usuario.setContentAreaFilled(false);
-        Usuario.setBorderPainted(false);
-        Usuario.setFocusPainted(false);
-        
-        
+
+        btnUsuario = new JButton("");
+        btnUsuario.setForeground(Color.white);
+        btnUsuario.setHorizontalAlignment(SwingConstants.CENTER);
+        btnUsuario.setFont(new Font("Arial", Font.BOLD, 20));
+        btnUsuario.setOpaque(false);
+        btnUsuario.setContentAreaFilled(false);
+        btnUsuario.setBorderPainted(false);
+        btnUsuario.setFocusPainted(false);
+
         JButton inicio = new JButton("inicio");
         inicio.setForeground(Color.white);
-        inicio.setBorderPainted(false);
-        inicio.setContentAreaFilled(false);
         inicio.setFont(new Font("Arial", Font.BOLD, 20));
         inicio.setHorizontalAlignment(SwingConstants.CENTER);
         inicio.setOpaque(false);
         inicio.setContentAreaFilled(false);
         inicio.setBorderPainted(false);
         inicio.setFocusPainted(false);
-        inicio.addActionListener(ev->{
-        panelWindows.setVisible(!panelWindows.isVisible());
-            
-            
-        });
-        
-        
-        
-        
-        panelwindowsajustes.add(Usuario);
+
+        inicio.addActionListener(ev -> panelWindows.setVisible(!panelWindows.isVisible()));
+
+        panelwindowsajustes.add(btnUsuario);
         panelwindowsajustes.add(Box.createHorizontalStrut(250));
         panelwindowsajustes.add(inicio);
         escritorio.add(panelwindowsajustes);
-        
-        
     }
 }

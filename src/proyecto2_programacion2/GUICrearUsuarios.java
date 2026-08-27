@@ -9,9 +9,11 @@ package proyecto2_programacion2;
  * @author denam
  */
 
+
 import java.awt.*;
 import javax.swing.*;
 import java.util.ArrayList;
+import java.io.*;
 
 public class GUICrearUsuarios extends JPanel {
 
@@ -21,10 +23,12 @@ public class GUICrearUsuarios extends JPanel {
     private Timer tempo;
     private Image imagenFondo;
     private String nombre;
+    private GUIPantallaPrincipal padre;
 
-    public GUICrearUsuarios() {
+    public GUICrearUsuarios(GUIPantallaPrincipal padre, CardLayout principal, JPanel cards) {
+        this.padre = padre;
 
-        ImageIcon icono = new ImageIcon(getClass().getResource("/imagenes/windows/fondoLogin.jpg"));
+        ImageIcon icono = new ImageIcon(getClass().getResource("/datos/windows/Z/imagenes/windows/fondoLogin.jpg"));
         Dimension pantalla = Toolkit.getDefaultToolkit().getScreenSize();
         imagenFondo = icono.getImage().getScaledInstance(
                 pantalla.width,
@@ -36,7 +40,7 @@ public class GUICrearUsuarios extends JPanel {
         setPreferredSize(new Dimension(pantalla.width, pantalla.height));
 
         inicializarTitulo();
-        Inicializarbotones();
+        Inicializarbotones(principal, cards);
         inicializarBotonExit();
         inicializarTimer();
 
@@ -73,7 +77,7 @@ public class GUICrearUsuarios extends JPanel {
         });
     }
 
-    public void Inicializarbotones() {
+    public void Inicializarbotones(CardLayout principal, JPanel cards) {
         JPanel panelLogin = new JPanel();
         panelLogin.setLayout(new GridLayout(8, 1, 8, 8));
         panelLogin.setBackground(Color.WHITE);
@@ -143,7 +147,7 @@ public class GUICrearUsuarios extends JPanel {
             int compC = ComprobarC();
 
             if (compU == 2 && compC == 2) {
-                Seguir();
+                Seguir(principal, cards);
             } else {
                 if (compU == 0 && compC == 0) {
                     label.setText("Falta User y Contra");
@@ -177,18 +181,16 @@ public class GUICrearUsuarios extends JPanel {
         boolean tieneNumero = false;
         boolean tieneLetra = false;
         boolean tieneEspecial = false;
+        boolean tieneMayuscula = false;
 
         if (caracteres.length == 0) {
             label.setText("Ingrese contraseña");
             return 0;
-
         } else if (caracteres.length < 8) {
             label.setText("Debe tener minimo 8 caracteres");
             return 1;
         } else {
-
             for (Character caracter : passwordIngresada) {
-
                 if (Character.isDigit(caracter)) {
                     tieneNumero = true;
                 }
@@ -200,18 +202,31 @@ public class GUICrearUsuarios extends JPanel {
                 if (!Character.isLetterOrDigit(caracter)) {
                     tieneEspecial = true;
                 }
+
+                if (Character.isUpperCase(caracter)) {
+                    tieneMayuscula = true;
+                }
             }
 
             if (!tieneNumero) {
                 label.setText("Debe tener al menos un numero");
+                label.setVisible(true);
+                tempo.start();
                 return 1;
-
             } else if (!tieneLetra) {
                 label.setText("Debe tener letras y no solo numeros");
+                label.setVisible(true);
+                tempo.start();
                 return 1;
-
             } else if (!tieneEspecial) {
                 label.setText("Debe tener al menos un caracter especial");
+                label.setVisible(true);
+                tempo.start();
+                return 1;
+            } else if (!tieneMayuscula) {
+                label.setText("Debe tener al menos una letra mayuscula");
+                label.setVisible(true);
+                tempo.start();
                 return 1;
             }
         }
@@ -220,31 +235,11 @@ public class GUICrearUsuarios extends JPanel {
     }
 
     private int ComprobarU() {
-
         if (nombre.length() == 0) {
             label.setText("Ingrese usuario");
             return 0;
-
-        } else if (isusuarioexistente(0)) {
-            label.setText("Usuario existente");
-            return 1;
-
         } else {
             return 2;
-        }
-    }
-
-    private boolean isusuarioexistente(int index) {
-        if (Globales.jugadores.size() > index) {
-
-            if (nombre.equals(Globales.jugadores.get(index).getUser())) {
-                return true;
-            } else {
-                return isusuarioexistente(index + 1);
-            }
-
-        } else {
-            return false;
         }
     }
 
@@ -257,9 +252,7 @@ public class GUICrearUsuarios extends JPanel {
         btnExit.setForeground(Color.WHITE);
         btnExit.setFocusable(false);
 
-        btnExit.addActionListener(e -> {
-            System.exit(0);
-        });
+        btnExit.addActionListener(e -> System.exit(0));
 
         GridBagConstraints gbcExit = new GridBagConstraints();
         gbcExit.gridx = 0;
@@ -272,7 +265,31 @@ public class GUICrearUsuarios extends JPanel {
         add(btnExit, gbcExit);
     }
 
-    public void Seguir() {
-        // crear usuario
+    public void Seguir(CardLayout principal, JPanel cards) {
+        ArchivoUsuarioWin archivo = new ArchivoUsuarioWin();
+
+        try {
+            if (!archivo.UsuarioExiste(nombre)) {
+                if (!archivo.existeAdmin()) {
+                    UsuarioWin win = new UsuarioWin(nombre, contra.getPassword(), true);
+                    archivo.agregarUsuario(win);
+                    archivo.login(nombre, contra);
+                    padre.mostrarEscritorio();
+                } else {
+                    UsuarioWin win = new UsuarioWin(nombre, contra.getPassword(), false);
+                    archivo.agregarUsuario(win);
+                    archivo.login(nombre, contra);
+                    padre.mostrarEscritorio();
+                }
+            } else {
+                label.setText("el usuario ya existe");
+                label.setVisible(true);
+                tempo.start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 }

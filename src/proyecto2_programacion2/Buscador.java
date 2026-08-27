@@ -13,9 +13,10 @@ import java.awt.*;
 import javax.swing.*;
 public class Buscador extends JDialog {
     
+    private CardLayout cardLayout;
+    private JPanel panelCards;
     
-    
-    Buscador(GUIPantallaPrincipal Perfil){
+    public Buscador(GUIPantallaPrincipal Perfil){
         
     
     super(Perfil, "Buscador", false);
@@ -27,7 +28,7 @@ public class Buscador extends JDialog {
         getContentPane().setBackground(Color.black);
         setLocationRelativeTo(Perfil);
         
-        InitBarra();
+        Initbarra();
         
         InitCardLayout();
         agregarCards();
@@ -59,4 +60,44 @@ public class Buscador extends JDialog {
 
     
     }
+     public void agregarCards(){
+        GUIWordEditor editor = new GUIWordEditor(this, cardLayout, panelCards);
+        agregarCard(editor, "editor");
+        
+        GUIWordNuevo nuevo = new GUIWordNuevo (this, cardLayout, panelCards, editor);
+        agregarCard(nuevo, "nuevo");
+        
+        
+        
+        
+        
+        
+
+        
+    }
+    
+    public void InitCardLayout(){
+    cardLayout = new CardLayout(); 
+    panelCards = new JPanel(cardLayout); 
+    
+    
+    panelCards.setOpaque(false);
+     
+ 
+    getContentPane().add(panelCards, BorderLayout.CENTER);
+    
+    
+
+
+
+    }
+    private void agregarCard(JPanel panel, String nombre) {
+        panelCards.add(panel, nombre);
+    }
+    public void mostrarCard(String nombreCard) { 
+        cardLayout.show(panelCards, nombreCard); 
+        panelCards.revalidate();
+        panelCards.repaint(); 
+    }
 }
+

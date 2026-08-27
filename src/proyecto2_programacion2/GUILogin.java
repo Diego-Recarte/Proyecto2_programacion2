@@ -13,6 +13,8 @@ import java.awt.*;
 import java.util.Arrays;
 import javax.swing.*;
 
+
+
 public class GUILogin extends JPanel {
 
     private JPasswordField contra;
@@ -20,10 +22,12 @@ public class GUILogin extends JPanel {
     private Timer tempo;
     private JLabel label;
     private Image imagenFondo;
+    private GUIPantallaPrincipal padre;
 
-    public GUILogin(CardLayout principal, JPanel cards) {
+    public GUILogin(GUIPantallaPrincipal padre, CardLayout principal, JPanel cards) {
+        this.padre = padre;
 
-        ImageIcon icono = new ImageIcon(getClass().getResource("/imagenes/windows/fondoLogin.jpg"));
+        ImageIcon icono = new ImageIcon(getClass().getResource("/datos/windows/Z/imagenes/windows/fondoLogin.jpg"));
         Dimension pantalla = Toolkit.getDefaultToolkit().getScreenSize();
         imagenFondo = icono.getImage().getScaledInstance(
                 pantalla.width,
@@ -56,11 +60,9 @@ public class GUILogin extends JPanel {
     }
 
     public void inicializarBotones(CardLayout principal, JPanel cards) {
-
         JPanel panelLogin = new JPanel();
         panelLogin.setLayout(new GridLayout(7, 1, 10, 10));
         panelLogin.setBackground(Color.WHITE);
-
         panelLogin.setPreferredSize(new Dimension(350, 280));
         panelLogin.setOpaque(false);
 
@@ -111,25 +113,27 @@ public class GUILogin extends JPanel {
         btnIngresar.setFocusable(false);
 
         btnIngresar.addActionListener(e -> {
-            int index;
-            index = Encontrar(0);
+            ArchivoUsuarioWin archivo = new ArchivoUsuarioWin();
+            int resultado = archivo.login(user.getText().trim(), contra);
 
-            if (Globales.jugadores.isEmpty()) {
-                label.setText("No existen usuarios activos");
-                label.setVisible(true);
-                tempo.start();
-            } else if (index == -1) {
-                label.setText("No se encontró usuario");
-                label.setVisible(true);
-                tempo.start();
-            } else {
-                if (Arrays.equals(Globales.jugadores.get(index).getPassword(), contra.getPassword())) {
-                    principal.show(cards, "escritorio");
-                } else {
-                    label.setText("Contraseña incorrecta");
+            switch (resultado) {
+                case 1:
+                    user.setText("");
+                    contra.setText("");
+                    padre.mostrarEscritorio();
+                    break;
+
+                case 2:
+                    label.setText("contraseña incorrecta");
                     label.setVisible(true);
                     tempo.start();
-                }
+                    break;
+
+                case 3:
+                    label.setText("usuario incorrecto");
+                    label.setVisible(true);
+                    tempo.start();
+                    break;
             }
         });
 
@@ -151,9 +155,7 @@ public class GUILogin extends JPanel {
         btnExit.setOpaque(false);
         btnExit.setFocusable(false);
 
-        btnExit.addActionListener(e -> {
-            System.exit(0);
-        });
+        btnExit.addActionListener(e -> System.exit(0));
 
         GridBagConstraints gbcExit = new GridBagConstraints();
         gbcExit.gridx = 0;
@@ -164,19 +166,5 @@ public class GUILogin extends JPanel {
         gbcExit.insets = new Insets(0, 20, 20, 0);
 
         add(btnExit, gbcExit);
-    }
-
-    private int Encontrar(int name) {
-        /**
-        if (name < Globales.jugadores.size()) {
-            if (Globales.jugadores.get(name).getUser().equals(user.getText())
-                    && Globales.jugadores.get(name).isActivo()) {
-                return name;
-            } else {
-                return Encontrar(name + 1);
-            }
-        } else {
-        **/
-        return -1;
     }
 }

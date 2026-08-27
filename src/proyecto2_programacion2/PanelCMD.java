@@ -45,7 +45,7 @@ public class PanelCMD extends JDialog {
         consola.setLineWrap(true);
         consola.setWrapStyleWord(true);
         consola.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-        consola.append("usuario " + "Win64 ~" + "\n");// poner el usuario de la persona
+        consola.append(usuarioWinActivo.nombre + " Win64 ~" + "\n");// poner el usuario de la persona
         
         
         JScrollPane scroll = new JScrollPane(consola);
@@ -84,7 +84,7 @@ public class PanelCMD extends JDialog {
                 entrada.setText("");
                 consola.setCaretPosition(consola.getDocument().getLength());
                 
-                consola.append("usuario " + "Win64 ~" + "\n");// poner el usuario de la persona
+                consola.append(usuarioWinActivo.nombre + " Win64 ~" + "\n");// poner el usuario de la persona
                 
             }
         });
