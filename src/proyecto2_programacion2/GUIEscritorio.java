@@ -28,6 +28,7 @@ public class GUIEscritorio extends JPanel {
     private JButton visualizador;
     private JButton word;
     private JButton btnUsuario;
+    private JButton btncrear;
 
     private Dimension pantalla;
 
@@ -62,6 +63,11 @@ public class GUIEscritorio extends JPanel {
     public void actualizarUsuarioActivo() {
         if (btnUsuario != null) {
             btnUsuario.setText(usuarioWinActivo.nombre);
+            if (usuarioWinActivo.isAdmin){
+                panelWindows.add(btncrear);
+            }else{
+               panelWindows.remove(btncrear); 
+            }
             btnUsuario.revalidate();
             btnUsuario.repaint();
         }
@@ -82,7 +88,9 @@ public class GUIEscritorio extends JPanel {
         buscador = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/buscador.png", 150, 50, "buscador");
         visualizador = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/visualizador.png", 250, 250, "Visualizador");
         word = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/word.png", 150, 250, "Word");
-
+         buscador.addActionListener(ev->{
+        new Buscador(padre);
+        });
         word.addActionListener(ev -> new GUIpantallaWord(padre));
 
         escritorio.add(insta);
@@ -187,7 +195,12 @@ public class GUIEscritorio extends JPanel {
         JButton btnInstaBarra = crearBotonBarra("/datos/windows/Z/imagenes/windows/iconosApp/insta.png");
         JButton btnTerminalBarra = crearBotonBarra("/datos/windows/Z/imagenes/windows/iconosApp/cmd.png");
         JButton btnReproductorBarra = crearBotonBarra("/datos/windows/Z/imagenes/windows/iconosApp/reproductor.png");
+        
         JButton btnBuscadorBarra = crearBotonBarra("/datos/windows/Z/imagenes/windows/iconosApp/buscador.png");
+        btnBuscadorBarra.addActionListener(ev->{
+        new Buscador(padre);
+        });
+        
         JButton btnWordBarra = crearBotonBarra("/datos/windows/Z/imagenes/windows/iconosApp/word.png");
 
         btnTerminalBarra.addActionListener(ev -> new PanelCMD(padre));
@@ -227,7 +240,7 @@ public class GUIEscritorio extends JPanel {
         btnApagar.setBorderPainted(false);
         btnApagar.setHorizontalAlignment(SwingConstants.LEFT);
 
-        JButton btncrear = new JButton("Crear Usuario");
+         btncrear = new JButton("Crear Usuario");
         btncrear.setBackground(Color.white);
         btncrear.setBorderPainted(false);
         btncrear.setHorizontalAlignment(SwingConstants.LEFT);
@@ -247,7 +260,10 @@ public class GUIEscritorio extends JPanel {
         btnApagar.addActionListener(e -> System.exit(0));
 
         panelWindows.add(btnCerrarSesion);
-        panelWindows.add(btncrear);
+        
+             
+        
+       
         panelWindows.add(btnApagar);
 
         escritorio.add(panelWindows);
