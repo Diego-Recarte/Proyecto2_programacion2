@@ -33,8 +33,8 @@ public class InstaRegisterUI extends JPanel {
     private final Color COLOR_BTN_HOVER = new Color(200, 50, 0);
     private final Color COLOR_TEXT = Color.WHITE;
     private final Color COLOR_BORDER = new Color(100, 100, 100);
-    private final Font FONT_CAOS = new Font("Comic Sans MS", Font.BOLD, 12);
-    private final Font FONT_TITLE = new Font("Comic Sans MS", Font.BOLD | Font.ITALIC, 28);
+    private final Font FONT_CAOS = new Font("Segoe UI", Font.BOLD, 12);
+    private final Font FONT_TITLE = new Font("Segoe UI", Font.BOLD, 28);
 
     genFondos panelFondos;
 
@@ -54,7 +54,7 @@ public class InstaRegisterUI extends JPanel {
         add(lblTitulo);
 
         JLabel lblSub = new JLabel(", sube reals y chatea con tus amigos.");
-        lblSub.setFont(new Font("Comic Sans MS", Font.BOLD, 16));
+        lblSub.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lblSub.setForeground(Color.LIGHT_GRAY);
         lblSub.setHorizontalAlignment(SwingConstants.CENTER);
         lblSub.setBounds(40, 50, 320, 30);
@@ -94,7 +94,7 @@ public class InstaRegisterUI extends JPanel {
         cbGenero.setFont(FONT_CAOS);
         cbGenero.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(COLOR_BORDER), "Género", 0, 0,
-                new Font("Comic Sans MS", Font.PLAIN, 12), Color.LIGHT_GRAY));
+                new Font("Segoe UI", Font.PLAIN, 12), Color.LIGHT_GRAY));
         add(cbGenero);
 
         btnRegistrar = new BotonRojo("Invocar Cuenta");
@@ -106,7 +106,7 @@ public class InstaRegisterUI extends JPanel {
         lblBackLogin.setBounds(50, 600, 300, 30);
         lblBackLogin.setHorizontalAlignment(SwingConstants.CENTER);
         lblBackLogin.setForeground(COLOR_BTN);
-        lblBackLogin.setFont(new Font("Comic Sans MS", Font.ITALIC, 13));
+        lblBackLogin.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblBackLogin.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         lblBackLogin.addMouseListener(new MouseAdapter() {
@@ -129,11 +129,11 @@ public class InstaRegisterUI extends JPanel {
         txt.setBackground(new Color(30, 30, 30));
         txt.setForeground(COLOR_TEXT);
         txt.setCaretColor(COLOR_TEXT);
-        txt.setFont(new Font("Comic Sans MS", Font.PLAIN, 14));
+        txt.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txt.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(COLOR_BORDER),
                 titulo, 0, 0,
-                new Font("Comic Sans MS", Font.PLAIN, 12),
+                new Font("Segoe UI", Font.PLAIN, 12),
                 Color.LIGHT_GRAY));
     }
 
@@ -420,7 +420,7 @@ public class InstaRegisterUI extends JPanel {
             setBorderPainted(false);
             setBackground(COLOR_BTN);
             setForeground(Color.BLACK);
-            setFont(new Font("Comic Sans MS", Font.BOLD, 14));
+            setFont(new Font("Segoe UI", Font.BOLD, 14));
             setCursor(new Cursor(Cursor.HAND_CURSOR));
 
             addMouseListener(new MouseAdapter() {

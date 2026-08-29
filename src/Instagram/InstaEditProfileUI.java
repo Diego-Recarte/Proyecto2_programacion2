@@ -20,8 +20,8 @@ public class InstaEditProfileUI extends JPanel {
     
     private final Color COLOR_TEXT = Color.WHITE;
     private final Color COLOR_BORDER = new Color(100, 100, 100);
-    private final Font FONT_TITLE = new Font("Comic Sans MS", Font.BOLD | Font.ITALIC, 20);
-    private final Font FONT_CAOS = new Font("Comic Sans MS", Font.PLAIN, 12);
+    private final Font FONT_TITLE = new Font("Segoe UI", Font.BOLD, 20);
+    private final Font FONT_CAOS = new Font("Segoe UI", Font.PLAIN, 12);
 
     private JPanel panelCentral;
     private JTextField txtBuscar;
@@ -72,7 +72,7 @@ public class InstaEditProfileUI extends JPanel {
         });
         p.add(lblBack);
 
-        JLabel title = new JLabel("Ver reals");
+        JLabel title = new JLabel("Buscar usuarios");
         title.setFont(FONT_TITLE);
         title.setForeground(COLOR_TEXT);
         title.setBounds(50, 12, 180, 30);

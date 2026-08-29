@@ -13,7 +13,7 @@ import javax.swing.*;
 public class GUIWordNuevo extends JPanel{
     private JButton archivo;
     
-    public GUIWordNuevo(GUIpantallaWord padre, CardLayout principal, JPanel cards,  GUIWordEditor campo){
+    public GUIWordNuevo(Component padre, CardLayout principal, JPanel cards, GUIWordEditor campo){
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         setPreferredSize(new Dimension(1200, 800));
         setOpaque(false);

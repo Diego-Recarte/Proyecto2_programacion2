@@ -19,7 +19,7 @@ public class GUIWordEditor extends JPanel{
     private JTextPane editor;
     private JScrollPane scrollEditor;
     
-    public GUIWordEditor(GUIpantallaWord padre, CardLayout principal, JPanel cards){
+    public GUIWordEditor(Component padre, CardLayout principal, JPanel cards){
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setPreferredSize(new Dimension(800, 500));
         setOpaque(false);

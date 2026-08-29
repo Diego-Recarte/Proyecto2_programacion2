@@ -12,10 +12,4 @@ public class musica {
     private String nombre;
     private String descripcion;
     private String autor;
-    private 
-    
-    
-    
-    
-    
 }

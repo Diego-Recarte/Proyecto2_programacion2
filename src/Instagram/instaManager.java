@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -21,6 +22,7 @@ public class instaManager {
     private final String usersDir = mainRoot + File.separator + "users";
     private File loggedUserDir = null;
     private String loggedUser = null;
+    private StickerRepository stickerRepository;
 
     public instaManager() {
         File instaFolder = new File(mainRoot);
@@ -34,6 +36,13 @@ public class instaManager {
         }
 
         try {
+            stickerRepository = new StickerRepository(instaFolder, usersDirF);
+            File[] existingUsers = usersDirF.listFiles(File::isDirectory);
+            if (existingUsers != null) {
+                for (File existingUser : existingUsers) {
+                    initUserFiles(existingUser.getAbsolutePath());
+                }
+            }
             File f = new File(mainRoot + File.separator + "users.ins");
             if (!f.exists()) {
                 f.createNewFile();
@@ -82,6 +91,8 @@ public class instaManager {
         File fFollowing = new File(userFolder + File.separator + "following.ins");
         File fPosts = new File(userFolder + File.separator + "insta.ins");
         File fComments = new File(userFolder + File.separator + "comments.ins");
+        File fLikes = new File(userFolder + File.separator + "likes.ins");
+        File fInbox = new File(userFolder + File.separator + "inbox.ins");
 
         if (!fFollowers.exists()) {
             fFollowers.createNewFile();
@@ -94,6 +105,123 @@ public class instaManager {
         }
         if (!fComments.exists()) {
             fComments.createNewFile();
+        }
+        if (!fLikes.exists()) {
+            fLikes.createNewFile();
+        }
+        if (!fInbox.exists()) {
+            fInbox.createNewFile();
+        }
+        if (stickerRepository != null) {
+            stickerRepository.initializeUser(new File(userFolder));
+        }
+    }
+
+    public ArrayList<String[]> getStickers(String username) throws IOException {
+        if (stickerRepository == null) {
+            throw new IOException("El repositorio de stickers no está disponible.");
+        }
+        return stickerRepository.list(username);
+    }
+
+    public String importSticker(String username, File source) throws IOException {
+        if (stickerRepository == null) {
+            throw new IOException("El repositorio de stickers no está disponible.");
+        }
+        return stickerRepository.importSticker(username, source);
+    }
+
+    /** Actualiza los datos editables sin alterar contraseña, fecha ni estado. */
+    public synchronized boolean updateProfile(String username, String realName, char gender,
+            int age, String newProfilePicPath) throws IOException {
+        if (realName == null || realName.isBlank()) {
+            throw new IOException("El nombre no puede estar vacío.");
+        }
+        if (age < 13 || age > 120) {
+            throw new IOException("La edad debe estar entre 13 y 120 años.");
+        }
+
+        ArrayList<UserRecord> records = readUserRecords();
+        UserRecord selected = null;
+        for (UserRecord record : records) {
+            if (record.username.equals(username)) {
+                selected = record;
+                break;
+            }
+        }
+        if (selected == null) {
+            return false;
+        }
+
+        selected.realName = realName.trim();
+        selected.gender = gender;
+        selected.age = age;
+
+        if (newProfilePicPath != null && !newProfilePicPath.isBlank()) {
+            File source = new File(newProfilePicPath);
+            if (!source.isFile()) {
+                throw new IOException("La nueva foto de perfil no existe.");
+            }
+            File userDirectory = new File(usersDir, username);
+            Files.createDirectories(userDirectory.toPath());
+            String fileName = source.getName();
+            int dot = fileName.lastIndexOf('.');
+            String extension = dot >= 0 ? fileName.substring(dot + 1).replaceAll("[^a-zA-Z0-9]", "") : "jpg";
+            if (extension.isBlank()) {
+                extension = "jpg";
+            }
+            File destination = new File(userDirectory, "profile." + extension.toLowerCase());
+            if (!source.getCanonicalFile().equals(destination.getCanonicalFile())) {
+                Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+            selected.profilePicture = destination.getAbsolutePath();
+        }
+
+        rewriteUsers(records);
+        return true;
+    }
+
+    private ArrayList<UserRecord> readUserRecords() throws IOException {
+        ArrayList<UserRecord> records = new ArrayList<>();
+        users.seek(0);
+        while (users.getFilePointer() < users.length()) {
+            records.add(new UserRecord(
+                    users.readUTF(),
+                    users.readChar(),
+                    users.readUTF(),
+                    users.readUTF(),
+                    users.readLong(),
+                    users.readInt(),
+                    users.readBoolean(),
+                    users.readUTF()
+            ));
+        }
+        return records;
+    }
+
+    private void rewriteUsers(ArrayList<UserRecord> records) throws IOException {
+        File original = new File(mainRoot, "users.ins");
+        File temporary = new File(mainRoot, "users.ins.tmp");
+        try (RandomAccessFile output = new RandomAccessFile(temporary, "rw")) {
+            output.setLength(0);
+            for (UserRecord record : records) {
+                output.writeUTF(record.realName);
+                output.writeChar(record.gender);
+                output.writeUTF(record.username);
+                output.writeUTF(record.password);
+                output.writeLong(record.entryDate);
+                output.writeInt(record.age);
+                output.writeBoolean(record.active);
+                output.writeUTF(record.profilePicture);
+            }
+        }
+
+        users.close();
+        try {
+            Files.move(temporary.toPath(), original.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } finally {
+            users = new RandomAccessFile(original, "rw");
+            Files.deleteIfExists(temporary.toPath());
         }
     }
 
@@ -463,6 +591,9 @@ public class instaManager {
         if (loggedUserDir == null) {
             throw new IOException("No hay usuario loggeado.");
         }
+        if (contenido != null && contenido.length() > 220) {
+            throw new IOException("La descripción no puede superar 220 caracteres.");
+        }
         SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy HH:mm");
         String dateFormat = formato.format(Calendar.getInstance().getTime());
         File postFile = new File(loggedUserDir, "insta.ins");
@@ -507,6 +638,218 @@ public class instaManager {
         }
         Collections.reverse(posts);
         return posts;
+    }
+
+    /**
+     * Construye el timeline con publicaciones propias y de cuentas seguidas.
+     */
+    public ArrayList<String[]> getFeedPosts(String viewer) throws IOException {
+        ArrayList<String[]> feed = new ArrayList<>();
+        Set<String> visibleUsers = new HashSet<>();
+        visibleUsers.add(viewer);
+        File followingFile = new File(new File(usersDir, viewer), "following.ins");
+        if (followingFile.exists()) {
+            try (RandomAccessFile following = new RandomAccessFile(followingFile, "r")) {
+                while (following.getFilePointer() < following.length()) {
+                    visibleUsers.add(following.readUTF());
+                }
+            }
+        }
+
+        File usersRoot = new File(usersDir);
+        File[] userFolders = usersRoot.listFiles(File::isDirectory);
+        if (userFolders == null) {
+            return feed;
+        }
+
+        for (File userFolder : userFolders) {
+            String owner = userFolder.getName();
+            if (!visibleUsers.contains(owner) || !getStatusUser(owner)) {
+                continue;
+            }
+
+            for (String[] post : getPosts(owner)) {
+                feed.add(new String[]{
+                    post.length > 0 ? post[0] : "",
+                    post.length > 1 ? post[1] : owner,
+                    post.length > 2 ? post[2] : "",
+                    post.length > 3 ? post[3] : "",
+                    owner
+                });
+            }
+        }
+
+        SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+        format.setLenient(false);
+        Comparator<String[]> newestFirst = (left, right) -> {
+            try {
+                long leftDate = format.parse(left[2]).getTime();
+                long rightDate = format.parse(right[2]).getTime();
+                return Long.compare(rightDate, leftDate);
+            } catch (Exception ex) {
+                return 0;
+            }
+        };
+        feed.sort(newestFirst);
+        return feed;
+    }
+
+    /** Alterna el corazón de un usuario y devuelve el nuevo total. */
+    public synchronized int toggleLike(String postOwner, String imagePath, String username) throws IOException {
+        File likesFile = getLikesFile(postOwner);
+        ArrayList<String[]> likes = new ArrayList<>();
+        boolean removed = false;
+        try (RandomAccessFile input = new RandomAccessFile(likesFile, "r")) {
+            while (input.getFilePointer() < input.length()) {
+                String storedPath = input.readUTF();
+                String storedUser = input.readUTF();
+                if (storedPath.equals(imagePath) && storedUser.equals(username)) {
+                    removed = true;
+                } else {
+                    likes.add(new String[]{storedPath, storedUser});
+                }
+            }
+        }
+        if (!removed) {
+            likes.add(new String[]{imagePath, username});
+        }
+        rewritePairs(likesFile, likes);
+        return getLikeCount(postOwner, imagePath);
+    }
+
+    public synchronized boolean hasLiked(String postOwner, String imagePath, String username) throws IOException {
+        File likesFile = getLikesFile(postOwner);
+        try (RandomAccessFile input = new RandomAccessFile(likesFile, "r")) {
+            while (input.getFilePointer() < input.length()) {
+                String storedPath = input.readUTF();
+                String storedUser = input.readUTF();
+                if (storedPath.equals(imagePath) && storedUser.equals(username)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public synchronized int getLikeCount(String postOwner, String imagePath) throws IOException {
+        File likesFile = getLikesFile(postOwner);
+        Set<String> usersWhoLiked = new HashSet<>();
+        try (RandomAccessFile input = new RandomAccessFile(likesFile, "r")) {
+            while (input.getFilePointer() < input.length()) {
+                String storedPath = input.readUTF();
+                String storedUser = input.readUTF();
+                if (storedPath.equals(imagePath)) {
+                    usersWhoLiked.add(storedUser);
+                }
+            }
+        }
+        return usersWhoLiked.size();
+    }
+
+    /** Borra el post y sus comentarios/corazones asociados. */
+    public synchronized boolean deletePost(String postOwner, String imagePath) throws IOException {
+        File userDirectory = new File(usersDir, postOwner);
+        File postsFile = new File(userDirectory, "insta.ins");
+        if (!postsFile.exists()) {
+            return false;
+        }
+
+        ArrayList<String[]> remainingPosts = new ArrayList<>();
+        boolean found = false;
+        try (RandomAccessFile input = new RandomAccessFile(postsFile, "r")) {
+            while (input.getFilePointer() < input.length()) {
+                String image = input.readUTF();
+                String author = input.readUTF();
+                String date = input.readUTF();
+                String content = input.readUTF();
+                if (image.equals(imagePath)) {
+                    found = true;
+                } else {
+                    remainingPosts.add(new String[]{image, author, date, content});
+                }
+            }
+        }
+        if (!found) {
+            return false;
+        }
+        rewritePosts(postsFile, remainingPosts);
+        removeCommentsForImage(new File(userDirectory, "comments.ins"), imagePath);
+        removeLikesForImage(getLikesFile(postOwner), imagePath);
+        return true;
+    }
+
+    private File getLikesFile(String postOwner) throws IOException {
+        File userDirectory = new File(usersDir, postOwner);
+        Files.createDirectories(userDirectory.toPath());
+        File likesFile = new File(userDirectory, "likes.ins");
+        if (!likesFile.exists()) {
+            likesFile.createNewFile();
+        }
+        return likesFile;
+    }
+
+    private void rewritePairs(File original, ArrayList<String[]> values) throws IOException {
+        File temporary = new File(original.getParentFile(), original.getName() + ".tmp");
+        try (RandomAccessFile output = new RandomAccessFile(temporary, "rw")) {
+            output.setLength(0);
+            for (String[] value : values) {
+                output.writeUTF(value[0]);
+                output.writeUTF(value[1]);
+            }
+        }
+        Files.move(temporary.toPath(), original.toPath(), StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    private void rewritePosts(File original, ArrayList<String[]> posts) throws IOException {
+        File temporary = new File(original.getParentFile(), original.getName() + ".tmp");
+        try (RandomAccessFile output = new RandomAccessFile(temporary, "rw")) {
+            output.setLength(0);
+            for (String[] post : posts) {
+                output.writeUTF(post[0]);
+                output.writeUTF(post[1]);
+                output.writeUTF(post[2]);
+                output.writeUTF(post[3]);
+            }
+        }
+        Files.move(temporary.toPath(), original.toPath(), StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    private void removeCommentsForImage(File commentsFile, String imagePath) throws IOException {
+        if (!commentsFile.exists()) {
+            return;
+        }
+        File temporary = new File(commentsFile.getParentFile(), commentsFile.getName() + ".tmp");
+        try (RandomAccessFile input = new RandomAccessFile(commentsFile, "r");
+                RandomAccessFile output = new RandomAccessFile(temporary, "rw")) {
+            output.setLength(0);
+            while (input.getFilePointer() < input.length()) {
+                String storedPath = input.readUTF();
+                String author = input.readUTF();
+                String comment = input.readUTF();
+                long timestamp = input.readLong();
+                if (!storedPath.equals(imagePath)) {
+                    output.writeUTF(storedPath);
+                    output.writeUTF(author);
+                    output.writeUTF(comment);
+                    output.writeLong(timestamp);
+                }
+            }
+        }
+        Files.move(temporary.toPath(), commentsFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    private void removeLikesForImage(File likesFile, String imagePath) throws IOException {
+        ArrayList<String[]> remaining = new ArrayList<>();
+        try (RandomAccessFile input = new RandomAccessFile(likesFile, "r")) {
+            while (input.getFilePointer() < input.length()) {
+                String storedPath = input.readUTF();
+                String storedUser = input.readUTF();
+                if (!storedPath.equals(imagePath)) {
+                    remaining.add(new String[]{storedPath, storedUser});
+                }
+            }
+        }
+        rewritePairs(likesFile, remaining);
     }
 
     public String getPostsfromUser(String imagReferencia, String username) throws IOException {
@@ -1000,6 +1343,29 @@ public class instaManager {
                 return true;
             }
             idx = after;
+        }
+    }
+
+    private static final class UserRecord {
+        private String realName;
+        private char gender;
+        private final String username;
+        private final String password;
+        private final long entryDate;
+        private int age;
+        private final boolean active;
+        private String profilePicture;
+
+        private UserRecord(String realName, char gender, String username, String password,
+                long entryDate, int age, boolean active, String profilePicture) {
+            this.realName = realName;
+            this.gender = gender;
+            this.username = username;
+            this.password = password;
+            this.entryDate = entryDate;
+            this.age = age;
+            this.active = active;
+            this.profilePicture = profilePicture;
         }
     }
 }

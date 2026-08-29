@@ -206,11 +206,10 @@ public class InstaPostUI extends JLayeredPane {
             gbc.fill = GridBagConstraints.NONE;
             gbc.insets = new Insets(0, 0, 0, 0);
 
-            tarjeta.setMaximumSize(new Dimension(450, Integer.MAX_VALUE));
-            tarjeta.setPreferredSize(new Dimension(450, tarjeta.getPreferredSize().height));
+            tarjeta.setMaximumSize(new Dimension(380, Integer.MAX_VALUE));
 
             wrapper.add(tarjeta, gbc);
-            wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, tarjeta.getPreferredSize().height + 10));
+            wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, wrapper.getPreferredSize().height));
             mainContentPanel.add(wrapper);
 
             JPanel separator = new JPanel();
@@ -280,7 +279,7 @@ public class InstaPostUI extends JLayeredPane {
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(COLOR_BG);
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
-        card.setMaximumSize(new Dimension(450, Integer.MAX_VALUE));
+        card.setMaximumSize(new Dimension(380, Integer.MAX_VALUE));
 
         card.add(crearHeaderPostIndividual(author));
         card.add(crearImagenPost(imgPath));
@@ -308,7 +307,7 @@ public class InstaPostUI extends JLayeredPane {
             pCaption.setBackground(COLOR_BG);
             pCaption.setBorder(new EmptyBorder(0, 15, 20, 15));
             pCaption.setAlignmentX(Component.CENTER_ALIGNMENT);
-            pCaption.setMaximumSize(new Dimension(450, 100));
+            pCaption.setMaximumSize(new Dimension(380, Integer.MAX_VALUE));
 
             JLabel lblCap = new JLabel("<html><body style='width: 300px'>"
                     + "<font color='#FF4500'><b>" + author + "</b></font> "
@@ -336,7 +335,7 @@ public class InstaPostUI extends JLayeredPane {
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(COLOR_BG);
         header.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-        header.setPreferredSize(new Dimension(400, 50));
+        header.setPreferredSize(new Dimension(380, 50));
         header.setBorder(new EmptyBorder(0, 10, 0, 10));
         header.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -367,8 +366,7 @@ public class InstaPostUI extends JLayeredPane {
         JPanel imgContainer = new JPanel(new GridBagLayout());
         imgContainer.setBackground(COLOR_BG);
         imgContainer.setAlignmentX(Component.CENTER_ALIGNMENT);
-        imgContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 420));
-        imgContainer.setPreferredSize(new Dimension(450, 420));
+        imgContainer.setMaximumSize(new Dimension(380, 470));
 
         JLabel lblImagen = new JLabel();
         lblImagen.setHorizontalAlignment(SwingConstants.CENTER);
@@ -377,7 +375,7 @@ public class InstaPostUI extends JLayeredPane {
 
         ImageIcon icon = null;
         try {
-            icon = recortarImagenCuadrada(path, 380);
+            icon = ajustarImagenAlFeed(path, 360, 450);
         } catch (ImageLoadException ex) {
             System.err.println("Error cargando imagen: " + ex.getMessage());
         }
@@ -389,9 +387,12 @@ public class InstaPostUI extends JLayeredPane {
             lblImagen.setText("Imagen no encontrada");
             lblImagen.setForeground(Color.GRAY);
             lblImagen.setHorizontalAlignment(SwingConstants.CENTER);
-            lblImagen.setPreferredSize(new Dimension(380, 380));
+            lblImagen.setPreferredSize(new Dimension(360, 240));
             lblImagen.setBorder(new LineBorder(Color.DARK_GRAY));
         }
+
+        int containerHeight = icon != null ? icon.getIconHeight() + 16 : 256;
+        imgContainer.setPreferredSize(new Dimension(380, containerHeight));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -410,11 +411,45 @@ public class InstaPostUI extends JLayeredPane {
         acciones.setAlignmentX(Component.CENTER_ALIGNMENT);
         acciones.setMaximumSize(new Dimension(Integer.MAX_VALUE, 56));
 
-        JLabel lblLike = new JLabel("👍");
-        lblLike.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 26));
-        lblLike.setForeground(COLOR_TEXT);
+        boolean initiallyLiked = false;
+        int initialLikeCount = 0;
+        try {
+            instaManager manager = instaController.getInstance().getInsta();
+            if (manager != null) {
+                initiallyLiked = manager.hasLiked(author, path, currentUser);
+                initialLikeCount = manager.getLikeCount(author, path);
+            }
+        } catch (IOException ignored) {
+        }
+
+        JPanel likeGroup = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        likeGroup.setOpaque(false);
+        JLabel lblLike = new JLabel(initiallyLiked ? "♥" : "♡");
+        lblLike.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 29));
+        lblLike.setForeground(initiallyLiked ? new Color(255, 48, 64) : COLOR_TEXT);
         lblLike.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        lblLike.setBorder(new EmptyBorder(2, 0, 0, 6));
+        JLabel lblLikeCount = new JLabel(String.valueOf(initialLikeCount));
+        lblLikeCount.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblLikeCount.setForeground(COLOR_TEXT);
+
+        lblLike.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                try {
+                    instaManager manager = instaController.getInstance().getInsta();
+                    int total = manager.toggleLike(author, path, currentUser);
+                    boolean liked = manager.hasLiked(author, path, currentUser);
+                    lblLike.setText(liked ? "♥" : "♡");
+                    lblLike.setForeground(liked ? new Color(255, 48, 64) : COLOR_TEXT);
+                    lblLikeCount.setText(String.valueOf(total));
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(InstaPostUI.this,
+                            "No se pudo guardar el corazón.", "Publicación", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+        likeGroup.add(lblLike);
+        likeGroup.add(lblLikeCount);
 
         JPanel commentGroup = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         commentGroup.setOpaque(false);
@@ -427,7 +462,7 @@ public class InstaPostUI extends JLayeredPane {
 
         JLabel lblCount = new JLabel(String.valueOf(commentCount));
         lblCount.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        lblCount.setForeground(Color.YELLOW);
+        lblCount.setForeground(Color.LIGHT_GRAY);
         lblCount.setVerticalAlignment(SwingConstants.CENTER);
         lblCount.setBorder(new EmptyBorder(0, 2, 0, 8));
         lblCount.setPreferredSize(new Dimension(Math.max(24, (int) lblCount.getPreferredSize().getWidth()), (int) lblCount.getPreferredSize().getHeight()));
@@ -442,10 +477,52 @@ public class InstaPostUI extends JLayeredPane {
         commentGroup.add(lblComment);
         commentGroup.add(lblCount);
 
-        acciones.add(lblLike);
+        acciones.add(likeGroup);
         acciones.add(commentGroup);
 
+        if (currentUser.equals(author)) {
+            JLabel delete = new JLabel("🗑");
+            delete.setToolTipText("Eliminar publicación");
+            delete.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 22));
+            delete.setForeground(Color.LIGHT_GRAY);
+            delete.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            delete.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    eliminarPublicacion(author, path);
+                }
+            });
+            acciones.add(delete);
+        }
+
         return acciones;
+    }
+
+    private void eliminarPublicacion(String author, String path) {
+        int answer = JOptionPane.showConfirmDialog(this,
+                "¿Eliminar esta publicación definitivamente?",
+                "Eliminar publicación",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+        if (answer != JOptionPane.YES_OPTION) {
+            return;
+        }
+        try {
+            instaManager manager = instaController.getInstance().getInsta();
+            if (manager != null && manager.deletePost(author, path)) {
+                Window window = SwingUtilities.getWindowAncestor(this);
+                if (window instanceof JFrame frame) {
+                    frame.setContentPane(new InstaProfileUI(currentUser));
+                    frame.pack();
+                    frame.setLocationRelativeTo(null);
+                    frame.revalidate();
+                    frame.repaint();
+                }
+            }
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "No se pudo eliminar: " + ex.getMessage(),
+                    "Eliminar publicación", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void crearInterfazComentarios() {
@@ -687,6 +764,27 @@ public class InstaPostUI extends JLayeredPane {
             throw new ImageLoadException("Error leyendo la imagen: " + ruta, e);
         } catch (Exception e) {
             throw new ImageLoadException("Error al procesar la imagen: " + ruta, e);
+        }
+    }
+
+    private ImageIcon ajustarImagenAlFeed(String ruta, int maxWidth, int maxHeight) throws ImageLoadException {
+        try {
+            File file = new File(ruta);
+            if (!file.isFile()) {
+                throw new ImageLoadException("Archivo de imagen no existe: " + ruta);
+            }
+            BufferedImage original = ImageIO.read(file);
+            if (original == null) {
+                throw new ImageLoadException("No se pudo leer la imagen: " + ruta);
+            }
+            double scale = Math.min((double) maxWidth / original.getWidth(), (double) maxHeight / original.getHeight());
+            int width = Math.max(1, (int) Math.round(original.getWidth() * scale));
+            int height = Math.max(1, (int) Math.round(original.getHeight() * scale));
+            return new ImageIcon(original.getScaledInstance(width, height, Image.SCALE_SMOOTH));
+        } catch (ImageLoadException ex) {
+            throw ex;
+        } catch (IOException ex) {
+            throw new ImageLoadException("Error leyendo la imagen: " + ruta, ex);
         }
     }
 

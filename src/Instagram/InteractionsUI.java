@@ -168,7 +168,7 @@ public class InteractionsUI extends JPanel {
             return;
         }
         JFrame f = (JFrame) w;
-        f.setContentPane(new InstaProfileUI(currentUser));
+        f.setContentPane(new InstaFeedUI(currentUser));
         f.pack();
         f.setLocationRelativeTo(null);
         f.revalidate();

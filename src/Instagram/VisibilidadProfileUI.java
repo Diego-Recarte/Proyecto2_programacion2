@@ -29,8 +29,8 @@ public class VisibilidadProfileUI extends JPanel {
     private final Color COLOR_BTN_HOVER = new Color(200, 50, 0);
     private final Color COLOR_TEXT = Color.WHITE;
     private final Color COLOR_BORDER = new Color(100, 100, 100);
-    private final Font FONT_TEXT = new Font("Comic Sans MS", Font.PLAIN, 12);
-    private final Font FONT_CAOS = new Font("Comic Sans MS", Font.BOLD, 12);
+    private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 12);
+    private final Font FONT_CAOS = new Font("Segoe UI", Font.BOLD, 12);
 
     public VisibilidadProfileUI(String profileUser, String viewer) {
         this.profileUser = profileUser;
@@ -92,7 +92,7 @@ public class VisibilidadProfileUI extends JPanel {
         panel.add(lblBack);
 
         JLabel lblTitle = new JLabel("@" + profileUser);
-        lblTitle.setFont(new Font("Comic Sans MS", Font.BOLD | Font.ITALIC, 20));
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitle.setForeground(COLOR_TEXT);
         lblTitle.setBounds(60, 10, 250, 30);
         panel.add(lblTitle);
@@ -104,19 +104,33 @@ public class VisibilidadProfileUI extends JPanel {
         lblFoto.setForeground(Color.GRAY);
         panel.add(lblFoto);
 
-        lblStats = new JLabel("0 Evidencias    0 Acosadores    0 Víctimas");
-        lblStats.setFont(new Font("Comic Sans MS", Font.BOLD, 11));
+        lblStats = new JLabel(statsHtml(0, 0, 0));
+        lblStats.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lblStats.setForeground(COLOR_TEXT);
         lblStats.setHorizontalAlignment(SwingConstants.CENTER);
         lblStats.setBounds(120, 50, 260, 60);
         panel.add(lblStats);
 
         JButton btnFollow = new BotonRojo("Seguir");
-        btnFollow.setBounds(130, 110, 240, 30);
+        btnFollow.setBounds(130, 110, 112, 30);
         panel.add(btnFollow);
 
+        JButton btnMessage = new BotonRojo("Mensaje");
+        btnMessage.setBounds(252, 110, 118, 30);
+        btnMessage.addActionListener(e -> {
+            Window window = SwingUtilities.getWindowAncestor(this);
+            if (window instanceof JFrame frame) {
+                frame.setContentPane(new InstaChatUI(viewer, profileUser));
+                frame.pack();
+                frame.setLocationRelativeTo(null);
+                frame.revalidate();
+                frame.repaint();
+            }
+        });
+        panel.add(btnMessage);
+
         lblName = new JLabel("Cargando nombre...");
-        lblName.setFont(new Font("Comic Sans MS", Font.BOLD, 14));
+        lblName.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblName.setForeground(COLOR_TEXT);
         lblName.setBounds(15, 150, 350, 20);
         panel.add(lblName);
@@ -167,8 +181,8 @@ public class VisibilidadProfileUI extends JPanel {
         JPanel container = new JPanel(new BorderLayout());
         container.setBackground(COLOR_BG);
 
-        JLabel lblGridTitle = new JLabel(" Tus Crímenes (Posts)");
-        lblGridTitle.setFont(new Font("Comic Sans MS", Font.BOLD, 14));
+        JLabel lblGridTitle = new JLabel(" PUBLICACIONES");
+        lblGridTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblGridTitle.setForeground(COLOR_BTN);
         lblGridTitle.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
         container.add(lblGridTitle, BorderLayout.NORTH);
@@ -333,7 +347,7 @@ public class VisibilidadProfileUI extends JPanel {
             ArrayList<String[]> posts = manager.getPosts(profileUser);
             int evidencias = (posts == null) ? 0 : posts.size();
 
-            lblStats.setText(evidencias + " Evidencias    " + followers + " Acosadores    " + following + " Víctimas");
+            lblStats.setText(statsHtml(evidencias, followers, following));
 
             manager.setLoggedUser(viewer);
             boolean sigo = manager.isFollowing(profileUser);
@@ -360,18 +374,18 @@ public class VisibilidadProfileUI extends JPanel {
     }
 
     private JPanel crearBarraNavegacionInferior() {
-        JPanel bar = new JPanel(new GridLayout(1, 4));
+        JPanel bar = new JPanel(new GridLayout(1, 5));
         bar.setBackground(new Color(20, 20, 20));
         bar.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, COLOR_BTN));
         bar.setPreferredSize(new Dimension(400, 60));
 
-        JButton btnInicio = crearBotonNav("Interacciones", "❤️");
+        JButton btnInicio = crearBotonNav("Inicio", "⌂");
         btnInicio.setForeground(COLOR_BTN);
         btnInicio.addActionListener(e -> {
             Window window = SwingUtilities.getWindowAncestor(this);
             if (window instanceof JFrame) {
                 JFrame frame = (JFrame) window;
-                frame.setContentPane(new InteractionsUI(viewer));
+                frame.setContentPane(new InstaFeedUI(viewer));
                 frame.pack();
                 frame.setLocationRelativeTo(null);
                 frame.revalidate();
@@ -538,7 +552,29 @@ public class VisibilidadProfileUI extends JPanel {
             }
         });
 
+        for (java.awt.event.ActionListener listener : btnSubir.getActionListeners()) {
+            btnSubir.removeActionListener(listener);
+        }
+        btnSubir.addActionListener(e -> InstaPostComposer.open(this, viewer, () -> {
+            cargarDatosPerfil();
+            cargarPostsEnGrid();
+        }));
+
         bar.add(btnSubir);
+
+        JButton btnChat = crearBotonNav("Mensajes", "✉");
+        btnChat.setForeground(COLOR_BTN);
+        btnChat.addActionListener(e -> {
+            Window window = SwingUtilities.getWindowAncestor(this);
+            if (window instanceof JFrame frame) {
+                frame.setContentPane(new InstaChatUI(viewer));
+                frame.pack();
+                frame.setLocationRelativeTo(null);
+                frame.revalidate();
+                frame.repaint();
+            }
+        });
+        bar.add(btnChat);
 
         JButton btnPerfil = crearBotonNav("Perfil", "👤");
         btnPerfil.setForeground(COLOR_BTN);
@@ -564,6 +600,14 @@ public class VisibilidadProfileUI extends JPanel {
         } catch (IOException ex) {
             return f.getAbsolutePath();
         }
+    }
+
+    private String statsHtml(int posts, int followers, int following) {
+        return "<html><table style='color:white;text-align:center'><tr>"
+                + "<td width='82'><b>" + posts + "</b><br>Publicaciones</td>"
+                + "<td width='82'><b>" + followers + "</b><br>Seguidores</td>"
+                + "<td width='82'><b>" + following + "</b><br>Seguidos</td>"
+                + "</tr></table></html>";
     }
 
     private JButton crearBotonNav(String texto, String emoji) {

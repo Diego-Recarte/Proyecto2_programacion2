@@ -34,11 +34,11 @@ public class InstaProfileUI extends JPanel {
     private final Color COLOR_BG = Color.BLACK;
     private final Color COLOR_TEXT = Color.WHITE;
     private final Color COLOR_BORDER = new Color(100, 100, 100);
-    private final Font FONT_TEXT = new Font("Comic Sans MS", Font.PLAIN, 12);
+    private final Font FONT_TEXT = new Font("Segoe UI", Font.PLAIN, 12);
 
     private final Color COLOR_BTN = new Color(255, 69, 0);
     private final Color COLOR_BTN_HOVER = new Color(200, 50, 0);
-    private final Font FONT_CAOS = new Font("Comic Sans MS", Font.BOLD, 12);
+    private final Font FONT_CAOS = new Font("Segoe UI", Font.BOLD, 12);
 
     public InstaProfileUI(String username) {
         this(username, username);
@@ -125,7 +125,7 @@ public class InstaProfileUI extends JPanel {
 
         int titleX = viewer.equals(username) ? 15 : 60;
         JLabel lblTitle = new JLabel("@" + username);
-        lblTitle.setFont(new Font("Comic Sans MS", Font.BOLD | Font.ITALIC, 20));
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitle.setForeground(COLOR_TEXT);
         lblTitle.setBounds(titleX, 10, 250, 30);
         panel.add(lblTitle);
@@ -137,21 +137,21 @@ public class InstaProfileUI extends JPanel {
         lblFoto.setForeground(Color.GRAY);
         panel.add(lblFoto);
 
-        lblStats = new JLabel("0 Posts    0 Seguidores    0 Seguidos");
-        lblStats.setFont(new Font("Comic Sans MS", Font.BOLD, 11));
+        lblStats = new JLabel(statsHtml(0, 0, 0));
+        lblStats.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lblStats.setForeground(COLOR_TEXT);
         lblStats.setHorizontalAlignment(SwingConstants.CENTER);
         lblStats.setBounds(120, 50, 260, 60);
         panel.add(lblStats);
 
         if (viewer.equals(username)) {
-            JButton btnEdit = new BotonRojo("Usuarios");
+            JButton btnEdit = new BotonRojo("Editar perfil");
             btnEdit.setBounds(130, 110, 240, 30);
             btnEdit.addActionListener(e -> {
                 Window window = SwingUtilities.getWindowAncestor(InstaProfileUI.this);
                 if (window instanceof JFrame) {
                     JFrame frame = (JFrame) window;
-                    frame.setContentPane(new InstaEditProfileUI(username));
+                    frame.setContentPane(new InstaProfileEditUI(username));
                     frame.pack();
                     frame.setLocationRelativeTo(null);
                     frame.revalidate();
@@ -164,7 +164,7 @@ public class InstaProfileUI extends JPanel {
             btnFollow.setBounds(130, 110, 110, 30);
             panel.add(btnFollow);
 
-            JButton btnVerTweets = new BotonRojo("Ver Mensajes");
+            JButton btnVerTweets = new BotonRojo("Mensaje");
             btnVerTweets.setBounds(250, 110, 120, 30);
             panel.add(btnVerTweets);
 
@@ -198,38 +198,19 @@ public class InstaProfileUI extends JPanel {
             });
 
             btnVerTweets.addActionListener(e -> {
-                try {
-                    instaManager manager = instaController.getInstance().getInsta();
-                    if (manager == null) {
-                        return;
-                    }
-                    ArrayList<String[]> posts = manager.getPosts(username);
-                    if (posts.isEmpty()) {
-                        JOptionPane.showMessageDialog(this, "No hay mensajes/post de " + username);
-                    } else {
-                        StringBuilder sb = new StringBuilder();
-                        for (String[] p : posts) {
-                            String autor = (p.length > 1) ? p[1] : "(?)";
-                            String fecha = (p.length > 2) ? p[2] : "(fecha)";
-                            String contenido = (p.length > 3) ? p[3] : "";
-                            sb.append(autor).append(": '").append(contenido).append("'    [").append(fecha).append("]\n\n");
-                        }
-                        JTextArea area = new JTextArea(sb.toString());
-                        area.setEditable(false);
-                        area.setBackground(new Color(20, 20, 20));
-                        area.setForeground(Color.WHITE);
-                        JScrollPane sp = new JScrollPane(area);
-                        sp.setPreferredSize(new Dimension(380, 400));
-                        JOptionPane.showMessageDialog(this, sp, "Mensajes de " + username, JOptionPane.PLAIN_MESSAGE);
-                    }
-                } catch (IOException ex) {
-                    JOptionPane.showMessageDialog(this, "Error cargando mensajes: " + ex.getMessage());
+                Window window = SwingUtilities.getWindowAncestor(this);
+                if (window instanceof JFrame frame) {
+                    frame.setContentPane(new InstaChatUI(viewer, username));
+                    frame.pack();
+                    frame.setLocationRelativeTo(null);
+                    frame.revalidate();
+                    frame.repaint();
                 }
             });
         }
 
         lblName = new JLabel("Cargando nombre...");
-        lblName.setFont(new Font("Comic Sans MS", Font.BOLD, 14));
+        lblName.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblName.setForeground(COLOR_TEXT);
         lblName.setBounds(15, 150, 350, 20);
         panel.add(lblName);
@@ -248,8 +229,8 @@ public class InstaProfileUI extends JPanel {
         JPanel container = new JPanel(new BorderLayout());
         container.setBackground(COLOR_BG);
 
-        JLabel lblGridTitle = new JLabel(" Posts");
-        lblGridTitle.setFont(new Font("Comic Sans MS", Font.BOLD, 14));
+        JLabel lblGridTitle = new JLabel(" PUBLICACIONES");
+        lblGridTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblGridTitle.setForeground(COLOR_BTN);
         lblGridTitle.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
         container.add(lblGridTitle, BorderLayout.NORTH);
@@ -374,18 +355,18 @@ public class InstaProfileUI extends JPanel {
     }
 
     private JPanel crearBarraNavegacionInferior() {
-        JPanel bar = new JPanel(new GridLayout(1, 4));
+        JPanel bar = new JPanel(new GridLayout(1, 5));
         bar.setBackground(new Color(20, 20, 20));
         bar.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, COLOR_BTN));
         bar.setPreferredSize(new Dimension(400, 60));
 
-        JButton btnInicio = crearBotonNav("Interacciones", "❤️");
+        JButton btnInicio = crearBotonNav("Inicio", "⌂");
         btnInicio.setForeground(COLOR_BTN);
         btnInicio.addActionListener(e -> {
             Window window = SwingUtilities.getWindowAncestor(this);
             if (window instanceof JFrame) {
                 JFrame frame = (JFrame) window;
-                frame.setContentPane(new InteractionsUI(viewer));
+                frame.setContentPane(new InstaFeedUI(viewer));
                 frame.pack();
                 frame.setLocationRelativeTo(null);
                 frame.revalidate();
@@ -411,8 +392,25 @@ public class InstaProfileUI extends JPanel {
 
         JButton btnSubir = crearBotonNav("Subir", "⬆");
         btnSubir.setForeground(COLOR_BTN);
-        btnSubir.addActionListener(e -> subirPost());
+        btnSubir.addActionListener(e -> InstaPostComposer.open(this, viewer, () -> {
+            cargarDatosPerfil();
+            cargarPostsEnGrid();
+        }));
         bar.add(btnSubir);
+
+        JButton btnChat = crearBotonNav("Mensajes", "✉");
+        btnChat.setForeground(COLOR_BTN);
+        btnChat.addActionListener(e -> {
+            Window window = SwingUtilities.getWindowAncestor(this);
+            if (window instanceof JFrame frame) {
+                frame.setContentPane(new InstaChatUI(viewer));
+                frame.pack();
+                frame.setLocationRelativeTo(null);
+                frame.revalidate();
+                frame.repaint();
+            }
+        });
+        bar.add(btnChat);
 
         JButton btnPerfil = crearBotonNav("Perfil", "👤");
         btnPerfil.setForeground(COLOR_BTN);
@@ -614,7 +612,7 @@ public class InstaProfileUI extends JPanel {
             int Seguidores = manager.getFollowersCount(username);
             int Seguidos = manager.getFollowingCount(username);
 
-            lblStats.setText(Publicaciones + " Posts    " + Seguidores + " Seguidores    " + Seguidos + " Seguidos");
+            lblStats.setText(statsHtml(Publicaciones, Seguidores, Seguidos));
 
         } catch (IOException e) {
             lblName.setText("Error de conexión.");
@@ -622,6 +620,10 @@ public class InstaProfileUI extends JPanel {
     }
 
     private void cerrarSesion() {
+        instaManager manager = instaController.getInstance().getInsta();
+        if (manager != null) {
+            manager.loggoutUser();
+        }
         Window window = SwingUtilities.getWindowAncestor(this);
         if (window instanceof JFrame) {
             JFrame frame = (JFrame) window;
@@ -631,6 +633,14 @@ public class InstaProfileUI extends JPanel {
             frame.revalidate();
             frame.repaint();
         }
+    }
+
+    private String statsHtml(int posts, int followers, int following) {
+        return "<html><table style='color:white;text-align:center'><tr>"
+                + "<td width='82'><b>" + posts + "</b><br>Publicaciones</td>"
+                + "<td width='82'><b>" + followers + "</b><br>Seguidores</td>"
+                + "<td width='82'><b>" + following + "</b><br>Seguidos</td>"
+                + "</tr></table></html>";
     }
 
     private class BotonRojo extends JButton {

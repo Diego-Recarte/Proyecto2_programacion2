@@ -34,7 +34,7 @@ public class InstaLoginUI extends JPanel {
         int startY = 140;
 
         JLabel lblLogo = new JLabel("Instagram");
-        lblLogo.setFont(new Font("Comic Sans MS", Font.BOLD | Font.ITALIC, 42));
+        lblLogo.setFont(new Font("Segoe UI", Font.BOLD, 38));
         lblLogo.setForeground(COLOR_TEXT);
         lblLogo.setHorizontalAlignment(SwingConstants.CENTER);
         lblLogo.setBounds(40, startY, 320, 60);
@@ -43,7 +43,7 @@ public class InstaLoginUI extends JPanel {
         JLabel lblUser = new JLabel("Usuario");
         lblUser.setBounds(50, startY + 70, 100, 20);
         lblUser.setForeground(Color.LIGHT_GRAY);
-        lblUser.setFont(new Font("Comic Sans MS", Font.PLAIN, 12));
+        lblUser.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         add(lblUser);
 
         txtUser = new JTextField();
@@ -54,7 +54,7 @@ public class InstaLoginUI extends JPanel {
         JLabel lblPass = new JLabel("Contraseña");
         lblPass.setBounds(50, startY + 140, 100, 20);
         lblPass.setForeground(Color.LIGHT_GRAY);
-        lblPass.setFont(new Font("Comic Sans MS", Font.PLAIN, 12));
+        lblPass.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         add(lblPass);
 
         txtPass = new JPasswordField();
@@ -66,7 +66,7 @@ public class InstaLoginUI extends JPanel {
         btnLogin.setBounds(50, startY + 220, 300, 40);
         btnLogin.setBackground(COLOR_BTN);
         btnLogin.setForeground(Color.BLACK);
-        btnLogin.setFont(new Font("Comic Sans MS", Font.BOLD, 16));
+        btnLogin.setFont(new Font("Segoe UI", Font.BOLD, 15));
         btnLogin.setFocusPainted(false);
         btnLogin.setBorderPainted(false);
         btnLogin.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -83,7 +83,7 @@ public class InstaLoginUI extends JPanel {
         lblRegister.setBounds(40, startY + 300, 320, 30);
         lblRegister.setHorizontalAlignment(SwingConstants.CENTER);
         lblRegister.setForeground(COLOR_BTN);
-        lblRegister.setFont(new Font("Comic Sans MS", Font.ITALIC, 13));
+        lblRegister.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lblRegister.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         lblRegister.addMouseListener(new MouseAdapter() {
@@ -108,7 +108,7 @@ public class InstaLoginUI extends JPanel {
         txt.setBackground(new Color(30, 30, 30));
         txt.setForeground(COLOR_TEXT);
         txt.setCaretColor(COLOR_TEXT);
-        txt.setFont(new Font("Comic Sans MS", Font.PLAIN, 14));
+        txt.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txt.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(COLOR_BORDER),
                 BorderFactory.createEmptyBorder(5, 10, 5, 5)));
@@ -152,6 +152,15 @@ public class InstaLoginUI extends JPanel {
                 return;
             }
 
+            if (!manager.getStatusUser(username)) {
+                int reactivate = JOptionPane.showConfirmDialog(this,
+                        "Esta cuenta está desactivada. ¿Deseas reactivarla e iniciar sesión?",
+                        "Cuenta desactivada", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (reactivate != JOptionPane.YES_OPTION || !manager.activateUser(username)) {
+                    return;
+                }
+            }
+
             try {
                 manager.setLoggedUser(username);
             } catch (IOException ex) {
@@ -162,7 +171,8 @@ public class InstaLoginUI extends JPanel {
             if (window instanceof JFrame) {
                 JFrame frame = (JFrame) window;
                 frame.setAlwaysOnTop(true);
-                frame.setContentPane(new InstaProfileUI(username));
+                // El feed es la pantalla principal después de iniciar sesión.
+                frame.setContentPane(new InstaFeedUI(username));
                 frame.pack();
                 frame.setLocationRelativeTo(null);
                 frame.revalidate();

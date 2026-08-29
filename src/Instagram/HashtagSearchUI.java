@@ -19,7 +19,7 @@ public class HashtagSearchUI extends JPanel {
     
     private final Color COLOR_BTN = new Color(255, 69, 0);
     private final Color COLOR_BTN_HOVER = new Color(200, 50, 0);
-    private final Font FONT_CAOS = new Font("Comic Sans MS", Font.PLAIN, 12);
+    private final Font FONT_CAOS = new Font("Segoe UI", Font.PLAIN, 12);
 
     public HashtagSearchUI(String currentUser) {
         this.currentUser = currentUser;
@@ -128,7 +128,7 @@ public class HashtagSearchUI extends JPanel {
         p.add(lblBack);
 
         JLabel title = new JLabel("Buscar Hashtag");
-        title.setFont(new Font("Comic Sans MS", Font.BOLD | Font.ITALIC, 18));
+        title.setFont(new Font("Segoe UI", Font.BOLD, 18));
         title.setForeground(COLOR_TEXT);
         title.setBounds(50, 10, 300, 30);
         p.add(title);
@@ -234,7 +234,7 @@ public class HashtagSearchUI extends JPanel {
             return;
         }
         JFrame frame = (JFrame) w;
-        frame.setContentPane(new InstaProfileUI(currentUser));
+        frame.setContentPane(new InstaFeedUI(currentUser));
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.revalidate();
