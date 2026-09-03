@@ -37,7 +37,6 @@ final class StickerRepository {
 
     void initializeUser(File userDirectory) throws IOException {
         Files.createDirectories(new File(userDirectory, "imagenes").toPath());
-        Files.createDirectories(new File(userDirectory, "folders_personales").toPath());
         Files.createDirectories(new File(userDirectory, "stickers_personales").toPath());
 
         File stickersFile = new File(userDirectory, "stickers.ins");

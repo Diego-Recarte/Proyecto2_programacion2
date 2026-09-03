@@ -8,6 +8,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -309,11 +310,9 @@ public class InstaPostUI extends JLayeredPane {
             pCaption.setAlignmentX(Component.CENTER_ALIGNMENT);
             pCaption.setMaximumSize(new Dimension(380, Integer.MAX_VALUE));
 
-            JLabel lblCap = new JLabel("<html><body style='width: 300px'>"
-                    + "<font color='#FF4500'><b>" + author + "</b></font> "
-                    + "<font color='white'>" + caption + "</font></body></html>");
-            lblCap.setFont(FONT_PLAIN);
-            pCaption.add(lblCap, BorderLayout.CENTER);
+            JEditorPane captionText = InstaSocialText.createCaption(author, caption, 350,
+                    this::abrirHashtag, this::abrirMencion);
+            pCaption.add(captionText, BorderLayout.CENTER);
             card.add(pCaption);
         } else {
             card.add(Box.createVerticalStrut(10));
@@ -363,6 +362,19 @@ public class InstaPostUI extends JLayeredPane {
     }
 
     private JPanel crearImagenPost(String path) {
+        List<String> mediaPaths = InstaPostMedia.decode(path);
+        if (mediaPaths.size() > 1) {
+            JPanel carouselContainer = new JPanel(new GridBagLayout());
+            carouselContainer.setBackground(COLOR_BG);
+            carouselContainer.setAlignmentX(Component.CENTER_ALIGNMENT);
+            InstaMediaCarousel carousel = new InstaMediaCarousel(mediaPaths, 360, 400, null);
+            carouselContainer.add(carousel);
+            carouselContainer.setPreferredSize(new Dimension(380, 422));
+            carouselContainer.setMaximumSize(new Dimension(380, 422));
+            return carouselContainer;
+        }
+
+        String singlePath = mediaPaths.isEmpty() ? "" : mediaPaths.get(0);
         JPanel imgContainer = new JPanel(new GridBagLayout());
         imgContainer.setBackground(COLOR_BG);
         imgContainer.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -375,7 +387,7 @@ public class InstaPostUI extends JLayeredPane {
 
         ImageIcon icon = null;
         try {
-            icon = ajustarImagenAlFeed(path, 360, 450);
+            icon = ajustarImagenAlFeed(singlePath, 360, 450);
         } catch (ImageLoadException ex) {
             System.err.println("Error cargando imagen: " + ex.getMessage());
         }
@@ -802,6 +814,55 @@ public class InstaPostUI extends JLayeredPane {
             JFrame frame = (JFrame) window;
             frame.setContentPane(new InstaProfileUI(currentUser));
             frame.pack();
+            frame.revalidate();
+            frame.repaint();
+        }
+    }
+
+    private void abrirHashtag(String hashtag) {
+        if (hashtag == null || hashtag.isBlank()) {
+            return;
+        }
+        mostrarPanel(new HashtagSearchUI(currentUser, hashtag));
+    }
+
+    private void abrirMencion(String username) {
+        if (username == null || username.isBlank()) {
+            return;
+        }
+        String resolved = resolveUsername(username);
+        if (resolved == null) {
+            JOptionPane.showMessageDialog(this, "La mención @" + username
+                    + " está guardada, pero ese usuario no existe o está desactivado.",
+                    "Mención", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        mostrarPanel(resolved.equalsIgnoreCase(currentUser)
+                ? new InstaProfileUI(currentUser)
+                : new VisibilidadProfileUI(resolved, currentUser));
+    }
+
+    private String resolveUsername(String username) {
+        try {
+            instaManager manager = instaController.getInstance().getInsta();
+            if (manager != null) {
+                for (String candidate : manager.searchUsers(username)) {
+                    if (candidate.equalsIgnoreCase(username)) {
+                        return candidate;
+                    }
+                }
+            }
+        } catch (IOException ignored) {
+        }
+        return null;
+    }
+
+    private void mostrarPanel(Component panel) {
+        Window window = SwingUtilities.getWindowAncestor(this);
+        if (window instanceof JFrame frame) {
+            frame.setContentPane((Container) panel);
+            frame.pack();
+            frame.setLocationRelativeTo(null);
             frame.revalidate();
             frame.repaint();
         }

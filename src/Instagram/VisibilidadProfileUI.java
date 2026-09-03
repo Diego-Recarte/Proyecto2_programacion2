@@ -211,7 +211,9 @@ public class VisibilidadProfileUI extends JPanel {
                 for (int i = 0; i < posts.size(); i++) {
                     String[] post = posts.get(i);
                     final int index = i;
-                    String rutaImg = post.length > 0 ? post[0] : "";
+                    String mediaReference = post.length > 0 ? post[0] : "";
+                    int mediaCount = InstaPostMedia.decode(mediaReference).size();
+                    String rutaImg = InstaPostMedia.coverPath(mediaReference);
 
                     JPanel frameFoto = new JPanel(new BorderLayout());
                     frameFoto.setBackground(new Color(20, 20, 20));
@@ -234,7 +236,19 @@ public class VisibilidadProfileUI extends JPanel {
                         lblImg.setForeground(Color.GRAY);
                     }
 
-                    frameFoto.add(lblImg, BorderLayout.CENTER);
+                    if (mediaCount > 1) {
+                        JLayeredPane thumbnailLayer = new JLayeredPane();
+                        thumbnailLayer.setPreferredSize(new Dimension(130, 130));
+                        lblImg.setBounds(0, 0, 130, 130);
+                        thumbnailLayer.add(lblImg, JLayeredPane.DEFAULT_LAYER);
+                        JLabel carouselBadge = crearIndicadorCarrusel(mediaCount);
+                        carouselBadge.setBounds(88, 7, 36, 20);
+                        thumbnailLayer.add(carouselBadge, JLayeredPane.PALETTE_LAYER);
+                        frameFoto.setToolTipText("Carrusel de " + mediaCount + " imágenes");
+                        frameFoto.add(thumbnailLayer, BorderLayout.CENTER);
+                    } else {
+                        frameFoto.add(lblImg, BorderLayout.CENTER);
+                    }
 
                     frameFoto.addMouseListener(new MouseAdapter() {
                         @Override
@@ -301,6 +315,16 @@ public class VisibilidadProfileUI extends JPanel {
         } catch (Exception e) {
             throw new ImageLoadException("Error procesando imagen: " + ruta, e);
         }
+    }
+
+    private JLabel crearIndicadorCarrusel(int total) {
+        JLabel badge = new JLabel("1/" + total, SwingConstants.CENTER);
+        badge.setOpaque(true);
+        badge.setBackground(new Color(20, 20, 20, 220));
+        badge.setForeground(Color.WHITE);
+        badge.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        badge.setBorder(BorderFactory.createLineBorder(new Color(255, 90, 35)));
+        return badge;
     }
 
     private void cargarDatosPerfil() {
@@ -379,7 +403,7 @@ public class VisibilidadProfileUI extends JPanel {
         bar.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, COLOR_BTN));
         bar.setPreferredSize(new Dimension(400, 60));
 
-        JButton btnInicio = crearBotonNav("Inicio", "⌂");
+        JButton btnInicio = crearBotonNav("Inicio", InstaNavIcon.Type.HOME);
         btnInicio.setForeground(COLOR_BTN);
         btnInicio.addActionListener(e -> {
             Window window = SwingUtilities.getWindowAncestor(this);
@@ -394,7 +418,7 @@ public class VisibilidadProfileUI extends JPanel {
         });
         bar.add(btnInicio);
 
-        JButton btnBuscar = crearBotonNav("Buscar", "🔎");
+        JButton btnBuscar = crearBotonNav("Buscar", InstaNavIcon.Type.SEARCH);
         btnBuscar.setForeground(COLOR_BTN);
         btnBuscar.addActionListener(e -> {
             Window window = SwingUtilities.getWindowAncestor(this);
@@ -409,7 +433,7 @@ public class VisibilidadProfileUI extends JPanel {
         });
         bar.add(btnBuscar);
 
-        JButton btnSubir = crearBotonNav("Subir", "⬆");
+        JButton btnSubir = crearBotonNav("Subir", InstaNavIcon.Type.ADD);
         btnSubir.setForeground(COLOR_BTN);
         btnSubir.addActionListener(e -> {
             try {
@@ -562,7 +586,7 @@ public class VisibilidadProfileUI extends JPanel {
 
         bar.add(btnSubir);
 
-        JButton btnChat = crearBotonNav("Mensajes", "✉");
+        JButton btnChat = crearBotonNav("Mensajes", InstaNavIcon.Type.MESSAGE);
         btnChat.setForeground(COLOR_BTN);
         btnChat.addActionListener(e -> {
             Window window = SwingUtilities.getWindowAncestor(this);
@@ -576,7 +600,7 @@ public class VisibilidadProfileUI extends JPanel {
         });
         bar.add(btnChat);
 
-        JButton btnPerfil = crearBotonNav("Perfil", "👤");
+        JButton btnPerfil = crearBotonNav("Perfil", InstaNavIcon.Type.PROFILE);
         btnPerfil.setForeground(COLOR_BTN);
         btnPerfil.addActionListener(e -> {
             Window window = SwingUtilities.getWindowAncestor(this);
@@ -610,9 +634,8 @@ public class VisibilidadProfileUI extends JPanel {
                 + "</tr></table></html>";
     }
 
-    private JButton crearBotonNav(String texto, String emoji) {
-        JButton btn = new JButton(emoji);
-        btn.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
+    private JButton crearBotonNav(String texto, InstaNavIcon.Type type) {
+        JButton btn = new JButton(new InstaNavIcon(type, 24));
         btn.setToolTipText(texto);
         btn.setBackground(new Color(20, 20, 20));
         btn.setForeground(Color.GRAY);

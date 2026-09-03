@@ -11,7 +11,10 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 
@@ -587,7 +590,7 @@ public class instaManager {
         return sb.toString();
     }
 
-    public void addPost(String imagRef, String autor, String contenido) throws IOException {
+    public synchronized void addPost(String imagRef, String autor, String contenido) throws IOException {
         if (loggedUserDir == null) {
             throw new IOException("No hay usuario loggeado.");
         }
@@ -609,7 +612,7 @@ public class instaManager {
         }
     }
 
-    public ArrayList<String[]> getPosts(String username) throws IOException {
+    public synchronized ArrayList<String[]> getPosts(String username) throws IOException {
         ArrayList<String[]> posts = new ArrayList<>();
         try {
             if (!getStatusUser(username)) {
@@ -643,7 +646,7 @@ public class instaManager {
     /**
      * Construye el timeline con publicaciones propias y de cuentas seguidas.
      */
-    public ArrayList<String[]> getFeedPosts(String viewer) throws IOException {
+    public synchronized ArrayList<String[]> getFeedPosts(String viewer) throws IOException {
         ArrayList<String[]> feed = new ArrayList<>();
         Set<String> visibleUsers = new HashSet<>();
         visibleUsers.add(viewer);
@@ -913,7 +916,7 @@ public class instaManager {
         return comments;
     }
 
-    public ArrayList<String> searchUsers(String query) throws IOException {
+    public synchronized ArrayList<String> searchUsers(String query) throws IOException {
         ArrayList<String> encontrados = new ArrayList<>();
         if (query == null) {
             return encontrados;
@@ -1041,12 +1044,19 @@ public class instaManager {
         return res;
     }
 
-    public ArrayList<String[]> getPostsByHashtag(String tag) throws IOException {
+    public synchronized ArrayList<String[]> getPostsByHashtag(String tag) throws IOException {
         ArrayList<String[]> res = new ArrayList<>();
-        if (tag == null || tag.isEmpty()) {
+        if (tag == null || tag.isBlank()) {
             return res;
         }
-        String needle = "#" + tag.toLowerCase();
+        String normalizedTag = tag.trim();
+        if (normalizedTag.startsWith("#")) {
+            normalizedTag = normalizedTag.substring(1);
+        }
+        normalizedTag = normalizedTag.toLowerCase(Locale.ROOT);
+        if (normalizedTag.isBlank()) {
+            return res;
+        }
 
         File base = new File(usersDir);
         File[] usersFolders = base.listFiles(File::isDirectory);
@@ -1077,8 +1087,8 @@ public class instaManager {
                     String fecha = raf.readUTF();
                     String contenido = raf.readUTF();
                     if (contenido != null) {
-                        String low = contenido.toLowerCase();
-                        if (low.contains(needle) || low.contains("#" + tag.toLowerCase())) {
+                        String low = contenido.toLowerCase(Locale.ROOT);
+                        if (containsHashtagVariant(low, normalizedTag)) {
                             String key = imag + "|" + autor + "|" + fecha + "|" + owner;
                             if (!seen.contains(key)) {
                                 seen.add(key);
@@ -1092,6 +1102,98 @@ public class instaManager {
         }
         Collections.reverse(res);
         return res;
+    }
+
+    /**
+     * Devuelve hashtags realmente presentes en publicaciones activas. Los más
+     * usados aparecen primero y el prefijo puede recibirse con o sin '#'.
+     */
+    public synchronized ArrayList<String> getHashtagSuggestions(String prefix, int limit) throws IOException {
+        ArrayList<String> suggestions = new ArrayList<>();
+        if (limit <= 0) {
+            return suggestions;
+        }
+
+        String normalizedPrefix = prefix == null ? "" : prefix.trim();
+        if (normalizedPrefix.startsWith("#")) {
+            normalizedPrefix = normalizedPrefix.substring(1);
+        }
+        normalizedPrefix = normalizedPrefix.toLowerCase(Locale.ROOT);
+
+        Map<String, Integer> counts = new HashMap<>();
+        File base = new File(usersDir);
+        File[] usersFolders = base.listFiles(File::isDirectory);
+        if (usersFolders == null) {
+            return suggestions;
+        }
+
+        for (File userDirectory : usersFolders) {
+            try {
+                if (!getStatusUser(userDirectory.getName())) {
+                    continue;
+                }
+            } catch (IOException ex) {
+                continue;
+            }
+
+            File postsFile = new File(userDirectory, "insta.ins");
+            if (!postsFile.isFile()) {
+                continue;
+            }
+            try (RandomAccessFile raf = new RandomAccessFile(postsFile, "r")) {
+                while (raf.getFilePointer() < raf.length()) {
+                    raf.readUTF();
+                    raf.readUTF();
+                    raf.readUTF();
+                    String content = raf.readUTF();
+                    for (String hashtag : extractHashtags(content)) {
+                        if (normalizedPrefix.isEmpty() || hashtag.startsWith(normalizedPrefix)) {
+                            counts.merge(hashtag, 1, Integer::sum);
+                        }
+                    }
+                }
+            } catch (IOException ex) {
+                // Un registro dañado no debe impedir sugerir etiquetas de otros usuarios.
+            }
+        }
+
+        ArrayList<Map.Entry<String, Integer>> ranked = new ArrayList<>(counts.entrySet());
+        ranked.sort((left, right) -> {
+            int byFrequency = Integer.compare(right.getValue(), left.getValue());
+            return byFrequency != 0 ? byFrequency : left.getKey().compareToIgnoreCase(right.getKey());
+        });
+        for (Map.Entry<String, Integer> entry : ranked) {
+            suggestions.add("#" + entry.getKey());
+            if (suggestions.size() == limit) {
+                break;
+            }
+        }
+        return suggestions;
+    }
+
+    private Set<String> extractHashtags(String text) {
+        Set<String> hashtags = new HashSet<>();
+        if (text == null || text.isBlank()) {
+            return hashtags;
+        }
+        for (int index = 0; index < text.length(); index++) {
+            if (text.charAt(index) != '#') {
+                continue;
+            }
+            int end = index + 1;
+            while (end < text.length()) {
+                char current = text.charAt(end);
+                if (!Character.isLetterOrDigit(current) && current != '_') {
+                    break;
+                }
+                end++;
+            }
+            if (end > index + 1) {
+                hashtags.add(text.substring(index + 1, end).toLowerCase(Locale.ROOT));
+                index = end - 1;
+            }
+        }
+        return hashtags;
     }
 
     public ArrayList<String[]> findPostsMentioning(String username) throws IOException {
