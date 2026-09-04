@@ -101,6 +101,7 @@ public class musica implements Serializable {
             return null;
         }
 
-    return new ImageIcon(caratula);
-}
+        return new ImageIcon(caratula);
+    }
+
 }

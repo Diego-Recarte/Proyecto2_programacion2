@@ -9,7 +9,9 @@ package proyecto2_programacion2;
  * @author denam
  */
 
-
+import Instagram.InstaLoginUI;
+import Instagram.instaController;
+import Instagram.instaManager;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -31,6 +33,7 @@ public class GUIEscritorio extends JPanel {
     private JButton word;
     private JButton btnUsuario;
     private JButton btncrear;
+    private JFrame instaFrame;
 
     private Dimension pantalla;
 
@@ -102,7 +105,11 @@ public class GUIEscritorio extends JPanel {
          buscador.addActionListener(ev->{
         new Buscador(padre);
         });
+
         word.addActionListener(ev -> new GUIpantallaWord(padre, null,false));
+
+        insta.addActionListener(ev -> abrirInstagram());
+
 
         escritorio.add(insta);
         escritorio.add(reproductor);
@@ -215,7 +222,11 @@ public class GUIEscritorio extends JPanel {
         JButton btnWordBarra = crearBotonBarra("/datos/windows/Z/imagenes/windows/iconosApp/word.png");
 
         btnTerminalBarra.addActionListener(ev -> new PanelCMD(padre));
+
         btnWordBarra.addActionListener(ev -> new GUIpantallaWord(padre, null,false));
+
+        btnInstaBarra.addActionListener(ev -> abrirInstagram());
+
 
         btnWindowsBarra.addActionListener(e -> {
             panelwindowsajustes.setVisible(!panelwindowsajustes.isVisible());
@@ -232,6 +243,24 @@ public class GUIEscritorio extends JPanel {
         barra.add(btnInstaBarra);
 
         add(barra, BorderLayout.SOUTH);
+    }
+
+    private void abrirInstagram() {
+        if (instaController.getInstance().getInsta() == null) {
+            instaController.getInstance().setInsta(new instaManager());
+        }
+
+        if (instaFrame == null || !instaFrame.isDisplayable()) {
+            instaFrame = new JFrame("Instagram");
+            instaFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            instaFrame.setResizable(false);
+            instaFrame.setAlwaysOnTop(true);
+            instaFrame.setContentPane(new InstaLoginUI());
+            instaFrame.pack();
+            instaFrame.setLocationRelativeTo(null);
+        }
+        instaFrame.setVisible(true);
+        instaFrame.toFront();
     }
 
     public void initApagar(CardLayout principal, JPanel cards) {

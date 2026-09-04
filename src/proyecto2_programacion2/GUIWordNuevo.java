@@ -18,7 +18,7 @@ public class GUIWordNuevo extends JPanel{
     public JButton Guardarc;
     
     
-    public GUIWordNuevo(GUIpantallaWord padre, CardLayout principal, JPanel cards,  GUIWordEditor campo){
+    public GUIWordNuevo(GUIpantallaWord padre, CardLayout principal, JPanel cards, GUIWordEditor campo){
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         setPreferredSize(new Dimension(1200, 800));
         setOpaque(false);
