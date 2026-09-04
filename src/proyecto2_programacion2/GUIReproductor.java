@@ -59,8 +59,8 @@ public class GUIReproductor extends JDialog{
         GUIWordEditor editor = new GUIWordEditor(this, cardLayout, panelCards);
         agregarCard(editor, "editor");
         
-        GUIWordNuevo nuevo = new GUIWordNuevo (this, cardLayout, panelCards, editor);
-        agregarCard(nuevo, "nuevo");
+        //GUIWordNuevo nuevo = new GUIWordNuevo (this, cardLayout, panelCards, editor);
+        //agregarCard(nuevo, "nuevo");
         
         
         
@@ -250,7 +250,7 @@ public class GUIReproductor extends JDialog{
 
         if (seleccionado != null) {
             carpeta = seleccionado.getParentFile();
-            abrirImagen(seleccionado);
+            //abrirImagen(seleccionado);
         }
     }
      
