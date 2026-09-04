@@ -10,16 +10,17 @@ package proyecto2_programacion2;
  */
 
 
-
 import java.awt.*;
 import java.io.File;
-import java.util.Arrays;
 import javax.swing.*;
+import javax.swing.tree.*;
 
 public class Buscador extends JDialog {
 
-    private JPanel panelOpciones;
-    private ButtonGroup grupoCarpetas;
+    private JTree arbolArchivos;
+    private DefaultTreeModel modeloArbol;
+    private DefaultMutableTreeNode nodoRaiz;
+
     private GUIArchivosPanel exploradorPanel;
 
     private File carpetaBase;
@@ -36,11 +37,21 @@ public class Buscador extends JDialog {
 
     private Runnable accionPendiente;
 
+    private JComboBox<String> comboOrden;
+    private CriterioOrden criterioActual = CriterioOrden.NOMBRE;
+
+    private final GUIPantallaPrincipal perfil;
+
+    public enum CriterioOrden {
+        NOMBRE, FECHA, TIPO, TAMANIO
+    }
+
     public Buscador(GUIPantallaPrincipal perfil) {
         super(perfil, "Buscador", false);
+        this.perfil = perfil;
 
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        setSize(1150, 800);
+        setSize(1400, 800);
         setLocationRelativeTo(perfil);
         setLayout(new BorderLayout(10, 10));
         getContentPane().setBackground(Color.BLACK);
@@ -56,7 +67,7 @@ public class Buscador extends JDialog {
         }
 
         initPanelSuperior();
-        initBarraIzquierda();
+        initArbolIzquierdo();
         initExplorador();
 
         setVisible(true);
@@ -74,6 +85,21 @@ public class Buscador extends JDialog {
         labelMensaje.setFont(new Font("Arial", Font.BOLD, 14));
         labelMensaje.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
         labelMensaje.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel panelOrden = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 8));
+        panelOrden.setBackground(Color.BLACK);
+        panelOrden.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel labelOrden = new JLabel("Ordenar por:");
+        labelOrden.setForeground(Color.WHITE);
+        labelOrden.setFont(new Font("Arial", Font.BOLD, 13));
+
+        comboOrden = new JComboBox<>(new String[]{"Nombre", "Fecha", "Tipo", "Tamaño"});
+        comboOrden.setFont(new Font("Arial", Font.PLAIN, 13));
+        comboOrden.addActionListener(e -> cambiarOrden());
+
+        panelOrden.add(labelOrden);
+        panelOrden.add(comboOrden);
 
         panelEntrada = new JPanel(new BorderLayout(8, 8));
         panelEntrada.setBackground(Color.BLACK);
@@ -108,9 +134,132 @@ public class Buscador extends JDialog {
         panelEntrada.add(panelBotonesEntrada, BorderLayout.EAST);
 
         contenedorSuperior.add(labelMensaje);
+        contenedorSuperior.add(panelOrden);
         contenedorSuperior.add(panelEntrada);
 
         add(contenedorSuperior, BorderLayout.NORTH);
+    }
+
+    private void initArbolIzquierdo() {
+        nodoRaiz = new DefaultMutableTreeNode(carpetaBase);
+        modeloArbol = new DefaultTreeModel(nodoRaiz);
+        arbolArchivos = new JTree(modeloArbol);
+
+        arbolArchivos.setRootVisible(true);
+        arbolArchivos.setShowsRootHandles(true);
+        arbolArchivos.setBackground(Color.BLACK);
+        arbolArchivos.setForeground(Color.WHITE);
+
+        arbolArchivos.addTreeSelectionListener(e -> {
+            DefaultMutableTreeNode nodo = (DefaultMutableTreeNode) arbolArchivos.getLastSelectedPathComponent();
+            if (nodo == null) return;
+
+            File archivo = (File) nodo.getUserObject();
+            carpetaSeleccionada = archivo;
+
+            if (archivo.isDirectory()) {
+                exploradorPanel.setCarpetaActual(archivo);
+                exploradorPanel.setCriterioOrden(criterioActual);
+                exploradorPanel.recargarArchivos();
+                mostrarMensaje("Carpeta seleccionada: " + archivo.getName(), false);
+            }
+        });
+
+        JScrollPane scrollArbol = new JScrollPane(arbolArchivos);
+        scrollArbol.setPreferredSize(new Dimension(400, 800));
+        scrollArbol.setBorder(BorderFactory.createTitledBorder("Explorador"));
+
+        add(scrollArbol, BorderLayout.WEST);
+
+        cargarArbolEnThread();
+    }
+
+    private void cargarArbolEnThread() {
+        mostrarMensaje("Cargando árbol de archivos...", false);
+
+        Thread hiloArbol = new Thread(() -> {
+            DefaultMutableTreeNode nuevaRaiz = crearNodoArchivo(carpetaBase);
+
+            SwingUtilities.invokeLater(() -> {
+                nodoRaiz = nuevaRaiz;
+                modeloArbol.setRoot(nodoRaiz);
+                modeloArbol.reload();
+
+                for (int i = 0; i < arbolArchivos.getRowCount(); i++) {
+                    arbolArchivos.expandRow(i);
+                }
+
+                mostrarMensaje("Árbol cargado correctamente.", false);
+            });
+        });
+
+        hiloArbol.setName("Hilo-Arbol-Buscador");
+        hiloArbol.start();
+    }
+
+    private DefaultMutableTreeNode crearNodoArchivo(File archivo) {
+        DefaultMutableTreeNode nodo = new DefaultMutableTreeNode(archivo);
+
+        if (archivo.isDirectory()) {
+            File[] hijos = archivo.listFiles();
+            if (hijos != null) {
+                java.util.Arrays.sort(hijos, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+                for (File hijo : hijos) {
+                    nodo.add(crearNodoArchivo(hijo));
+                }
+            }
+        }
+
+        return nodo;
+    }
+
+    private void initExplorador() {
+        carpetaSeleccionada = carpetaBase;
+        exploradorPanel = new GUIArchivosPanel(this, carpetaSeleccionada, carpetaBase);
+        exploradorPanel.setCriterioOrden(criterioActual);
+        add(exploradorPanel, BorderLayout.CENTER);
+    }
+
+    private void cambiarOrden() {
+        String seleccion = (String) comboOrden.getSelectedItem();
+        if (seleccion == null) return;
+
+        switch (seleccion) {
+            case "Nombre":
+                criterioActual = CriterioOrden.NOMBRE;
+                break;
+            case "Fecha":
+                criterioActual = CriterioOrden.FECHA;
+                break;
+            case "Tipo":
+                criterioActual = CriterioOrden.TIPO;
+                break;
+            case "Tamaño":
+                criterioActual = CriterioOrden.TAMANIO;
+                break;
+        }
+
+        if (exploradorPanel != null) {
+            exploradorPanel.setCriterioOrden(criterioActual);
+            exploradorPanel.recargarArchivos();
+        }
+
+        mostrarMensaje("Orden aplicado: " + seleccion, false);
+    }
+
+    public void recargarArbol() {
+        cargarArbolEnThread();
+    }
+
+    private void configurarBoton(JButton boton) {
+        boton.setFont(new Font("Arial", Font.BOLD, 13));
+        boton.setForeground(Color.WHITE);
+        boton.setBackground(Color.BLACK);
+        boton.setFocusPainted(false);
+    }
+
+    public CriterioOrden getCriterioActual() {
+        return criterioActual;
     }
 
     public void mostrarMensaje(String mensaje, boolean error) {
@@ -162,164 +311,31 @@ public class Buscador extends JDialog {
         }
     }
 
-    private void initBarraIzquierda() {
-        JPanel barraIzquierda = new JPanel(new BorderLayout(10, 10));
-        barraIzquierda.setPreferredSize(new Dimension(250, 800));
-        barraIzquierda.setBackground(Color.BLACK);
-        barraIzquierda.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        JPanel panelAcciones = new JPanel(new GridLayout(1, 2, 10, 10));
-        panelAcciones.setBackground(Color.BLACK);
-
-        JButton crear = new JButton("Crear");
-        JButton borrar = new JButton("Borrar");
-
-        configurarBoton(crear);
-        configurarBoton(borrar);
-
-        crear.addActionListener(e -> pedirCrearCarpetaLateral());
-        borrar.addActionListener(e -> borrarCarpetaLateral());
-
-        panelAcciones.add(crear);
-        panelAcciones.add(borrar);
-
-        panelOpciones = new JPanel();
-        panelOpciones.setLayout(new BoxLayout(panelOpciones, BoxLayout.Y_AXIS));
-        panelOpciones.setBackground(Color.BLACK);
-
-        JScrollPane scroll = new JScrollPane(panelOpciones);
-        scroll.setBorder(BorderFactory.createTitledBorder("Carpetas"));
-        scroll.getVerticalScrollBar().setUnitIncrement(12);
-
-        barraIzquierda.add(panelAcciones, BorderLayout.NORTH);
-        barraIzquierda.add(scroll, BorderLayout.CENTER);
-
-        add(barraIzquierda, BorderLayout.WEST);
-
-        recargarCarpetas();
-    }
-
-    private void initExplorador() {
-        carpetaSeleccionada = carpetaBase;
-        exploradorPanel = new GUIArchivosPanel(this, carpetaSeleccionada, carpetaBase);
-        add(exploradorPanel, BorderLayout.CENTER);
-    }
-
-    private void configurarBoton(JButton boton) {
-        boton.setFont(new Font("Arial", Font.BOLD, 13));
-        boton.setForeground(Color.WHITE);
-        boton.setBackground(Color.BLACK);
-        boton.setFocusPainted(false);
-    }
-
-    public void recargarCarpetas() {
-        panelOpciones.removeAll();
-        grupoCarpetas = new ButtonGroup();
-
-        File[] archivos = carpetaBase.listFiles();
-
-        if (archivos != null) {
-            Arrays.sort(archivos, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-
-            for (File archivo : archivos) {
-                if (archivo.isDirectory()) {
-                    JToggleButton boton = new JToggleButton(archivo.getName());
-
-                    boton.setFont(new Font("Arial", Font.BOLD, 11));
-                    boton.setPreferredSize(new Dimension(200, 35));
-                    boton.setMaximumSize(new Dimension(200, 35));
-                    boton.setMinimumSize(new Dimension(200, 35));
-                    boton.setForeground(Color.WHITE);
-                    boton.setBackground(Color.BLACK);
-                    boton.setFocusPainted(false);
-                    boton.setHorizontalAlignment(SwingConstants.CENTER);
-
-                    grupoCarpetas.add(boton);
-
-                    boton.addActionListener(e -> {
-                        if (boton.isSelected()) {
-                            carpetaSeleccionada = archivo;
-                            exploradorPanel.setCarpetaActual(carpetaSeleccionada);
-                            mostrarMensaje("Carpeta seleccionada: " + archivo.getName(), false);
-                        }
-                    });
-
-                    panelOpciones.add(boton);
-                    panelOpciones.add(Box.createVerticalStrut(5));
-                }
-            }
+    public void abrirArchivoEnVisualizador(File archivo) throws BuscadorException {
+        if (archivo == null || !archivo.exists() || !archivo.isFile()) {
+            throw new BuscadorException("El archivo seleccionado no es válido.");
         }
 
-        panelOpciones.revalidate();
-        panelOpciones.repaint();
+        String nombre = archivo.getName().toLowerCase();
+
+        if (!nombre.endsWith(".jpg") && !nombre.endsWith(".jpeg") && !nombre.endsWith(".png")) {
+            throw new BuscadorException("El archivo seleccionado no es una imagen válida.");
+        }
+
+        new GUIVisualizadorPantalla(perfil, archivo);
     }
 
-    private void pedirCrearCarpetaLateral() {
-        mostrarEntrada("Nueva carpeta:", () -> {
-            try {
-                crearCarpetaLateral();
-                recargarCarpetas();
-                mostrarMensaje("Carpeta creada correctamente.", false);
-                ocultarEntrada();
-            } catch (BuscadorException ex) {
-                mostrarMensaje(ex.getMessage(), true);
-            }
-        });
-    }
-
-    private void crearCarpetaLateral() throws BuscadorException {
-        String nombre = getTextoEntrada();
-
-        if (nombre.isEmpty()) {
-            throw new BuscadorException("Debes escribir un nombre válido.");
+    public void abrirArchivoEnWord(File archivo) throws BuscadorException {
+        if (archivo == null || !archivo.exists() || !archivo.isFile()) {
+            throw new BuscadorException("El archivo seleccionado no es válido.");
         }
 
-        File nueva = new File(carpetaBase, nombre);
+        String nombre = archivo.getName().toLowerCase();
 
-        if (nueva.exists()) {
-            throw new BuscadorException("Ya existe una carpeta con ese nombre.");
+        if (!nombre.endsWith(".wrd")) {
+            throw new BuscadorException("El archivo seleccionado no es un documento válido.");
         }
 
-        if (!nueva.mkdir()) {
-            throw new BuscadorException("No se pudo crear la carpeta.");
-        }
-    }
-
-    private void borrarCarpetaLateral() {
-        try {
-            eliminarCarpetaLateral();
-            carpetaSeleccionada = carpetaBase;
-            exploradorPanel.setCarpetaActual(carpetaBase);
-            recargarCarpetas();
-            mostrarMensaje("Carpeta eliminada correctamente.", false);
-        } catch (BuscadorException ex) {
-            mostrarMensaje(ex.getMessage(), true);
-        }
-    }
-
-    private void eliminarCarpetaLateral() throws BuscadorException {
-        if (carpetaSeleccionada == null || carpetaSeleccionada.equals(carpetaBase)) {
-            throw new BuscadorException("Selecciona una carpeta válida para borrar.");
-        }
-
-        boolean eliminado = eliminarRecursivo(carpetaSeleccionada);
-
-        if (!eliminado) {
-            throw new BuscadorException("No se pudo eliminar la carpeta.");
-        }
-    }
-
-    private boolean eliminarRecursivo(File archivo) {
-        if (archivo.isDirectory()) {
-            File[] hijos = archivo.listFiles();
-            if (hijos != null) {
-                for (File hijo : hijos) {
-                    if (!eliminarRecursivo(hijo)) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return archivo.delete();
+        new GUIpantallaWord(perfil, archivo, true);
     }
 }

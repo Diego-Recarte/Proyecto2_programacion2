@@ -10,26 +10,40 @@ package proyecto2_programacion2;
  */
 import java.awt.*;
 import javax.swing.*;
+import java.io.*;
+import javax.swing.text.*;
 public class GUIWordNuevo extends JPanel{
-    private JButton archivo;
+    public JButton archivo;
+    public JButton Guardar;
+    public JButton Guardarc;
+    
     
     public GUIWordNuevo(GUIpantallaWord padre, CardLayout principal, JPanel cards,  GUIWordEditor campo){
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         setPreferredSize(new Dimension(1200, 800));
         setOpaque(false);
-        initComponentes(principal, cards, campo);
+        
+        initComponentes(padre,principal, cards, campo);
     }
+        
     
     
-    public void initComponentes(CardLayout principal, JPanel cards, GUIWordEditor campo){
-        InitBarra(principal,  cards);
+    public void initComponentes(GUIpantallaWord padre,CardLayout principal, JPanel cards, GUIWordEditor campo){
+        
+        try{
+        InitBarra(padre, principal,  cards, campo);
+        }catch( IOException e  ){
+            
+        }catch (BadLocationException ev){
+            
+        }
         Inicializarbotones(campo,principal,  cards);
         
         
     }
     
     
-    private void InitBarra(CardLayout principal, JPanel cards){
+    private void InitBarra(GUIpantallaWord padre,CardLayout principal, JPanel cards, GUIWordEditor campo) throws IOException, BadLocationException {
         JPanel panel = new JPanel();
 
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -87,7 +101,7 @@ public class GUIWordNuevo extends JPanel{
 
         });
         
-        JButton Guardar = new JButton("Guardar");
+        Guardar = new JButton("Guardar");
 
         Guardar.setFont(new Font("Arial", Font.BOLD, 14));
         Guardar.setPreferredSize(new Dimension(200, 35));
@@ -102,18 +116,33 @@ public class GUIWordNuevo extends JPanel{
         Guardar.setBorderPainted(false);
         Guardar.setContentAreaFilled(false);
         Guardar.setOpaque(false);
+        Guardar.setVisible(false);
 
         Guardar.setHorizontalAlignment(SwingConstants.LEFT);
 
         Guardar.addActionListener(e -> {
+            
+             boolean resultado= false;
+            try{
+              resultado =WordArchivos.guardarComo(campo.editor, new File ("src/datos/windows/Z/infoUsuarios/"+usuarioWinActivo.nombre+"/misDocumentos/"+campo.label.getText().trim()+".wrd"),campo.label.getText(), false);
+            }catch (IOException er){
+                
+            };
+            
+            if (resultado){
+                principal.show(cards, "editor");
+            }else{
+                
+            }
 
         });
-        JButton Guardarc = new JButton("Guardar como");
+        Guardarc = new JButton("Guardar como");
 
         Guardarc.setFont(new Font("Arial", Font.BOLD, 14));
         Guardarc.setPreferredSize(new Dimension(200, 35));
         Guardarc.setMinimumSize(new Dimension(200, 35));
         Guardarc.setMaximumSize(new Dimension(200, 35));
+        Guardarc.setVisible(false);
         
 
         Guardarc.setForeground(Color.white);
@@ -127,7 +156,7 @@ public class GUIWordNuevo extends JPanel{
         Guardarc.setHorizontalAlignment(SwingConstants.LEFT);
 
         Guardarc.addActionListener(e -> {
-
+            padre.mostrarCard("guardarComo");
         });
         
         JButton Cargar = new JButton("Cargar");
@@ -146,9 +175,39 @@ public class GUIWordNuevo extends JPanel{
         Cargar .setContentAreaFilled(false);
         Cargar .setOpaque(false);
 
-        Cargar .setHorizontalAlignment(SwingConstants.LEFT);
+        Cargar.setHorizontalAlignment(SwingConstants.LEFT);
 
         Cargar .addActionListener(e -> {
+
+                try {
+                    File carpetaBase;
+                    if (usuarioWinActivo.isAdmin){
+                        
+                     carpetaBase = new File( "src/datos/windows/Z/infoUsuarios" );
+                    }else{
+                     carpetaBase = new File( "src/datos/windows/Z/infoUsuarios/" + usuarioWinActivo.nombre + "/misDocumentos" );
+                    }
+
+                    GUISelector selector = new GUISelector(SwingUtilities.getWindowAncestor(this),carpetaBase,"wrd" );
+
+                    selector.setVisible(true);
+
+                    File archivoSeleccionado = selector.getArchivoSeleccionado();
+
+                    if (archivoSeleccionado != null) {
+                        WordArchivos.abrir(campo.label, campo.editor, archivoSeleccionado);
+
+                        archivo.setVisible(true);
+                        Guardar.setVisible(true);
+                        Guardarc.setVisible(true);
+
+                        principal.show(cards, "editor");
+                    }
+
+                } catch (IOException | BadLocationException ex) {
+                    
+                    
+                }
 
         });
         
@@ -230,6 +289,8 @@ public class GUIWordNuevo extends JPanel{
             campo.ingresarContenido(null, nombre.getText().trim());
             nombre.setText("");
             archivo.setVisible(true);
+            Guardar.setVisible(true);
+            Guardarc.setVisible(true);
             
              principal.show(cards, "editor");
             }

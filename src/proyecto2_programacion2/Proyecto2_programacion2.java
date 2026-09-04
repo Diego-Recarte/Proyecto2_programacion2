@@ -20,7 +20,7 @@ public class Proyecto2_programacion2 {
             new GUIPantallaPrincipal().setVisible(true);
         });
         
-        //cuenta admin. nombre: admin, contra Admin123!
+        //cuenta admin. nombre: Admin, contra Admin123!
     }
     
 }

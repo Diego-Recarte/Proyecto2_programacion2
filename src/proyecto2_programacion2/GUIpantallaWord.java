@@ -11,11 +11,15 @@ package proyecto2_programacion2;
 
 import java.awt.*;
 import javax.swing.*;
+import java.io.*;
+import javax.swing.text.*;
 public class GUIpantallaWord extends JDialog{
     private CardLayout cardLayout;
     private JPanel panelCards;
-    
-    public GUIpantallaWord  (GUIPantallaPrincipal Perfil){
+    private GUIWordEditor editor;
+    private GUIWordNuevo nuevo;
+    private GUIWordGuardarComo guardarComo;
+    public GUIpantallaWord  (GUIPantallaPrincipal Perfil,File archivo, boolean isbuscador){
         super(Perfil, "Word", false);
 
 
@@ -26,19 +30,44 @@ public class GUIpantallaWord extends JDialog{
         setLocationRelativeTo(Perfil);
         InitCardLayout();
         agregarCards();
-        mostrarCard("nuevo");
+        
+        if (isbuscador){
+            nuevo.archivo.setVisible(true);
+             nuevo.Guardar.setVisible(true);
+             nuevo.Guardarc.setVisible(true);
+             
+             guardarComo.archivo.setVisible(true);
+             guardarComo.Guardar.setVisible(true);
+             guardarComo.Guardarc.setVisible(true);
+             
+             try{
+                WordArchivos.abrir(editor.label, editor.editor, archivo);
+                mostrarCard("editor");
+             }catch(IOException e){
+                 
+             }catch (BadLocationException e){
+                 
+             }
+
+        }else{
+            mostrarCard("nuevo");
+        }
+        
+        
         setVisible(true);
         
        
 
     }
      public void agregarCards(){
-        GUIWordEditor editor = new GUIWordEditor(this, cardLayout, panelCards);
+       editor = new GUIWordEditor(this, cardLayout, panelCards);
         agregarCard(editor, "editor");
         
-        GUIWordNuevo nuevo = new GUIWordNuevo (this, cardLayout, panelCards, editor);
+        nuevo = new GUIWordNuevo (this, cardLayout, panelCards, editor);
         agregarCard(nuevo, "nuevo");
         
+         guardarComo= new GUIWordGuardarComo(this, cardLayout, panelCards,  editor);
+         agregarCard(guardarComo, "guardarComo");
         
         
         

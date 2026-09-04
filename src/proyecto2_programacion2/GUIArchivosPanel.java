@@ -8,17 +8,13 @@ package proyecto2_programacion2;
  *
  * @author denam
  */
-
-
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
-
+import java.util.Arrays;
+import java.util.Calendar;
 
 public class GUIArchivosPanel extends JPanel {
 
@@ -27,12 +23,14 @@ public class GUIArchivosPanel extends JPanel {
     private File carpetaActual;
     private File archivoSeleccionado;
     private File archivoCopiado;
-    private File carpetaBase;
+    private final File carpetaBase;
 
     private JPanel panelListaArchivos;
     private JLabel labelRuta;
 
     private ButtonGroup grupoArchivos;
+
+    private Buscador.CriterioOrden criterioOrden = Buscador.CriterioOrden.NOMBRE;
 
     public GUIArchivosPanel(Buscador buscador, File carpetaInicial, File base) {
         this.buscador = buscador;
@@ -57,6 +55,14 @@ public class GUIArchivosPanel extends JPanel {
         }
     }
 
+    public void setCriterioOrden(Buscador.CriterioOrden criterioOrden) {
+        this.criterioOrden = criterioOrden;
+    }
+
+    public void recargarArchivos() {
+        archivos(carpetaActual);
+    }
+
     private void initBarra() {
         JPanel contenedorSuperior = new JPanel(new BorderLayout(10, 10));
         contenedorSuperior.setBackground(Color.BLACK);
@@ -66,7 +72,7 @@ public class GUIArchivosPanel extends JPanel {
         labelRuta.setForeground(Color.WHITE);
         labelRuta.setFont(new Font("Arial", Font.BOLD, 12));
 
-        JPanel panelBotones = new JPanel(new GridLayout(1, 8, 8, 8));
+        JPanel panelBotones = new JPanel(new GridLayout(1, 9, 8, 8));
         panelBotones.setBackground(Color.BLACK);
 
         JButton volver = new JButton("Volver");
@@ -77,6 +83,7 @@ public class GUIArchivosPanel extends JPanel {
         JButton eliminar = new JButton("Eliminar");
         JButton crearCarpeta = new JButton("Crear carpeta");
         JButton importarArchivo = new JButton("Importar");
+        JButton organizar = new JButton("Organizar");
 
         configurarBoton(volver);
         configurarBoton(copiar);
@@ -85,9 +92,10 @@ public class GUIArchivosPanel extends JPanel {
         configurarBoton(cargar);
         configurarBoton(eliminar);
         configurarBoton(crearCarpeta);
-        
-        crearCarpeta.setFont(new Font("Arial", Font.BOLD, 9));
         configurarBoton(importarArchivo);
+        configurarBoton(organizar);
+
+        crearCarpeta.setFont(new Font("Arial", Font.BOLD, 9));
 
         volver.addActionListener(e -> {
             try {
@@ -145,6 +153,15 @@ public class GUIArchivosPanel extends JPanel {
             }
         });
 
+        organizar.addActionListener(e -> {
+            try {
+                organizarCarpeta();
+                buscador.mostrarMensaje("Archivos organizados correctamente.", false);
+            } catch (BuscadorException ex) {
+                buscador.mostrarMensaje(ex.getMessage(), true);
+            }
+        });
+
         panelBotones.add(volver);
         panelBotones.add(copiar);
         panelBotones.add(pegar);
@@ -153,6 +170,7 @@ public class GUIArchivosPanel extends JPanel {
         panelBotones.add(eliminar);
         panelBotones.add(crearCarpeta);
         panelBotones.add(importarArchivo);
+        panelBotones.add(organizar);
 
         contenedorSuperior.add(labelRuta, BorderLayout.NORTH);
         contenedorSuperior.add(panelBotones, BorderLayout.CENTER);
@@ -173,7 +191,7 @@ public class GUIArchivosPanel extends JPanel {
     }
 
     private void configurarBoton(JButton boton) {
-        boton.setFont(new Font("Arial", Font.BOLD, 12));
+        boton.setFont(new Font("Arial", Font.BOLD, 19));
         boton.setForeground(Color.WHITE);
         boton.setBackground(Color.BLACK);
         boton.setFocusPainted(false);
@@ -206,68 +224,75 @@ public class GUIArchivosPanel extends JPanel {
         Arrays.sort(archivos, (a, b) -> {
             if (a.isDirectory() && !b.isDirectory()) return -1;
             if (!a.isDirectory() && b.isDirectory()) return 1;
-            return a.getName().compareToIgnoreCase(b.getName());
+
+            switch (criterioOrden) {
+                case FECHA:
+                    return Long.compare(b.lastModified(), a.lastModified());
+                case TIPO:
+                    String tipoA = a.isDirectory() ? "" : obtenerTipoArchivo(a).toLowerCase();
+                    String tipoB = b.isDirectory() ? "" : obtenerTipoArchivo(b).toLowerCase();
+                    int cmpTipo = tipoA.compareToIgnoreCase(tipoB);
+                    if (cmpTipo != 0) return cmpTipo;
+                    return a.getName().compareToIgnoreCase(b.getName());
+                case TAMANIO:
+                    return Long.compare(b.length(), a.length());
+                case NOMBRE:
+                default:
+                    return a.getName().compareToIgnoreCase(b.getName());
+            }
         });
 
-       for (File archivo : archivos) {
+        for (File archivo : archivos) {
             agregarBotonArchivo(archivo);
         }
 
         refrescarLista();
-      }
+    }
 
-        private void agregarBotonArchivo(File archivo) {
-            String nombre = archivo.getName();
+    private void agregarBotonArchivo(File archivo) {
+        String nombre = archivo.getName();
 
-            Calendar calendario = Calendar.getInstance();
-            calendario.setTimeInMillis(archivo.lastModified());
+        Calendar calendario = Calendar.getInstance();
+        calendario.setTimeInMillis(archivo.lastModified());
 
-            String fecha = String.format(
-                    "%02d/%02d/%04d %02d:%02d:%02d",
-                    calendario.get(Calendar.DAY_OF_MONTH),
-                    calendario.get(Calendar.MONTH) + 1,
-                    calendario.get(Calendar.YEAR),
-                    calendario.get(Calendar.HOUR_OF_DAY),
-                    calendario.get(Calendar.MINUTE),
-                    calendario.get(Calendar.SECOND)
-            );
+        String fecha = String.format(
+                "%02d/%02d/%04d %02d:%02d:%02d",
+                calendario.get(Calendar.DAY_OF_MONTH),
+                calendario.get(Calendar.MONTH) + 1,
+                calendario.get(Calendar.YEAR),
+                calendario.get(Calendar.HOUR_OF_DAY),
+                calendario.get(Calendar.MINUTE),
+                calendario.get(Calendar.SECOND)
+        );
 
-            String tipo;
+        String tipo = archivo.isDirectory() ? "Carpeta" : obtenerTipoArchivo(archivo);
+        long tamanio = archivo.length();
 
-            if (archivo.isDirectory()) {
-                tipo = "Carpeta";
-            } else {
-                tipo = obtenerTipoArchivo(archivo);
+        String texto = nombre + " | Fecha: " + fecha
+                + " | Tipo: " + tipo
+                + " | Tamaño: " + tamanio + " bytes";
+
+        JToggleButton boton = new JToggleButton(texto);
+        boton.setPreferredSize(new Dimension(700, 90));
+        boton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
+        boton.setMinimumSize(new Dimension(700, 90));
+        boton.setHorizontalAlignment(SwingConstants.LEFT);
+        boton.setVerticalAlignment(SwingConstants.CENTER);
+        boton.setBackground(Color.BLACK);
+        boton.setForeground(Color.WHITE);
+        boton.setFocusPainted(false);
+
+        grupoArchivos.add(boton);
+
+        boton.addActionListener(e -> {
+            if (boton.isSelected()) {
+                archivoSeleccionado = archivo;
             }
+        });
 
-            long tamanio = archivo.length();
-
-            String texto = nombre + " | Fecha: " + fecha
-                    + " | Tipo: " + tipo
-                    + " | Tamaño: " + tamanio + " bytes";
-
-            JToggleButton boton = new JToggleButton(texto);
-            boton.setPreferredSize(new Dimension(700, 90));
-            boton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
-            boton.setMinimumSize(new Dimension(700, 90));
-
-            boton.setHorizontalAlignment(SwingConstants.LEFT);
-            boton.setVerticalAlignment(SwingConstants.CENTER);
-            boton.setBackground(Color.BLACK);
-            boton.setForeground(Color.WHITE);
-            boton.setFocusPainted(false);
-
-            grupoArchivos.add(boton);
-
-            boton.addActionListener(e -> {
-                if (boton.isSelected()) {
-                    archivoSeleccionado = archivo;
-                }
-            });
-
-            panelListaArchivos.add(boton);
-            panelListaArchivos.add(Box.createVerticalStrut(8));
-        }
+        panelListaArchivos.add(boton);
+        panelListaArchivos.add(Box.createVerticalStrut(8));
+    }
 
     private String obtenerTipoArchivo(File archivo) {
         String nombre = archivo.getName();
@@ -278,6 +303,51 @@ public class GUIArchivosPanel extends JPanel {
         }
 
         return "Sin extensión";
+    }
+
+    private void organizarCarpeta() throws BuscadorException {
+        if (carpetaActual == null || !carpetaActual.isDirectory()) {
+            throw new BuscadorException("La carpeta actual no es válida.");
+        }
+
+        File[] archivos = carpetaActual.listFiles();
+        if (archivos == null) {
+            throw new BuscadorException("No se pudo leer la carpeta.");
+        }
+
+        File carpetaImagenes = new File(carpetaActual, "Imagenes");
+        File carpetaDocumentos = new File(carpetaActual, "Documentos");
+        File carpetaMusica = new File(carpetaActual, "Musica");
+
+        carpetaImagenes.mkdirs();
+        carpetaDocumentos.mkdirs();
+        carpetaMusica.mkdirs();
+
+        for (File archivo : archivos) {
+            if (!archivo.isFile()) continue;
+
+            String extension = obtenerTipoArchivo(archivo).toLowerCase();
+            File destino = null;
+
+            if (extension.equals("jpg") || extension.equals("jpeg") || extension.equals("png")) {
+                destino = new File(carpetaImagenes, archivo.getName());
+            } else if (extension.equals("txt") || extension.equals("pdf") || extension.equals("doc") || extension.equals("docx")) {
+                destino = new File(carpetaDocumentos, archivo.getName());
+            } else if (extension.equals("mp3") || extension.equals("wav")) {
+                destino = new File(carpetaMusica, archivo.getName());
+            }
+
+            if (destino != null && !destino.exists()) {
+                try {
+                    Files.move(archivo.toPath(), destino.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    throw new BuscadorException("Error al organizar: " + archivo.getName());
+                }
+            }
+        }
+
+        archivos(carpetaActual);
+        buscador.recargarArbol();
     }
 
     private void volverCarpeta() throws BuscadorException {
@@ -330,11 +400,11 @@ public class GUIArchivosPanel extends JPanel {
             if (archivoCopiado.isDirectory()) {
                 copiarDirectorio(archivoCopiado, destino);
             } else {
-                Files.copy(archivoCopiado.toPath(), destino.toPath());
+                Files.copy(archivoCopiado.toPath(), destino.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
 
             archivos(carpetaActual);
-            buscador.recargarCarpetas();
+            buscador.recargarArbol();
 
         } catch (IOException ex) {
             throw new BuscadorException("Error al pegar: " + ex.getMessage());
@@ -371,11 +441,12 @@ public class GUIArchivosPanel extends JPanel {
             throw new BuscadorException("Ya existe otro elemento con ese nombre.");
         }
 
-        if (archivoSeleccionado.renameTo(nuevoArchivo)) {
+        try {
+            Files.move(archivoSeleccionado.toPath(), nuevoArchivo.toPath(), StandardCopyOption.REPLACE_EXISTING);
             archivoSeleccionado = nuevoArchivo;
             archivos(carpetaActual);
-            buscador.recargarCarpetas();
-        } else {
+            buscador.recargarArbol();
+        } catch (IOException e) {
             throw new BuscadorException("No se pudo renombrar el elemento.");
         }
     }
@@ -390,9 +461,20 @@ public class GUIArchivosPanel extends JPanel {
             archivoSeleccionado = null;
             archivos(carpetaActual);
             buscador.mostrarMensaje("Carpeta cargada: " + carpetaActual.getName(), false);
-        } else {
-            throw new BuscadorException("Por ahora solo se pueden cargar carpetas.");
+            return;
         }
+
+        String nombre = archivoSeleccionado.getName().toLowerCase();
+
+        if (nombre.endsWith(".jpg") || nombre.endsWith(".jpeg") || nombre.endsWith(".png")) {
+            buscador.abrirArchivoEnVisualizador(archivoSeleccionado);
+            return;
+        }else if (nombre.endsWith(".wrd") ){
+            buscador.abrirArchivoEnWord(archivoSeleccionado);
+            return;
+        }
+
+        throw new BuscadorException("No es valido para cargar");
     }
 
     private void eliminarArchivo() throws BuscadorException {
@@ -405,7 +487,7 @@ public class GUIArchivosPanel extends JPanel {
         if (eliminado) {
             archivoSeleccionado = null;
             archivos(carpetaActual);
-            buscador.recargarCarpetas();
+            buscador.recargarArbol();
         } else {
             throw new BuscadorException("No se pudo eliminar el elemento.");
         }
@@ -438,13 +520,13 @@ public class GUIArchivosPanel extends JPanel {
 
         if (nuevaCarpeta.mkdir()) {
             archivos(carpetaActual);
-            buscador.recargarCarpetas();
+            buscador.recargarArbol();
         } else {
             throw new BuscadorException("No se pudo crear la carpeta.");
         }
     }
 
-    private void importarArchivoDesdePC() throws BuscadorException {
+   private void importarArchivoDesdePC() throws BuscadorException {
         if (carpetaActual == null || !carpetaActual.exists() || !carpetaActual.isDirectory()) {
             throw new BuscadorException("La carpeta actual no es válida.");
         }
@@ -453,14 +535,7 @@ public class GUIArchivosPanel extends JPanel {
         chooser.setDialogTitle("Selecciona un archivo");
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         chooser.setMultiSelectionEnabled(false);
-        chooser.setAcceptAllFileFilterUsed(false);
-
-        FileNameExtensionFilter filtro = new FileNameExtensionFilter(
-                "Archivos permitidos (*.jpg, *.jpeg, *.png, *.mp3)",
-                "jpg", "jpeg", "png", "mp3"
-        );
-
-        chooser.setFileFilter(filtro);
+        chooser.setAcceptAllFileFilterUsed(true);
 
         int resultado = chooser.showOpenDialog(this);
 
@@ -476,29 +551,33 @@ public class GUIArchivosPanel extends JPanel {
 
         String nombre = archivoOrigen.getName().toLowerCase();
 
-        if (!(nombre.endsWith(".jpg") || nombre.endsWith(".jpeg")
-                || nombre.endsWith(".png") || nombre.endsWith(".mp3"))) {
-            throw new BuscadorException("Solo se permiten archivos JPG, PNG o MP3.");
-        }
-
-        File archivoDestino = new File(carpetaActual, archivoOrigen.getName());
-
-        if (archivoDestino.exists()) {
-            throw new BuscadorException("Ya existe un archivo con ese nombre en la carpeta actual.");
-        }
-
         try {
-            Files.copy(
-                    archivoOrigen.toPath(),
-                    archivoDestino.toPath(),
-                    StandardCopyOption.REPLACE_EXISTING
-            );
+            if (nombre.endsWith(".mp3") || nombre.endsWith(".wav")) {
+                musica m = new musica(archivoOrigen);
+
+                File archivoDestino = new File(carpetaActual, m.getNombre() + ".mp5");
+
+                if (archivoDestino.exists()) {
+                    throw new BuscadorException("Ya existe un archivo con ese nombre en la carpeta actual.");
+                }
+
+                m.guardarComoMP5(carpetaActual.getPath());
+
+            } else {
+                File archivoDestino = new File(carpetaActual, archivoOrigen.getName());
+
+                if (archivoDestino.exists()) {
+                    throw new BuscadorException("Ya existe un archivo con ese nombre en la carpeta actual.");
+                }
+
+                Files.copy(archivoOrigen.toPath(), archivoDestino.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
 
             archivos(carpetaActual);
-            buscador.recargarCarpetas();
+            buscador.recargarArbol();
 
-        } catch (IOException ex) {
-            throw new BuscadorException("Error al importar el archivo: " + ex.getMessage());
+        } catch (IOException e) {
+            throw new BuscadorException("Error al importar el archivo: " + e.getMessage());
         }
     }
 
@@ -529,7 +608,6 @@ public class GUIArchivosPanel extends JPanel {
             }
 
             File[] elementos = origen.listFiles();
-
             if (elementos != null) {
                 for (File elemento : elementos) {
                     File nuevoDestino = new File(destino, elemento.getName());
@@ -537,7 +615,7 @@ public class GUIArchivosPanel extends JPanel {
                 }
             }
         } else {
-            Files.copy(origen.toPath(), destino.toPath());
+            Files.copy(origen.toPath(), destino.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
@@ -545,4 +623,6 @@ public class GUIArchivosPanel extends JPanel {
         panelListaArchivos.revalidate();
         panelListaArchivos.repaint();
     }
+    
+   
 }

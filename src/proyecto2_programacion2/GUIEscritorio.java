@@ -14,6 +14,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
+import java.io.*;
+
 public class GUIEscritorio extends JPanel {
     private Image imagenFondo;
     private JPanel escritorio;
@@ -33,8 +35,7 @@ public class GUIEscritorio extends JPanel {
     private Dimension pantalla;
 
     public GUIEscritorio(GUIPantallaPrincipal padre, CardLayout principal, JPanel cards) {
-        ImageIcon iconoFondo = new ImageIcon(
-                getClass().getResource("/datos/windows/Z/imagenes/windows/fondoEscritorio.jpg"));
+        ImageIcon iconoFondo = new ImageIcon( getClass().getResource("/datos/windows/Z/imagenes/windows/fondoEscritorio.jpg"));
 
         pantalla = Toolkit.getDefaultToolkit().getScreenSize();
         imagenFondo = iconoFondo.getImage().getScaledInstance(
@@ -65,9 +66,15 @@ public class GUIEscritorio extends JPanel {
             btnUsuario.setText(usuarioWinActivo.nombre);
             if (usuarioWinActivo.isAdmin){
                 panelWindows.add(btncrear);
+                usuarioWinActivo.raiz= new File("src/datos/windows/Z/infoUsuarios");
             }else{
                panelWindows.remove(btncrear); 
+               usuarioWinActivo.raiz= new File("src/datos/windows/Z/infoUsuarios/"+usuarioWinActivo.nombre);
             }
+            
+            
+            
+            
             btnUsuario.revalidate();
             btnUsuario.repaint();
         }
@@ -87,11 +94,15 @@ public class GUIEscritorio extends JPanel {
         reproductor = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/reproductor.png", 50, 350, "reproductor");
         buscador = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/buscador.png", 150, 50, "buscador");
         visualizador = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/visualizador.png", 250, 250, "Visualizador");
+        visualizador.addActionListener(ev->{
+        new GUIVisualizadorPantalla (padre, null);
+        });
+        
         word = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/word.png", 150, 250, "Word");
          buscador.addActionListener(ev->{
         new Buscador(padre);
         });
-        word.addActionListener(ev -> new GUIpantallaWord(padre));
+        word.addActionListener(ev -> new GUIpantallaWord(padre, null,false));
 
         escritorio.add(insta);
         escritorio.add(reproductor);
@@ -204,7 +215,7 @@ public class GUIEscritorio extends JPanel {
         JButton btnWordBarra = crearBotonBarra("/datos/windows/Z/imagenes/windows/iconosApp/word.png");
 
         btnTerminalBarra.addActionListener(ev -> new PanelCMD(padre));
-        btnWordBarra.addActionListener(ev -> new GUIpantallaWord(padre));
+        btnWordBarra.addActionListener(ev -> new GUIpantallaWord(padre, null,false));
 
         btnWindowsBarra.addActionListener(e -> {
             panelwindowsajustes.setVisible(!panelwindowsajustes.isVisible());

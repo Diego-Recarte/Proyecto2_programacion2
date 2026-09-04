@@ -8,10 +8,12 @@ package proyecto2_programacion2;
  *
  * @author denam
  */
+import java.io.*;
 public class usuarioWinActivo {
     public static boolean isActivo;
     public static String nombre;
     public static boolean isAdmin;
+    public static File raiz;
 
   
     

@@ -120,6 +120,7 @@ public class GUILogin extends JPanel {
                 case 1:
                     user.setText("");
                     contra.setText("");
+                   
                     padre.mostrarEscritorio();
                     break;
 

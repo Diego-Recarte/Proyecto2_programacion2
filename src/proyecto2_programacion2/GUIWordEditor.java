@@ -15,8 +15,8 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
 public class GUIWordEditor extends JPanel{
-    private JLabel label;
-    private JTextPane editor;
+    public JLabel label;
+    public JTextPane editor;
     private JScrollPane scrollEditor;
     
     public GUIWordEditor(GUIpantallaWord padre, CardLayout principal, JPanel cards){
