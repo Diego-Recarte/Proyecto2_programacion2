@@ -9,7 +9,7 @@ package proyecto2_programacion2;
  * @author denam
  */
 
-
+import javazoom.jl.player.advanced.AdvancedPlayer;
 import java.awt.*;
 import java.io.File;
 import javax.swing.*;
