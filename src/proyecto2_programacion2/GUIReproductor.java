@@ -140,8 +140,7 @@ public class GUIReproductor extends JDialog {
         JPanel biblioteca = new JPanel(new BorderLayout(5, 5));
         biblioteca.setBackground(Color.BLACK);
         biblioteca.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(Color.DARK_GRAY), "Canciones",
-                0, 0, null, Color.WHITE));
+                BorderFactory.createLineBorder(Color.DARK_GRAY), "Canciones",0, 0, null, Color.WHITE));
         biblioteca.add(new JScrollPane(listaCanciones), BorderLayout.CENTER);
 
         JButton cargar = crearBoton("Cargar seleccionada");

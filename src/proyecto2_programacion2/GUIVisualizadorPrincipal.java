@@ -134,7 +134,7 @@ public class GUIVisualizadorPrincipal extends JPanel {
         botonanterior.setPreferredSize(new Dimension(50, 50));
         botonanterior.setMaximumSize(new Dimension(50, 50));
         botonanterior.setMinimumSize(new Dimension(50, 50));
-        botonanterior.setForeground(Color.BLACK);
+        botonanterior.setForeground(Color.WHITE);
         botonanterior.setBackground(Color.WHITE);
         botonanterior.setFocusPainted(false);
         botonanterior.setBorderPainted(false);
@@ -158,7 +158,7 @@ public class GUIVisualizadorPrincipal extends JPanel {
         botonpost.setPreferredSize(new Dimension(50, 50));
         botonpost.setMaximumSize(new Dimension(50, 50));
         botonpost.setMinimumSize(new Dimension(50, 50));
-        botonpost.setForeground(Color.BLACK);
+        botonpost.setForeground(Color.WHITE);
         botonpost.setBackground(Color.WHITE);
         botonpost.setFocusPainted(false);
         botonpost.setBorderPainted(false);
