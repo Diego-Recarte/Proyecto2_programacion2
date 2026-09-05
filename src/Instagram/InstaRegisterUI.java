@@ -116,7 +116,6 @@ public class InstaRegisterUI extends JPanel {
                 if (window instanceof JFrame frame) {
                     frame.setContentPane(new InstaLoginUI());
                     frame.pack();
-                    frame.setLocationRelativeTo(null);
                     frame.revalidate();
                     frame.repaint();
                 }

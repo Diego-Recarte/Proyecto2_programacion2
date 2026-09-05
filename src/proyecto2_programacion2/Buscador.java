@@ -338,4 +338,17 @@ public class Buscador extends JDialog {
 
         new GUIpantallaWord(perfil, archivo, true);
     }
+
+    public void abrirArchivoEnReproductor(File archivo) throws BuscadorException {
+        if (archivo == null || !archivo.exists() || !archivo.isFile()) {
+            throw new BuscadorException("El archivo seleccionado no es válido.");
+        }
+
+        String nombre = archivo.getName().toLowerCase();
+        if (!nombre.endsWith(".mp5") && !nombre.endsWith(".mp3") && !nombre.endsWith(".wav")) {
+            throw new BuscadorException("El archivo seleccionado no es una canción válida.");
+        }
+
+        new GUIReproductor(perfil, archivo);
+    }
 }

@@ -279,7 +279,6 @@ public class InstaEditProfileUI extends JPanel {
             VisibilidadProfileUI vp = new VisibilidadProfileUI(username, currentUser);
             frame.setContentPane(vp);
             frame.pack();
-            frame.setLocationRelativeTo(null);
             frame.revalidate();
             frame.repaint();
 
@@ -357,7 +356,6 @@ public class InstaEditProfileUI extends JPanel {
             JFrame frame = (JFrame) window;
             frame.setContentPane(new InstaProfileUI(currentUser));
             frame.pack();
-            frame.setLocationRelativeTo(null);
             frame.revalidate();
             frame.repaint();
         }

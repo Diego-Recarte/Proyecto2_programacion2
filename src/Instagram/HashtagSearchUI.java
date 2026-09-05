@@ -167,7 +167,6 @@ public class HashtagSearchUI extends JPanel {
             Runnable backAction = () -> {
                 frame.setContentPane(HashtagSearchUI.this);
                 frame.pack();
-                frame.setLocationRelativeTo(null);
                 frame.revalidate();
                 frame.repaint();
             };
@@ -409,7 +408,6 @@ public class HashtagSearchUI extends JPanel {
         Runnable backAction = () -> {
             frame.setContentPane(HashtagSearchUI.this);
             frame.pack();
-            frame.setLocationRelativeTo(null);
             frame.revalidate();
             frame.repaint();
         };
@@ -428,7 +426,6 @@ public class HashtagSearchUI extends JPanel {
         JFrame frame = (JFrame) w;
         frame.setContentPane(new InstaFeedUI(currentUser));
         frame.pack();
-        frame.setLocationRelativeTo(null);
         frame.revalidate();
         frame.repaint();
     }

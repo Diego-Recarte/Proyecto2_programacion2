@@ -97,7 +97,6 @@ public class InstaProfileUI extends JPanel {
 
                         frame.setContentPane(new InstaEditProfileUI(viewer));
                         frame.pack();
-                        frame.setLocationRelativeTo(null);
                         frame.revalidate();
                         frame.repaint();
                     }
@@ -153,7 +152,6 @@ public class InstaProfileUI extends JPanel {
                     JFrame frame = (JFrame) window;
                     frame.setContentPane(new InstaProfileEditUI(username));
                     frame.pack();
-                    frame.setLocationRelativeTo(null);
                     frame.revalidate();
                     frame.repaint();
                 }
@@ -202,7 +200,6 @@ public class InstaProfileUI extends JPanel {
                 if (window instanceof JFrame frame) {
                     frame.setContentPane(new InstaChatUI(viewer, username));
                     frame.pack();
-                    frame.setLocationRelativeTo(null);
                     frame.revalidate();
                     frame.repaint();
                 }
@@ -311,7 +308,6 @@ public class InstaProfileUI extends JPanel {
                                     Runnable backAction = () -> {
                                         frame.setContentPane(InstaProfileUI.this);
                                         frame.pack();
-                                        frame.setLocationRelativeTo(null);
                                         frame.revalidate();
                                         frame.repaint();
                                     };
@@ -392,7 +388,6 @@ public class InstaProfileUI extends JPanel {
                 JFrame frame = (JFrame) window;
                 frame.setContentPane(new InstaFeedUI(viewer));
                 frame.pack();
-                frame.setLocationRelativeTo(null);
                 frame.revalidate();
                 frame.repaint();
             }
@@ -407,7 +402,6 @@ public class InstaProfileUI extends JPanel {
                 JFrame frame = (JFrame) window;
                 frame.setContentPane(new HashtagSearchUI(viewer));
                 frame.pack();
-                frame.setLocationRelativeTo(null);
                 frame.revalidate();
                 frame.repaint();
             }
@@ -429,7 +423,6 @@ public class InstaProfileUI extends JPanel {
             if (window instanceof JFrame frame) {
                 frame.setContentPane(new InstaChatUI(viewer));
                 frame.pack();
-                frame.setLocationRelativeTo(null);
                 frame.revalidate();
                 frame.repaint();
             }
@@ -444,7 +437,6 @@ public class InstaProfileUI extends JPanel {
                 JFrame frame = (JFrame) window;
                 frame.setContentPane(new InstaProfileUI(viewer));
                 frame.pack();
-                frame.setLocationRelativeTo(null);
                 frame.revalidate();
                 frame.repaint();
             }
@@ -652,7 +644,6 @@ public class InstaProfileUI extends JPanel {
             JFrame frame = (JFrame) window;
             frame.setContentPane(new InstaLoginUI());
             frame.pack();
-            frame.setLocationRelativeTo(null);
             frame.revalidate();
             frame.repaint();
         }

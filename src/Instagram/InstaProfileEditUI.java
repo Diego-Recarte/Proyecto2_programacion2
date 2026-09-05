@@ -247,7 +247,6 @@ public final class InstaProfileEditUI extends JPanel {
         if (window instanceof JFrame frame) {
             frame.setContentPane(new InstaLoginUI());
             frame.pack();
-            frame.setLocationRelativeTo(null);
             frame.revalidate();
             frame.repaint();
         }
@@ -258,7 +257,6 @@ public final class InstaProfileEditUI extends JPanel {
         if (window instanceof JFrame frame) {
             frame.setContentPane(new InstaProfileUI(username));
             frame.pack();
-            frame.setLocationRelativeTo(null);
             frame.revalidate();
             frame.repaint();
         }

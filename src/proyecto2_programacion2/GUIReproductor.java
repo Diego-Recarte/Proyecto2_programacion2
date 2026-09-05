@@ -1,276 +1,301 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package proyecto2_programacion2;
 
-/**
- *
- * @author denam
- */
-import javax.swing.*;
-import java.awt.*;
-import java.io.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
 
-public class GUIReproductor extends JDialog{
-     private CardLayout cardLayout;
-    private JPanel panelCards;
-    private JPanel panelcanciones ;
-    private File carpetaBase;
-    private File carpeta;
-    private File cancion;
-    private JLabel tituloCarpeta;
-    private ButtonGroup grupoArchivos;
-    
-    
-    GUIReproductor(GUIPantallaPrincipal Perfil, File cancion){
-        
-    
-    super(Perfil, "Reproductor", false);
-    
-    
+/** Ventana principal del reproductor de música de miniWindows. */
+public class GUIReproductor extends JDialog {
+
+    private final File carpetaBase;
+    private final DefaultListModel<File> modeloCanciones = new DefaultListModel<>();
+    private final JList<File> listaCanciones = new JList<>(modeloCanciones);
+    private final JPanel panelReproductor = new JPanel(new BorderLayout());
+    private GUIReproductorPrincipal reproductorActual;
+    private File archivoActual;
+    private boolean actualizandoSeleccion;
+
+    public GUIReproductor(GUIPantallaPrincipal perfil) {
+        this(perfil, null);
+    }
+
+    public GUIReproductor(GUIPantallaPrincipal perfil, File cancionInicial) {
+        super(perfil, "Reproductor de música", false);
+
         if (usuarioWinActivo.isAdmin) {
             carpetaBase = new File("./src/datos/windows/Z/infoUsuarios");
         } else {
             carpetaBase = new File("./src/datos/windows/Z/infoUsuarios/" + usuarioWinActivo.nombre);
         }
-        
-        this.cancion= cancion;
-        this.carpeta= cancion.getParentFile();
+        if (!carpetaBase.exists()) {
+            carpetaBase.mkdirs();
+        }
 
+        configurarVentana(perfil);
+        construirInterfaz();
+        recargarBiblioteca();
 
-        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        setSize(500, 800);
-      setLayout(new BorderLayout(10, 10));
-        getContentPane().setBackground(Color.black);
-        setLocationRelativeTo(Perfil);
-        
-        
-        InitCardLayout();
-        agregarCards();
-        mostrarCard("nuevo");
+        if (cancionInicial != null) {
+            cargarCancion(cancionInicial);
+        } else if (!modeloCanciones.isEmpty()) {
+            cargarCancion(modeloCanciones.get(0));
+        } else {
+            mostrarEstadoVacio();
+        }
+
         setVisible(true);
-        
-       
-
     }
-     public void agregarCards(){
-        GUIWordEditor editor = new GUIWordEditor(this, cardLayout, panelCards);
-        agregarCard(editor, "editor");
-        
-        //GUIWordNuevo nuevo = new GUIWordNuevo (this, cardLayout, panelCards, editor);
-        //agregarCard(nuevo, "nuevo");
-        
-        
-        
-        
-        
-        
 
-        
-    }
-    
-    public void InitCardLayout(){
-    cardLayout = new CardLayout(); 
-    panelCards = new JPanel(cardLayout); 
-    
-    
-    panelCards.setOpaque(false);
-     
- 
-    getContentPane().add(panelCards, BorderLayout.CENTER);
-    
-    
+    private void configurarVentana(GUIPantallaPrincipal perfil) {
+        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        setSize(900, 720);
+        setMinimumSize(new Dimension(760, 620));
+        setLocationRelativeTo(perfil);
+        getContentPane().setBackground(Color.BLACK);
 
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                detenerReproduccionActual();
+            }
 
-
-    }
-    private void agregarCard(JPanel panel, String nombre) {
-        panelCards.add(panel, nombre);
-    }
-    public void mostrarCard(String nombreCard) { 
-        cardLayout.show(panelCards, nombreCard); 
-        panelCards.revalidate();
-        panelCards.repaint(); 
-    }
-    
-    private void initLista(){
-        JPanel listaPanel = new JPanel();
-        listaPanel.setPreferredSize(new Dimension(150, 800));
-        listaPanel.setMinimumSize(new Dimension(150, 800));
-        listaPanel.setMaximumSize(new Dimension(150, 800));
-        listaPanel.setOpaque(false);
-        
-        
-        JPanel paneleleccion = new JPanel ();
-        paneleleccion .setPreferredSize(new Dimension(150, 100));
-        paneleleccion .setMinimumSize(new Dimension(150, 100));
-        paneleleccion .setMaximumSize(new Dimension(150, 100));
-        paneleleccion.setBackground(Color.gray);
-        paneleleccion.setLayout(new BoxLayout( paneleleccion, BoxLayout.Y_AXIS));
-        paneleleccion.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
-        
-        panelcanciones = new JPanel ();
-        panelcanciones .setPreferredSize(new Dimension(330, 100));
-        panelcanciones .setMinimumSize(new Dimension(330, 100));
-        panelcanciones .setMaximumSize(new Dimension(330, 100));
-        panelcanciones.setBackground(Color.black);
-        panelcanciones.setLayout(new BoxLayout( paneleleccion, BoxLayout.Y_AXIS));
-        panelcanciones.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
-        
-        JScrollPane scroll = new JScrollPane(panelcanciones);
-        scroll.setPreferredSize(new Dimension(330, 100));
-        scroll.setBorder(BorderFactory.createTitledBorder("Explorador"));
-        
-        tituloCarpeta = new JLabel(carpeta.getName());
-        tituloCarpeta.setFont(new Font("Arial", Font.BOLD, 14));
-        tituloCarpeta.setForeground(Color.BLACK);
-        tituloCarpeta.setOpaque(false);
-        tituloCarpeta.setHorizontalAlignment(SwingConstants.CENTER);
-        tituloCarpeta.setPreferredSize(new Dimension(50, 100));
-        paneleleccion.add(tituloCarpeta);
-        
-        
-        JButton abrirCarpeta = new JButton ("Buscar en otra carpeta");
-        abrirCarpeta .setFont(new Font("Arial", Font.BOLD, 14));
-        abrirCarpeta .setPreferredSize(new Dimension(50, 100));
-        abrirCarpeta .setMaximumSize(new Dimension(50, 100));
-        abrirCarpeta .setMinimumSize(new Dimension(50, 100));
-        abrirCarpeta .setForeground(Color.WHITE);
-        abrirCarpeta .setBackground(Color.RED);
-        abrirCarpeta .setFocusPainted(false);
-        abrirCarpeta .setBorderPainted(false);
-        abrirCarpeta .setContentAreaFilled(false);
-        abrirCarpeta .setHorizontalAlignment(SwingConstants.CENTER);
-        abrirCarpeta .addActionListener(e -> {
-            buscarOtraCarpeta();
-            
-            
+            @Override
+            public void windowClosed(WindowEvent e) {
+                detenerReproduccionActual();
+            }
         });
-        paneleleccion.add(Box.createHorizontalStrut(40));
-        paneleleccion.add(abrirCarpeta);
-
-
-        
-        listaPanel.add(paneleleccion);
-        listaPanel.add(scroll);
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        add(listaPanel, BorderLayout.WEST);
-        
-        
-        
-        
-
-        
     }
-    
-      public void archivos(File file) {
-        panelcanciones.removeAll();
-        grupoArchivos = new ButtonGroup();
-        file = carpeta;
 
-        
+    private void construirInterfaz() {
+        JPanel barra = new JPanel(new BorderLayout(10, 10));
+        barra.setBackground(Color.BLACK);
+        barra.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        
-        tituloCarpeta.setText( file.getName());
+        JLabel titulo = new JLabel("Biblioteca de música");
+        titulo.setForeground(Color.WHITE);
+        titulo.setFont(new Font("Arial", Font.BOLD, 20));
 
-        File[] archivos = file.listFiles();
+        JPanel acciones = new JPanel();
+        acciones.setOpaque(false);
+        JButton abrir = crearBoton("Buscar canción");
+        JButton actualizar = crearBoton("Actualizar");
+        abrir.addActionListener(e -> abrirSelector());
+        actualizar.addActionListener(e -> recargarBiblioteca());
+        acciones.add(abrir);
+        acciones.add(actualizar);
 
-        if (archivos == null || archivos.length == 0) {
-            JLabel vacio = new JLabel("Esta carpeta no contiene archivos.");
-            vacio.setForeground(Color.WHITE);
-            vacio.setFont(new Font("Arial", Font.BOLD, 14));
-            panelcanciones.add(vacio);
-            refrescarLista();
+        barra.add(titulo, BorderLayout.WEST);
+        barra.add(acciones, BorderLayout.EAST);
+        add(barra, BorderLayout.NORTH);
+
+        listaCanciones.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        listaCanciones.setBackground(new Color(24, 24, 24));
+        listaCanciones.setForeground(Color.WHITE);
+        listaCanciones.setFixedCellHeight(42);
+        listaCanciones.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                    boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(
+                        list, value, index, isSelected, cellHasFocus);
+                if (value instanceof File archivo) {
+                    label.setText(archivo.getName());
+                    label.setToolTipText(archivo.getAbsolutePath());
+                }
+                label.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+                return label;
+            }
+        });
+        listaCanciones.addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting() || actualizandoSeleccion) {
+                return;
+            }
+            File seleccionada = listaCanciones.getSelectedValue();
+            if (seleccionada != null && !seleccionada.equals(archivoActual)) {
+                cargarCancion(seleccionada);
+            }
+        });
+
+        JPanel biblioteca = new JPanel(new BorderLayout(5, 5));
+        biblioteca.setBackground(Color.BLACK);
+        biblioteca.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.DARK_GRAY), "Canciones",
+                0, 0, null, Color.WHITE));
+        biblioteca.add(new JScrollPane(listaCanciones), BorderLayout.CENTER);
+
+        JButton cargar = crearBoton("Cargar seleccionada");
+        cargar.addActionListener(e -> {
+            File seleccionada = listaCanciones.getSelectedValue();
+            if (seleccionada == null) {
+                JOptionPane.showMessageDialog(this, "Selecciona una canción de la lista.",
+                        "Reproductor", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            cargarCancion(seleccionada);
+        });
+        biblioteca.add(cargar, BorderLayout.SOUTH);
+
+        panelReproductor.setBackground(Color.BLACK);
+        JSplitPane divisor = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, biblioteca, panelReproductor);
+        divisor.setDividerLocation(260);
+        divisor.setResizeWeight(0.28);
+        divisor.setBorder(null);
+        add(divisor, BorderLayout.CENTER);
+    }
+
+    private JButton crearBoton(String texto) {
+        JButton boton = new JButton(texto);
+        boton.setBackground(new Color(210, 50, 35));
+        boton.setForeground(Color.WHITE);
+        boton.setFocusPainted(false);
+        return boton;
+    }
+
+    private void mostrarEstadoVacio() {
+        detenerReproduccionActual();
+        panelReproductor.removeAll();
+        JLabel mensaje = new JLabel(
+                "<html><div style='text-align:center'>No hay canciones disponibles.<br>"
+                + "Importa un MP3/WAV desde el Buscador o pulsa Buscar canción.</div></html>",
+                SwingConstants.CENTER);
+        mensaje.setForeground(Color.LIGHT_GRAY);
+        mensaje.setFont(new Font("Arial", Font.PLAIN, 16));
+        panelReproductor.add(mensaje, BorderLayout.CENTER);
+        panelReproductor.revalidate();
+        panelReproductor.repaint();
+    }
+
+    void abrirSelector() {
+        try {
+            GUISelector selector = new GUISelector(this, carpetaBase, "mp5", "mp3", "wav");
+            selector.setVisible(true);
+            File seleccionada = selector.getArchivoSeleccionado();
+            if (seleccionada != null) {
+                cargarCancion(seleccionada);
+                recargarBiblioteca();
+            }
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Reproductor", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void recargarBiblioteca() {
+        File seleccionAnterior = archivoActual;
+        List<File> canciones = new ArrayList<>();
+        recolectarCanciones(carpetaBase, canciones);
+        canciones.sort(Comparator.comparing(File::getName, String.CASE_INSENSITIVE_ORDER));
+
+        modeloCanciones.clear();
+        for (File archivo : canciones) {
+            modeloCanciones.addElement(archivo);
+        }
+
+        if (seleccionAnterior != null) {
+            listaCanciones.setSelectedValue(seleccionAnterior, true);
+        }
+    }
+
+    private void recolectarCanciones(File carpeta, List<File> resultado) {
+        File[] archivos = carpeta.listFiles();
+        if (archivos == null) {
+            return;
+        }
+        for (File archivo : archivos) {
+            if (archivo.isDirectory()) {
+                recolectarCanciones(archivo, resultado);
+            } else if (esAudioCompatible(archivo)) {
+                resultado.add(archivo);
+            }
+        }
+    }
+
+    private boolean esAudioCompatible(File archivo) {
+        String nombre = archivo.getName().toLowerCase();
+        return nombre.endsWith(".mp5") || nombre.endsWith(".mp3") || nombre.endsWith(".wav");
+    }
+
+    private void cargarCancion(File archivo) {
+        if (archivo == null || !archivo.isFile() || !esAudioCompatible(archivo)) {
+            JOptionPane.showMessageDialog(this, "El archivo de audio no es válido.",
+                    "Reproductor", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        
-
-        for (File archivo : archivos) {
-            agregarBotonArchivo(archivo);
-        }
-
-        refrescarLista();
-    }
-
-    private void agregarBotonArchivo(File archivo) {
-        String nombre = archivo.getName();
-
-       
-      
-        long tamanio = archivo.length();
-
-        String texto = nombre + " | Tamaño: " + tamanio + " bytes";
-
-        JToggleButton boton = new JToggleButton(texto);
-        boton.setPreferredSize(new Dimension(700, 90));
-        boton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
-        boton.setMinimumSize(new Dimension(700, 90));
-        boton.setHorizontalAlignment(SwingConstants.LEFT);
-        boton.setVerticalAlignment(SwingConstants.CENTER);
-        boton.setBackground(Color.BLACK);
-        boton.setForeground(Color.WHITE);
-        boton.setFocusPainted(false);
-
-        grupoArchivos.add(boton);
-
-        boton.addActionListener(e -> {
-            
-        });
-
-        panelcanciones.add(boton);
-        panelcanciones.add(Box.createVerticalStrut(8));
-    }
-     private void refrescarLista() {
-        panelcanciones.revalidate();
-        panelcanciones.repaint();
-    }
-     private void buscarOtraCarpeta() {
-        File carpetaInicial;
-
-        
-        GUISelector selector = new GUISelector(this, carpetaBase, "mp5");
-
-        selector.setVisible(true);
-
-        File seleccionado = selector.getArchivoSeleccionado();
-
-        if (seleccionado != null) {
-            carpeta = seleccionado.getParentFile();
-            //abrirImagen(seleccionado);
+        detenerReproduccionActual();
+        try {
+            GUIReproductorPrincipal nuevo = new GUIReproductorPrincipal(this, archivo);
+            reproductorActual = nuevo;
+            archivoActual = archivo;
+            panelReproductor.removeAll();
+            panelReproductor.add(nuevo, BorderLayout.CENTER);
+            panelReproductor.revalidate();
+            panelReproductor.repaint();
+            seleccionarEnLista(archivo);
+            setTitle("Reproductor - " + archivo.getName());
+        } catch (Exception ex) {
+            archivoActual = null;
+            panelReproductor.removeAll();
+            mostrarEstadoVacio();
+            JOptionPane.showMessageDialog(this, "No se pudo abrir la canción: " + ex.getMessage(),
+                    "Reproductor", JOptionPane.ERROR_MESSAGE);
         }
     }
-     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+    void cancionAnterior() {
+        cambiarCancion(-1);
+    }
+
+    void cancionSiguiente() {
+        cambiarCancion(1);
+    }
+
+    private void cambiarCancion(int desplazamiento) {
+        if (modeloCanciones.isEmpty()) {
+            return;
+        }
+        int indice = listaCanciones.getSelectedIndex();
+        if (indice < 0) {
+            indice = 0;
+        } else {
+            indice = (indice + desplazamiento + modeloCanciones.size()) % modeloCanciones.size();
+        }
+        cargarCancion(modeloCanciones.get(indice));
+    }
+
+    private void detenerReproduccionActual() {
+        if (reproductorActual != null) {
+            reproductorActual.detener();
+            reproductorActual = null;
+        }
+    }
+
+    private void seleccionarEnLista(File archivo) {
+        actualizandoSeleccion = true;
+        try {
+            listaCanciones.setSelectedValue(archivo, true);
+        } finally {
+            actualizandoSeleccion = false;
+        }
+    }
 }

@@ -33,7 +33,7 @@ public class GUIEscritorio extends JPanel {
     private JButton word;
     private JButton btnUsuario;
     private JButton btncrear;
-    private JFrame instaFrame;
+    private int siguienteOffsetInstagram;
 
     private Dimension pantalla;
 
@@ -109,6 +109,7 @@ public class GUIEscritorio extends JPanel {
         word.addActionListener(ev -> new GUIpantallaWord(padre, null,false));
 
         insta.addActionListener(ev -> abrirInstagram());
+        reproductor.addActionListener(ev -> abrirReproductor(padre));
 
 
         escritorio.add(insta);
@@ -226,6 +227,7 @@ public class GUIEscritorio extends JPanel {
         btnWordBarra.addActionListener(ev -> new GUIpantallaWord(padre, null,false));
 
         btnInstaBarra.addActionListener(ev -> abrirInstagram());
+        btnReproductorBarra.addActionListener(ev -> abrirReproductor(padre));
 
 
         btnWindowsBarra.addActionListener(e -> {
@@ -250,17 +252,29 @@ public class GUIEscritorio extends JPanel {
             instaController.getInstance().setInsta(new instaManager());
         }
 
-        if (instaFrame == null || !instaFrame.isDisplayable()) {
-            instaFrame = new JFrame("Instagram");
-            instaFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            instaFrame.setResizable(false);
-            instaFrame.setAlwaysOnTop(true);
-            instaFrame.setContentPane(new InstaLoginUI());
-            instaFrame.pack();
-            instaFrame.setLocationRelativeTo(null);
-        }
-        instaFrame.setVisible(true);
-        instaFrame.toFront();
+        JFrame nuevaVentana = new JFrame("Instagram");
+        nuevaVentana.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        nuevaVentana.setResizable(false);
+        nuevaVentana.setAlwaysOnTop(true);
+        nuevaVentana.setContentPane(new InstaLoginUI());
+        nuevaVentana.pack();
+        nuevaVentana.setLocationRelativeTo(null);
+
+        Point posicionCentrada = nuevaVentana.getLocation();
+        int offset = siguienteOffsetInstagram;
+        int x = Math.min(posicionCentrada.x + offset,
+                Math.max(0, pantalla.width - nuevaVentana.getWidth()));
+        int y = Math.min(posicionCentrada.y + offset,
+                Math.max(0, pantalla.height - nuevaVentana.getHeight()));
+        nuevaVentana.setLocation(x, y);
+        siguienteOffsetInstagram = (siguienteOffsetInstagram + 30) % 180;
+
+        nuevaVentana.setVisible(true);
+        nuevaVentana.toFront();
+    }
+
+    private void abrirReproductor(GUIPantallaPrincipal padre) {
+        new GUIReproductor(padre);
     }
 
     public void initApagar(CardLayout principal, JPanel cards) {

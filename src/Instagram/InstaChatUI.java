@@ -603,7 +603,6 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
         if (window instanceof JFrame frame) {
             frame.setContentPane(panel);
             frame.pack();
-            frame.setLocationRelativeTo(null);
             frame.revalidate();
             frame.repaint();
         }

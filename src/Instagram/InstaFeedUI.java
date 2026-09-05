@@ -491,7 +491,6 @@ public final class InstaFeedUI extends JPanel {
     private static void replace(JFrame frame, Component content) {
         frame.setContentPane((java.awt.Container) content);
         frame.pack();
-        frame.setLocationRelativeTo(null);
         frame.revalidate();
         frame.repaint();
     }

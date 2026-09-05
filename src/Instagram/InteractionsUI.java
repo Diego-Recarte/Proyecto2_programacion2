@@ -146,7 +146,6 @@ public class InteractionsUI extends JPanel {
             Runnable backAction = () -> {
                 f.setContentPane(this);
                 f.pack();
-                f.setLocationRelativeTo(null);
                 f.revalidate();
                 f.repaint();
             };
@@ -170,7 +169,6 @@ public class InteractionsUI extends JPanel {
         JFrame f = (JFrame) w;
         f.setContentPane(new InstaFeedUI(currentUser));
         f.pack();
-        f.setLocationRelativeTo(null);
         f.revalidate();
         f.repaint();
     }

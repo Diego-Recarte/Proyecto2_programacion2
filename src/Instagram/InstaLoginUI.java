@@ -95,7 +95,6 @@ public class InstaLoginUI extends JPanel {
                     frame.setAlwaysOnTop(true);
                     frame.setContentPane(new InstaRegisterUI());
                     frame.pack();
-                    frame.setLocationRelativeTo(null);
                     frame.revalidate();
                     frame.repaint();
                 }
@@ -174,7 +173,6 @@ public class InstaLoginUI extends JPanel {
                 // El feed es la pantalla principal después de iniciar sesión.
                 frame.setContentPane(new InstaFeedUI(username));
                 frame.pack();
-                frame.setLocationRelativeTo(null);
                 frame.revalidate();
                 frame.repaint();
             }

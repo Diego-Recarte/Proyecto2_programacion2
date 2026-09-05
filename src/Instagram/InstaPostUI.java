@@ -526,7 +526,6 @@ public class InstaPostUI extends JLayeredPane {
                 if (window instanceof JFrame frame) {
                     frame.setContentPane(new InstaProfileUI(currentUser));
                     frame.pack();
-                    frame.setLocationRelativeTo(null);
                     frame.revalidate();
                     frame.repaint();
                 }
@@ -862,7 +861,6 @@ public class InstaPostUI extends JLayeredPane {
         if (window instanceof JFrame frame) {
             frame.setContentPane((Container) panel);
             frame.pack();
-            frame.setLocationRelativeTo(null);
             frame.revalidate();
             frame.repaint();
         }

@@ -83,7 +83,6 @@ public class VisibilidadProfileUI extends JPanel {
                     JFrame frame = (JFrame) window;
                     frame.setContentPane(new InstaEditProfileUI(viewer));
                     frame.pack();
-                    frame.setLocationRelativeTo(null);
                     frame.revalidate();
                     frame.repaint();
                 }
@@ -122,7 +121,6 @@ public class VisibilidadProfileUI extends JPanel {
             if (window instanceof JFrame frame) {
                 frame.setContentPane(new InstaChatUI(viewer, profileUser));
                 frame.pack();
-                frame.setLocationRelativeTo(null);
                 frame.revalidate();
                 frame.repaint();
             }
@@ -263,7 +261,6 @@ public class VisibilidadProfileUI extends JPanel {
                                     Runnable backAction = () -> {
                                         frame.setContentPane(VisibilidadProfileUI.this);
                                         frame.pack();
-                                        frame.setLocationRelativeTo(null);
                                         frame.revalidate();
                                         frame.repaint();
                                     };
@@ -411,7 +408,6 @@ public class VisibilidadProfileUI extends JPanel {
                 JFrame frame = (JFrame) window;
                 frame.setContentPane(new InstaFeedUI(viewer));
                 frame.pack();
-                frame.setLocationRelativeTo(null);
                 frame.revalidate();
                 frame.repaint();
             }
@@ -426,7 +422,6 @@ public class VisibilidadProfileUI extends JPanel {
                 JFrame frame = (JFrame) window;
                 frame.setContentPane(new HashtagSearchUI(viewer));
                 frame.pack();
-                frame.setLocationRelativeTo(null);
                 frame.revalidate();
                 frame.repaint();
             }
@@ -593,7 +588,6 @@ public class VisibilidadProfileUI extends JPanel {
             if (window instanceof JFrame frame) {
                 frame.setContentPane(new InstaChatUI(viewer));
                 frame.pack();
-                frame.setLocationRelativeTo(null);
                 frame.revalidate();
                 frame.repaint();
             }
@@ -608,7 +602,6 @@ public class VisibilidadProfileUI extends JPanel {
                 JFrame frame = (JFrame) window;
                 frame.setContentPane(new InstaProfileUI(viewer));
                 frame.pack();
-                frame.setLocationRelativeTo(null);
                 frame.revalidate();
                 frame.repaint();
             }
