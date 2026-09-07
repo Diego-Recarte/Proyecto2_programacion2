@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.io.RandomAccessFile;
 
 public class GUIArchivosPanel extends JPanel {
 
@@ -434,8 +435,16 @@ public class GUIArchivosPanel extends JPanel {
         if (nuevoNombre.isEmpty()) {
             throw new BuscadorException("El nuevo nombre no puede estar vacío.");
         }
-
-        File nuevoArchivo = new File(archivoSeleccionado.getParentFile(), nuevoNombre);
+        int punto = archivoSeleccionado.getName().lastIndexOf('.');
+        String extension;
+         if (punto == -1 || punto == archivoSeleccionado.getName().length() - 1){
+            extension = "";
+        }else{
+           extension = archivoSeleccionado.getName().substring(punto);
+        }
+ 
+        
+        File nuevoArchivo = new File(archivoSeleccionado.getParentFile(), nuevoNombre + extension);
 
         if (nuevoArchivo.exists()) {
             throw new BuscadorException("Ya existe otro elemento con ese nombre.");
