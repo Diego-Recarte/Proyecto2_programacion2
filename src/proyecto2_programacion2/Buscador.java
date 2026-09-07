@@ -332,7 +332,7 @@ public class Buscador extends JDialog {
 
         String nombre = archivo.getName().toLowerCase();
 
-        if (!nombre.endsWith(".wrd")) {
+        if (!nombre.endsWith(".pwrd")) {
             throw new BuscadorException("El archivo seleccionado no es un documento válido.");
         }
 

@@ -331,7 +331,7 @@ public class GUIArchivosPanel extends JPanel {
 
             if (extension.equals("jpg") || extension.equals("jpeg") || extension.equals("png")) {
                 destino = new File(carpetaImagenes, archivo.getName());
-            } else if (extension.equals("txt") || extension.equals("pdf") || extension.equals("doc") || extension.equals("docx")) {
+            } else if (extension.equals("txt") || extension.equals("pdf") || extension.equals("doc") || extension.equals("docx")||extension.equals("pwrd")) {
                 destino = new File(carpetaDocumentos, archivo.getName());
             } else if (extension.equals("mp3") || extension.equals("wav") || extension.equals("mp5")) {
                 destino = new File(carpetaMusica, archivo.getName());
@@ -469,7 +469,7 @@ public class GUIArchivosPanel extends JPanel {
         if (nombre.endsWith(".jpg") || nombre.endsWith(".jpeg") || nombre.endsWith(".png")) {
             buscador.abrirArchivoEnVisualizador(archivoSeleccionado);
             return;
-        }else if (nombre.endsWith(".wrd") ){
+        }else if (nombre.endsWith(".pwrd") ){
             buscador.abrirArchivoEnWord(archivoSeleccionado);
             return;
         }else if (nombre.endsWith(".mp5") || nombre.endsWith(".mp3") || nombre.endsWith(".wav")) {

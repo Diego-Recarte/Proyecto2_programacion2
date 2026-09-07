@@ -9,23 +9,28 @@ package proyecto2_programacion2;
  * @author denam
  */
 
-import javax.swing.*;
-import java.io.*;
+
 import java.awt.*;
 public class wordFragmento {
-    
+
     private String texto;
     private String fuente;
     private int tamano;
     private Color color;
- 
-    
-    public wordFragmento (String texto, String fuente, int tamano, Color color ){
-        this.texto= texto;
-        this.fuente= fuente;
-        this.tamano= tamano;
-        this.color= color;
-        
+    private boolean negrita;
+    private boolean cursiva;
+    private boolean subrayado;
+    private boolean tachado;
+
+    public wordFragmento(String texto, String fuente, int tamano, Color color, boolean negrita, boolean cursiva, boolean subrayado, boolean tachado) {
+        this.texto = texto;
+        this.fuente = fuente;
+        this.tamano = tamano;
+        this.color = color;
+        this.negrita = negrita;
+        this.cursiva = cursiva;
+        this.subrayado = subrayado;
+        this.tachado = tachado;
     }
 
     public String getTexto() {
@@ -43,8 +48,20 @@ public class wordFragmento {
     public Color getColor() {
         return color;
     }
-    
-    
-    
-    
+
+    public boolean isNegrita() {
+        return negrita;
+    }
+
+    public boolean isCursiva() {
+        return cursiva;
+    }
+
+    public boolean isSubrayado() {
+        return subrayado;
+    }
+
+    public boolean isTachado() {
+        return tachado;
+    }
 }

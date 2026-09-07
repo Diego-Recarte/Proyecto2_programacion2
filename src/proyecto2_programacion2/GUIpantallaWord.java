@@ -43,9 +43,9 @@ public class GUIpantallaWord extends JDialog{
              try{
                 WordArchivos.abrir(editor.label, editor.editor, archivo);
                 mostrarCard("editor");
-             }catch(IOException e){
+             
                  
-             }catch (BadLocationException e){
+             }catch (WordException e){
                  
              }
 
@@ -66,7 +66,7 @@ public class GUIpantallaWord extends JDialog{
         nuevo = new GUIWordNuevo (this, cardLayout, panelCards, editor);
         agregarCard(nuevo, "nuevo");
         
-         guardarComo= new GUIWordGuardarComo(this, cardLayout, panelCards,  editor);
+         guardarComo= new GUIWordGuardarComo (this, cardLayout, panelCards,  editor);
          agregarCard(guardarComo, "guardarComo");
         
         
@@ -99,5 +99,16 @@ public class GUIpantallaWord extends JDialog{
         cardLayout.show(panelCards, nombreCard); 
         panelCards.revalidate();
         panelCards.repaint(); 
+    }
+    
+    
+    public void cambiarGuardar(){
+        if (editor.IsExistente){
+            guardarComo.Guardar.setVisible(true);
+            nuevo.Guardar.setVisible(true);
+        }else{
+            guardarComo.Guardar.setVisible(false);
+            nuevo.Guardar.setVisible(false);
+        }
     }
 }
