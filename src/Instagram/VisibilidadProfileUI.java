@@ -1,5 +1,7 @@
 package Instagram;
 
+import Logica.RutasSistema;
+
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -432,9 +434,9 @@ public class VisibilidadProfileUI extends JPanel {
         btnSubir.setForeground(COLOR_BTN);
         btnSubir.addActionListener(e -> {
             try {
-                String osUser = null;
+                String osUser = proyecto2_programacion2.usuarioWinActivo.nombre;
                 try {
-                    if (Logica.ManejoUsuarios.UserLogged.getInstance().getUserLogged() != null) {
+                    if ((osUser == null || osUser.isBlank()) && Logica.ManejoUsuarios.UserLogged.getInstance().getUserLogged() != null) {
                         osUser = Logica.ManejoUsuarios.UserLogged.getInstance().getUserLogged().getName();
                     }
                 } catch (Exception ex) {
@@ -442,9 +444,9 @@ public class VisibilidadProfileUI extends JPanel {
                 }
                 final String targetUser = (osUser != null && !osUser.trim().isEmpty()) ? osUser : viewer;
 
-                final File usersRoot = new File("src\\Z\\Usuarios");
+                final File usersRoot = RutasSistema.USUARIOS;
                 final File userRoot = new File(usersRoot, targetUser);
-                final File imagesFolder = new File(userRoot, "Mis Imagenes");
+                final File imagesFolder = new File(userRoot, RutasSistema.IMAGENES);
                 if (!imagesFolder.exists()) {
                     imagesFolder.mkdirs();
                 }

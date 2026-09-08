@@ -4,6 +4,8 @@
  */
 package proyecto2_programacion2;
 
+import Logica.RutasSistema;
+
 /**
  *
  * @author denam
@@ -69,10 +71,10 @@ public class GUIEscritorio extends JPanel {
             btnUsuario.setText(usuarioWinActivo.nombre);
             if (usuarioWinActivo.isAdmin){
                 panelWindows.add(btncrear);
-                usuarioWinActivo.raiz= new File("src/datos/windows/Z/infoUsuarios");
+                usuarioWinActivo.raiz= RutasSistema.USUARIOS;
             }else{
                panelWindows.remove(btncrear); 
-               usuarioWinActivo.raiz= new File("src/datos/windows/Z/infoUsuarios/"+usuarioWinActivo.nombre);
+               usuarioWinActivo.raiz= RutasSistema.usuario(usuarioWinActivo.nombre);
             }
             
             

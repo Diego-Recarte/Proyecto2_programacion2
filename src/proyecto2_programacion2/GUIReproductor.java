@@ -1,5 +1,7 @@
 package proyecto2_programacion2;
 
+import Logica.RutasSistema;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -44,9 +46,9 @@ public class GUIReproductor extends JDialog {
         super(perfil, "Reproductor de música", false);
 
         if (usuarioWinActivo.isAdmin) {
-            carpetaBase = new File("./src/datos/windows/Z/infoUsuarios");
+            carpetaBase = RutasSistema.USUARIOS;
         } else {
-            carpetaBase = new File("./src/datos/windows/Z/infoUsuarios/" + usuarioWinActivo.nombre);
+            carpetaBase = RutasSistema.usuario(usuarioWinActivo.nombre);
         }
         if (!carpetaBase.exists()) {
             carpetaBase.mkdirs();

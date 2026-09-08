@@ -4,6 +4,8 @@
  */
 package proyecto2_programacion2;
 
+import Logica.RutasSistema;
+
 /**
  *
  * @author denam
@@ -185,7 +187,7 @@ public class GUIVisualizadorPrincipal extends JPanel {
 
     private void initImagen() {
         if (archivo == null) {
-            carpeta = new File("src/datos/windows/Z/infoUsuarios/" + usuarioWinActivo.nombre + "/misImagenes");
+            carpeta = RutasSistema.imagenes(usuarioWinActivo.nombre);
 
             archivos = obtenerImagenesDeCarpeta(carpeta);
 
@@ -302,9 +304,9 @@ public class GUIVisualizadorPrincipal extends JPanel {
         File carpetaInicial;
 
         if (usuarioWinActivo.isAdmin) {
-            carpetaInicial = new File("src/datos/windows/Z/infoUsuarios");
+            carpetaInicial = RutasSistema.USUARIOS;
         } else {
-            carpetaInicial = new File("src/datos/windows/Z/infoUsuarios/" + usuarioWinActivo.nombre);
+            carpetaInicial = RutasSistema.usuario(usuarioWinActivo.nombre);
         }
 
         GUISelector selector = new GUISelector(padre, carpetaInicial, "jpg", "jpeg", "png");

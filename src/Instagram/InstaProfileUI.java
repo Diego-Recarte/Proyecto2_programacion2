@@ -4,6 +4,8 @@
  */
 package Instagram;
 
+import Logica.RutasSistema;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -447,9 +449,9 @@ public class InstaProfileUI extends JPanel {
     }
 
     private void subirPost() {
-        String osUser = null;
+        String osUser = proyecto2_programacion2.usuarioWinActivo.nombre;
         try {
-            if (UserLogged.getInstance().getUserLogged() != null) {
+            if ((osUser == null || osUser.isBlank()) && UserLogged.getInstance().getUserLogged() != null) {
                 osUser = UserLogged.getInstance().getUserLogged().getName();
             }
         } catch (Exception ex) {
@@ -458,9 +460,9 @@ public class InstaProfileUI extends JPanel {
 
         final String targetUser = (osUser != null && !osUser.trim().isEmpty()) ? osUser : username;
 
-        final File usersRoot = new File("src\\Z\\Usuarios");
+        final File usersRoot = RutasSistema.USUARIOS;
         final File userRoot = new File(usersRoot, targetUser);
-        final File imagesFolder = new File(userRoot, "Mis Imagenes");
+        final File imagesFolder = new File(userRoot, RutasSistema.IMAGENES);
 
         if (!imagesFolder.exists()) {
             imagesFolder.mkdirs();

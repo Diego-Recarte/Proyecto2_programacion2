@@ -1,5 +1,7 @@
 package Instagram;
 
+import Logica.RutasSistema;
+
 import Logica.Excepciones.InvalidDataException;
 import Logica.Ventanas.genFondos;
 import java.awt.*;
@@ -154,11 +156,11 @@ public class InstaRegisterUI extends JPanel {
 
     private void seleccionarFotoPerfil() {
 
-        final File usersRoot = new File("src\\Z\\Usuarios");
+        final File usersRoot = RutasSistema.USUARIOS;
 
-        String osUser = null;
+        String osUser = proyecto2_programacion2.usuarioWinActivo.nombre;
         try {
-            if (Logica.ManejoUsuarios.UserLogged.getInstance().getUserLogged() != null) {
+            if ((osUser == null || osUser.isBlank()) && Logica.ManejoUsuarios.UserLogged.getInstance().getUserLogged() != null) {
                 osUser = Logica.ManejoUsuarios.UserLogged.getInstance().getUserLogged().getName();
             }
         } catch (Exception ex) {
@@ -171,7 +173,7 @@ public class InstaRegisterUI extends JPanel {
         }
 
         final File userRoot = new File(usersRoot, osUser);
-        final File imagesFolder = new File(userRoot, "Mis Imagenes");
+        final File imagesFolder = new File(userRoot, RutasSistema.IMAGENES);
         if (!imagesFolder.exists()) {
             imagesFolder.mkdirs();
         }

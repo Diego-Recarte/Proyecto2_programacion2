@@ -4,6 +4,8 @@
  */
 package Logica.ManejoUsuarios;
 
+import Logica.RutasSistema;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -25,10 +27,11 @@ public class UserManager {
     
     //constructor inicializa dichos parametros
     public UserManager(){
-        userRoute="src\\Z\\Usuarios";
+        userRoute=RutasSistema.USUARIOS.getPath();
         try{
-           userMRoute= new File("src\\Z");
-           userManage= new RandomAccessFile(userMRoute+"\\users.patOS", "rw" ); //ver si esto no crashea
+           userMRoute= RutasSistema.Z;
+           java.nio.file.Files.createDirectories(RutasSistema.USUARIOS.toPath());
+           userManage= new RandomAccessFile(new File(userMRoute, "users.patOS"), "rw"); //ver si esto no crashea
         }catch(IOException e){
             
         }
@@ -49,8 +52,7 @@ public class UserManager {
     
     public static void addUser(String name, String password) throws IOException{
         
-        File route = new File(userRoute,name);
-        if(!route.exists()){
+        if(!checkUsername(name)){
             //Escritura de datos en archivo manager
             userManage.seek(userManage.length());
             userManage.writeUTF(name);
@@ -62,29 +64,9 @@ public class UserManager {
     }
     
     private static void initUserDir(String name) throws IOException{
-        File newUDir = new File(userRoute, name); //me ubico en carpeta de usuario
-        if(!newUDir.exists()){
-            newUDir.mkdir();
-            
-            //Inicializacion de carpetas por defecto del usuario
-            File myMusic= new File(newUDir,"Musica");
-            File myDocs = new File(newUDir,"Mis Documentos");
-            File myImages = new File(newUDir, "Mis Imagenes");
-            
-            if(!myMusic.exists()){
-                myMusic.mkdir();
-            }
-            
-            if(!myDocs.exists()){
-                myDocs.mkdir();
-            }
-            
-            if(!myImages.exists()){
-                myImages.mkdir();
-            }
-        }else{
-            System.out.println("YA ESTABA CREADA LA COSA XD");
-        }
+        java.nio.file.Files.createDirectories(RutasSistema.musica(name).toPath());
+        java.nio.file.Files.createDirectories(RutasSistema.documentos(name).toPath());
+        java.nio.file.Files.createDirectories(RutasSistema.imagenes(name).toPath());
     }
     
     

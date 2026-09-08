@@ -4,6 +4,8 @@
  */
 package proyecto2_programacion2;
 
+import Logica.RutasSistema;
+
 /**
  *
  * @author denam
@@ -172,9 +174,9 @@ public class GUIWordNuevo  extends JPanel {
                     File carpetaBase;
                     if (usuarioWinActivo.isAdmin){
                         
-                     carpetaBase = new File( "src/datos/windows/Z/infoUsuarios" );
+                     carpetaBase = RutasSistema.USUARIOS;
                     }else{
-                     carpetaBase = new File( "src/datos/windows/Z/infoUsuarios/" + usuarioWinActivo.nombre + "/misDocumentos" );
+                     carpetaBase = RutasSistema.documentos(usuarioWinActivo.nombre);
                     }
 
                     GUISelector selector = new GUISelector(SwingUtilities.getWindowAncestor(this),carpetaBase,"pwrd" );

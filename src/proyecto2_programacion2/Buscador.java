@@ -4,6 +4,8 @@
  */
 package proyecto2_programacion2;
 
+import Logica.RutasSistema;
+
 /**
  *
  * @author denam
@@ -57,9 +59,9 @@ public class Buscador extends JDialog {
         getContentPane().setBackground(Color.BLACK);
 
         if (usuarioWinActivo.isAdmin) {
-            carpetaBase = new File("./src/datos/windows/Z/infoUsuarios");
+            carpetaBase = RutasSistema.USUARIOS;
         } else {
-            carpetaBase = new File("./src/datos/windows/Z/infoUsuarios/" + usuarioWinActivo.nombre);
+            carpetaBase = RutasSistema.usuario(usuarioWinActivo.nombre);
         }
 
         if (!carpetaBase.exists()) {
