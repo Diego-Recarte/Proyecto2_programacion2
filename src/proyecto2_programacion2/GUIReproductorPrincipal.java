@@ -66,6 +66,13 @@ public class GUIReproductorPrincipal extends JPanel {
     private long duracionMs;
     private long[] tiemposFramesMp3 = new long[0];
     private boolean actualizandoBarra;
+    
+    
+    private JLabel titulo;
+    private JLabel artista;
+    private JLabel album;
+    private JTextArea descripcion ;
+    
 
     public GUIReproductorPrincipal(GUIReproductor padre, File archivo)
             throws IOException, ClassNotFoundException {
@@ -147,7 +154,7 @@ public class GUIReproductorPrincipal extends JPanel {
             try {
                 bitstream.close();
             } catch (JavaLayerException ignored) {
-                // El análisis ya terminó; no hay más recursos que recuperar.
+               
             }
         }
 
@@ -172,11 +179,9 @@ public class GUIReproductorPrincipal extends JPanel {
         contenido.setLayout(new BoxLayout(contenido, BoxLayout.Y_AXIS));
         contenido.setOpaque(false);
 
-        JLabel titulo = crearEtiqueta(cancion.getNombre(), 24, Font.BOLD, Color.WHITE);
-        JLabel artista = crearEtiqueta(textoOAlternativa(cancion.getArtista(), "Artista desconocido"),
-                14, Font.PLAIN, Color.LIGHT_GRAY);
-        JLabel album = crearEtiqueta(textoOAlternativa(cancion.getAlbum(), "Álbum desconocido"),
-                12, Font.PLAIN, Color.GRAY);
+        titulo = crearEtiqueta(cancion.getNombre(), 24, Font.BOLD, Color.WHITE);
+         artista = crearEtiqueta(textoOAlternativa(cancion.getArtista(), "Artista desconocido"), 14, Font.PLAIN, Color.LIGHT_GRAY);
+         album = crearEtiqueta(textoOAlternativa(cancion.getAlbum(), "Álbum desconocido"), 12, Font.PLAIN, Color.GRAY);
 
         JLabel caratula = new JLabel("♪", SwingConstants.CENTER);
         caratula.setAlignmentX(CENTER_ALIGNMENT);
@@ -196,8 +201,8 @@ public class GUIReproductorPrincipal extends JPanel {
             caratula.setIcon(new ImageIcon(escalada));
         }
 
-        JTextArea descripcion = new JTextArea(textoOAlternativa(
-                cancion.getDescripcion(), "Sin descripción"));
+         descripcion = new JTextArea(textoOAlternativa(
+        cancion.getDescripcion(), "Sin descripción"));
         descripcion.setEditable(false);
         descripcion.setLineWrap(true);
         descripcion.setWrapStyleWord(true);
@@ -309,6 +314,11 @@ public class GUIReproductorPrincipal extends JPanel {
         contenedor.add(Box.createVerticalStrut(4));
         contenedor.add(botones);
         contenedor.add(estado);
+        
+        
+        
+        
+        
 
         temporizadorProgreso = new Timer(250, e -> actualizarProgresoDesdeMotor());
         temporizadorProgreso.setCoalesce(true);
@@ -613,5 +623,11 @@ public class GUIReproductorPrincipal extends JPanel {
             }
             return musicaLeida;
         }
+    }
+    public void CambiarReproductor(){
+        titulo.setText(cancion.getNombre());
+        artista.setText(cancion.getArtista());
+        album.setText(cancion.getAlbum());
+        descripcion.setText(cancion.getDescripcion());
     }
 }

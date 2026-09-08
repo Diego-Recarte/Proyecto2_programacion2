@@ -136,7 +136,7 @@ public class GUIArchivosPanel extends JPanel {
 
         eliminar.addActionListener(e -> {
             try {
-                eliminarArchivo();
+                eliminarArchivo(null);
                 buscador.mostrarMensaje("Elemento eliminado correctamente.", false);
             } catch (BuscadorException ex) {
                 buscador.mostrarMensaje(ex.getMessage(), true);
@@ -267,7 +267,7 @@ public class GUIArchivosPanel extends JPanel {
         );
 
         String tipo = archivo.isDirectory() ? "Carpeta" : obtenerTipoArchivo(archivo);
-        long tamanio = archivo.length();
+        long tamanio = obtenerTamanio(archivo);
 
         String texto = nombre + " | Fecha: " + fecha
                 + " | Tipo: " + tipo
@@ -294,6 +294,26 @@ public class GUIArchivosPanel extends JPanel {
         panelListaArchivos.add(boton);
         panelListaArchivos.add(Box.createVerticalStrut(8));
     }
+    private long obtenerTamanio(File archivo) {
+        if (archivo == null || !archivo.exists()) {
+            return 0;
+        }
+
+        if (archivo.isFile()) {
+            return archivo.length();
+        }
+
+        long total = 0;
+        File[] hijos = archivo.listFiles();
+
+        if (hijos != null) {
+            for (File hijo : hijos) {
+                total += obtenerTamanio(hijo);
+            }
+        }
+
+        return total;
+    }
 
     private String obtenerTipoArchivo(File archivo) {
         String nombre = archivo.getName();
@@ -307,22 +327,42 @@ public class GUIArchivosPanel extends JPanel {
     }
 
     private void organizarCarpeta() throws BuscadorException {
-        if (carpetaActual == null || !carpetaActual.isDirectory()) {
+        File[] archivos;
+       
+        if (archivoSeleccionado != null){
+            archivos = archivoSeleccionado.listFiles();
+        }else if  (carpetaActual == null || !carpetaActual.isDirectory()) {
             throw new BuscadorException("La carpeta actual no es válida.");
+        }else{
+            archivos = carpetaActual.listFiles();
         }
 
-        File[] archivos = carpetaActual.listFiles();
+        
         if (archivos == null) {
             throw new BuscadorException("No se pudo leer la carpeta.");
         }
+        
+         File carpetaImagenes;
+        File carpetaDocumentos;
+        File carpetaMusica;
+                 
+        if (archivoSeleccionado != null){
+              carpetaImagenes = new File(archivoSeleccionado, "misimagenes");
+                 carpetaDocumentos = new File(archivoSeleccionado, "misdocumentos");
+                 carpetaMusica = new File(archivoSeleccionado, "musica");
+        }else{
+              carpetaImagenes = new File(carpetaActual, "misimagenes");
+            carpetaDocumentos = new File(carpetaActual, "misdocumentos");
+             carpetaMusica = new File(carpetaActual, "musica");
+        }
+            
 
-        File carpetaImagenes = new File(carpetaActual, "Imagenes");
-        File carpetaDocumentos = new File(carpetaActual, "Documentos");
-        File carpetaMusica = new File(carpetaActual, "Musica");
+       
+         carpetaImagenes.mkdirs();
+         carpetaDocumentos.mkdirs();
+         carpetaMusica.mkdirs();
 
-        carpetaImagenes.mkdirs();
-        carpetaDocumentos.mkdirs();
-        carpetaMusica.mkdirs();
+       
 
         for (File archivo : archivos) {
             if (!archivo.isFile()) continue;
@@ -346,9 +386,33 @@ public class GUIArchivosPanel extends JPanel {
                 }
             }
         }
+        if (IsDirEmpty (carpetaImagenes)){
+            eliminarArchivo(carpetaImagenes); 
+
+        }
+        if (IsDirEmpty (carpetaDocumentos)){
+            eliminarArchivo(carpetaDocumentos); 
+           
+        }
+        
+        if (IsDirEmpty (carpetaMusica)){
+            eliminarArchivo(carpetaMusica); 
+            
+        }
+        
 
         archivos(carpetaActual);
         buscador.recargarArbol();
+    }
+     
+    
+    private boolean IsDirEmpty(File dir){
+        File [] contenido = dir.listFiles();
+        if (contenido.length < 1){
+            return true;
+        }else{
+            return false;
+        }
     }
 
     private void volverCarpeta() throws BuscadorException {
@@ -489,11 +553,21 @@ public class GUIArchivosPanel extends JPanel {
         throw new BuscadorException("No es valido para cargar");
     }
 
-    private void eliminarArchivo() throws BuscadorException {
-        if (archivoSeleccionado == null) {
-            throw new BuscadorException("Selecciona un archivo o carpeta para eliminar.");
+    private void eliminarArchivo(File dir) throws BuscadorException {
+        File archivoSeleccionado;
+        if ( dir != null){
+            archivoSeleccionado = dir;
+        }else{
+            if (this.archivoSeleccionado==null){
+                 throw new BuscadorException("Selecciona un archivo o carpeta para eliminar.");
+            }else{
+                archivoSeleccionado = this.archivoSeleccionado; 
+            }
         }
-
+            
+        
+    
+      
         boolean eliminado = eliminarRecursivo(archivoSeleccionado);
 
         if (eliminado) {
