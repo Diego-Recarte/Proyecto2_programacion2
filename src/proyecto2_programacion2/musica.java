@@ -13,6 +13,9 @@ package proyecto2_programacion2;
 import java.io.*;
 import java.nio.file.Files;
 import javax.swing.*;
+import javax.imageio.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 
 
 public class musica implements Serializable {
@@ -78,9 +81,7 @@ public class musica implements Serializable {
         this.descripcion = descripcion;
     }
 
-    public void setCaratula(byte[] caratula) {
-        this.caratula = caratula;
-    }
+   
 
     public void setExtensionCaratula(String extensionCaratula) {
         this.extensionCaratula = extensionCaratula;
@@ -102,6 +103,32 @@ public class musica implements Serializable {
         }
 
         return new ImageIcon(caratula);
+    }
+    
+    public void setCaratula(ImageIcon icon) throws IOException {
+        if (icon == null) {
+            return;
+        }else{
+
+        int ancho = icon.getIconWidth();
+        int alto = icon.getIconHeight();
+
+        BufferedImage imagen = new BufferedImage(ancho,alto,BufferedImage.TYPE_INT_ARGB);
+
+        Graphics2D graphics = imagen.createGraphics();
+
+        graphics.drawImage( icon.getImage(),0, 0, null);
+
+        graphics.dispose();
+        ByteArrayOutputStream salida = new ByteArrayOutputStream();
+        
+            
+        ImageIO.write(imagen, "png", salida);
+        
+        caratula = salida.toByteArray();
+        }
+      
+        
     }
 
 }

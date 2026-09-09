@@ -18,11 +18,21 @@ public class CMDControladorMkdir implements CMDComando{
     
     @Override
     public String ejecutar(String args[]){
-        if (args.length != 1) {
-            return "Uso correcto: Mkdir <nombre>";
+        String nombre;
+        if (args[args.length-1].endsWith("\"")){
+            String textoCompleto= "";
+            for (String texto: args){
+                textoCompleto= textoCompleto+texto+" ";
+            }
+            nombre = textoCompleto;
+            nombre = nombre.substring(1, nombre.length() - 1);
+            nombre = nombre.substring(0, nombre.length() - 1);
+            
+        }else{
+            nombre = args[0];
         }
 
-        String nombre = args[0];
+       
 
         if (nombre.trim().isEmpty()) {
             return "Error: Debe especificar el nombre de la carpeta.";

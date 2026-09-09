@@ -21,11 +21,23 @@ public class CMDControladorCd implements CMDComando{
     
     @Override
     public String ejecutar(String[] argumentos){
-        if (argumentos.length != 1){
-            return "Uso correcto: Cd <nombre carpeta>";
+  
+        String nombre;
+        if (argumentos[argumentos.length-1].endsWith("\"")){
+            String textoCompleto= "";
+            for (String texto: argumentos){
+                textoCompleto= textoCompleto+texto+" ";
+            }
+            nombre = textoCompleto;
+            nombre = nombre.substring(1, nombre.length() - 1);
+            nombre = nombre.substring(0, nombre.length() - 1);
+            
+        }else{
+            nombre = argumentos[0];
         }
         
-        String nombre = argumentos[0];
+        
+        
         File carpeta = sistema.buscar(nombre);
         
         if(!carpeta.exists()){

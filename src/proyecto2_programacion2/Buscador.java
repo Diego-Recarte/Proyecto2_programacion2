@@ -187,9 +187,6 @@ public class Buscador extends JDialog {
                 modeloArbol.setRoot(nodoRaiz);
                 modeloArbol.reload();
 
-                for (int i = 0; i < arbolArchivos.getRowCount(); i++) {
-                    arbolArchivos.expandRow(i);
-                }
 
                 mostrarMensaje("Árbol cargado correctamente.", false);
             });
