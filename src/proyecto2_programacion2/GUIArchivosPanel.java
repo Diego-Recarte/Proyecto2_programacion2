@@ -147,7 +147,7 @@ public class GUIArchivosPanel extends JPanel {
 
         importarArchivo.addActionListener(e -> {
             try {
-                importarArchivoDesdePC();
+                importarArchivoDesdeZ();
                 buscador.mostrarMensaje("Archivo importado correctamente.", false);
             } catch (BuscadorException ex) {
                 buscador.mostrarMensaje(ex.getMessage(), true);
@@ -612,24 +612,15 @@ public class GUIArchivosPanel extends JPanel {
         }
     }
 
-   private void importarArchivoDesdePC() throws BuscadorException {
+   private void importarArchivoDesdeZ() throws BuscadorException {
         if (carpetaActual == null || !carpetaActual.exists() || !carpetaActual.isDirectory()) {
             throw new BuscadorException("La carpeta actual no es válida.");
         }
 
-        JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Selecciona un archivo");
-        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        chooser.setMultiSelectionEnabled(false);
-        chooser.setAcceptAllFileFilterUsed(true);
-
-        int resultado = chooser.showOpenDialog(this);
-
-        if (resultado != JFileChooser.APPROVE_OPTION) {
-            throw new BuscadorException("Importación cancelada.");
+        File archivoOrigen = GUISelector.seleccionarArchivo(this, "Selecciona un archivo de Z", "*");
+        if (archivoOrigen == null) {
+            return;
         }
-
-        File archivoOrigen = chooser.getSelectedFile();
 
         if (archivoOrigen == null || !archivoOrigen.exists() || !archivoOrigen.isFile()) {
             throw new BuscadorException("El archivo seleccionado no es válido.");

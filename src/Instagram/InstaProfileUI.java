@@ -4,7 +4,7 @@
  */
 package Instagram;
 
-import Logica.RutasSistema;
+
 
 import java.awt.*;
 import java.awt.event.*;
@@ -15,8 +15,8 @@ import java.util.ArrayList;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import Logica.ManejoUsuarios.UserLogged;
+
+
 import Logica.Excepciones.ImageLoadException;
 
 /**
@@ -446,132 +446,6 @@ public class InstaProfileUI extends JPanel {
         bar.add(btnPerfil);
 
         return bar;
-    }
-
-    private void subirPost() {
-        String osUser = proyecto2_programacion2.usuarioWinActivo.nombre;
-        try {
-            if ((osUser == null || osUser.isBlank()) && UserLogged.getInstance().getUserLogged() != null) {
-                osUser = UserLogged.getInstance().getUserLogged().getName();
-            }
-        } catch (Exception ex) {
-            osUser = null;
-        }
-
-        final String targetUser = (osUser != null && !osUser.trim().isEmpty()) ? osUser : username;
-
-        final File usersRoot = RutasSistema.USUARIOS;
-        final File userRoot = new File(usersRoot, targetUser);
-        final File imagesFolder = new File(userRoot, RutasSistema.IMAGENES);
-
-        if (!imagesFolder.exists()) {
-            imagesFolder.mkdirs();
-        }
-
-        JFileChooser fc = new JFileChooser(imagesFolder);
-        fc.setDialogTitle("Selecciona la evidencia");
-        fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Imágenes", "jpg", "png", "jpeg", "gif", "bmp", "webp"));
-
-        int r = fc.showOpenDialog(this);
-        if (r != JFileChooser.APPROVE_OPTION) {
-            return;
-        }
-
-        File selected = fc.getSelectedFile();
-        String caption = JOptionPane.showInputDialog(this, "Escribe una descripción:", "Nuevo Post", JOptionPane.PLAIN_MESSAGE);
-        if (caption == null) {
-            caption = "";
-        }
-
-        try {
-            instaManager manager = instaController.getInstance().getInsta();
-            manager.setLoggedUser(username);
-
-            String unique = System.currentTimeMillis() + "_" + selected.getName();
-            File dest = new File(imagesFolder, unique);
-
-            boolean sameFile = false;
-            try {
-                if (dest.exists()) {
-                    sameFile = java.nio.file.Files.isSameFile(selected.toPath(), dest.toPath());
-                }
-                if (!sameFile) {
-                    File[] all = imagesFolder.listFiles();
-                    if (all != null) {
-                        for (File f : all) {
-                            try {
-                                if (java.nio.file.Files.isSameFile(selected.toPath(), f.toPath())) {
-                                    sameFile = true;
-                                    dest = f;
-                                    break;
-                                }
-                            } catch (Exception ex) {
-                            }
-                        }
-                    }
-                }
-            } catch (Exception ex) {
-                sameFile = false;
-            }
-
-            if (!sameFile) {
-                String srcHash = sha1OfFile(selected);
-                boolean match = false;
-
-                File[] all = imagesFolder.listFiles();
-                if (all != null) {
-                    for (File f : all) {
-                        if (!f.isFile()) {
-                            continue;
-                        }
-                        if (srcHash.equals(sha1OfFile(f))) {
-                            dest = f;
-                            match = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!match) {
-                    java.nio.file.Path srcP = selected.toPath();
-                    java.nio.file.Path dstP = dest.toPath();
-                    try {
-                        if (!srcP.toRealPath().equals(dstP.getParent().toRealPath().resolve(dstP.getFileName()))) {
-                            java.nio.file.Files.copy(srcP, dstP, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                        } else {
-                            dest = selected;
-                        }
-                    } catch (Exception ex) {
-                        java.nio.file.Files.copy(srcP, dstP, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                    }
-                }
-            }
-
-            manager.addPost(dest.getAbsolutePath(), username, caption);
-            JOptionPane.showMessageDialog(this, "Post subido.");
-            cargarDatosPerfil();
-            cargarPostsEnGrid();
-
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
-        }
-    }
-
-    private static String sha1OfFile(File f) throws Exception {
-        java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-1");
-        java.io.InputStream is = new java.io.FileInputStream(f);
-        byte[] buf = new byte[8192];
-        int r;
-        while ((r = is.read(buf)) > 0) {
-            md.update(buf, 0, r);
-        }
-        is.close();
-        byte[] dig = md.digest();
-        StringBuilder sb = new StringBuilder();
-        for (byte b : dig) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
     }
 
     private JButton crearBotonNav(String texto, InstaNavIcon.Type type) {

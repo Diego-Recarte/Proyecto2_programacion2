@@ -12,7 +12,11 @@ package proyecto2_programacion2;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
+import Logica.RutasSistema;
 
 public class GUISelector extends JDialog {
 
@@ -20,6 +24,9 @@ public class GUISelector extends JDialog {
     private File carpetaActual;
     private File archivoSeleccionado;
     private final String[] extensionesPermitidas;
+    private boolean seleccionMultiple;
+    private boolean seleccionConfirmada;
+    private final LinkedHashSet<File> archivosSeleccionados = new LinkedHashSet<>();
 
     private JLabel labelRuta;
     private JLabel labelMensaje;
@@ -49,6 +56,61 @@ public class GUISelector extends JDialog {
         configurarVentana();
         initComponentes();
         cargarArchivos(carpetaActual);
+    }
+
+    /** El perfil del sistema determina el acceso, aunque la cuenta de Instagram sea otra. */
+    static File carpetaDelPerfil() throws IOException {
+        File usuarios = RutasSistema.USUARIOS.getCanonicalFile();
+        if (usuarioWinActivo.nombre == null || usuarioWinActivo.nombre.isBlank()) {
+            throw new IOException("No hay un usuario del sistema identificado.");
+        }
+        File base = usuarioWinActivo.isAdmin ? usuarios
+                : RutasSistema.usuario(usuarioWinActivo.nombre).getCanonicalFile();
+        if (!base.toPath().startsWith(usuarios.toPath())
+                || (!usuarioWinActivo.isAdmin && base.equals(usuarios))) {
+            throw new IOException("La carpeta del perfil no es válida.");
+        }
+        Files.createDirectories(base.toPath());
+        return base;
+    }
+
+    public static File seleccionarArchivo(Component parent, String titulo, String... extensiones) {
+        File[] archivos = seleccionarDesdePerfil(parent, titulo, false, extensiones);
+        return archivos.length == 0 ? null : archivos[0];
+    }
+
+    public static File[] seleccionarArchivos(Component parent, String titulo, String... extensiones) {
+        return seleccionarDesdePerfil(parent, titulo, true, extensiones);
+    }
+
+    private static File[] seleccionarDesdePerfil(Component parent, String titulo,
+            boolean multiple, String... extensiones) {
+        try {
+            Window owner = parent instanceof Window ? (Window) parent
+                    : parent == null ? null : SwingUtilities.getWindowAncestor(parent);
+            GUISelector selector = new GUISelector(owner, carpetaDelPerfil(), extensiones);
+            selector.setTitle(titulo);
+            selector.setSeleccionMultiple(multiple);
+            selector.setVisible(true);
+            return selector.getArchivosSeleccionados();
+        } catch (IOException | IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(parent, ex.getMessage(), "Seleccionar archivo", JOptionPane.ERROR_MESSAGE);
+            return new File[0];
+        }
+    }
+
+    public void setSeleccionMultiple(boolean multiple) {
+        seleccionMultiple = multiple;
+        cargarArchivos(carpetaActual);
+    }
+
+    private boolean dentroDeBase(File archivo) {
+        try {
+            return archivo != null && archivo.getCanonicalFile().toPath()
+                    .startsWith(carpetaBase.getCanonicalFile().toPath());
+        } catch (IOException ex) {
+            return false;
+        }
     }
 
     private void configurarVentana() {
@@ -133,7 +195,8 @@ public class GUISelector extends JDialog {
     }
 
     private void restaurarMensajeBase() {
-        labelMensaje.setText("Extensiones permitidas: " + String.join(", ", extensionesPermitidas));
+        labelMensaje.setText((seleccionMultiple ? "Marca una o varias imágenes. " : "")
+                + "Extensiones permitidas: " + String.join(", ", extensionesPermitidas));
         labelMensaje.setForeground(Color.LIGHT_GRAY);
     }
 
@@ -152,9 +215,15 @@ public class GUISelector extends JDialog {
     }
 
     private void cargarArchivos(File carpeta) {
+        if (!dentroDeBase(carpeta)) {
+            mostrarMensaje("No puedes salir de la carpeta base.", true);
+            return;
+        }
         panelLista.removeAll();
         grupoBotones = new ButtonGroup();
         archivoSeleccionado = null;
+        archivosSeleccionados.clear();
+        seleccionConfirmada = false;
 
         labelRuta.setText("Ruta: " + carpeta.getAbsolutePath());
         restaurarMensajeBase();
@@ -177,7 +246,7 @@ public class GUISelector extends JDialog {
         boolean hayElementos = false;
 
         for (File archivo : archivos) {
-            if (archivo.isDirectory() || archivoValido(archivo)) {
+            if (dentroDeBase(archivo) && (archivo.isDirectory() || archivoValido(archivo))) {
                 agregarElemento(archivo);
                 hayElementos = true;
             }
@@ -203,10 +272,31 @@ public class GUISelector extends JDialog {
         boton.setForeground(Color.WHITE);
         boton.setFocusPainted(false);
 
-        grupoBotones.add(boton);
+        if (!seleccionMultiple || archivo.isDirectory()) {
+            grupoBotones.add(boton);
+        }
 
         boton.addActionListener(e -> {
+            if (seleccionMultiple && archivo.isFile()) {
+                grupoBotones.clearSelection();
+                if (boton.isSelected()) {
+                    archivosSeleccionados.add(archivo);
+                } else {
+                    archivosSeleccionados.remove(archivo);
+                }
+                archivoSeleccionado = null;
+                mostrarMensaje("Archivos seleccionados: " + archivosSeleccionados.size(), false);
+                return;
+            }
             if (boton.isSelected()) {
+                archivosSeleccionados.clear();
+                if (seleccionMultiple) {
+                    for (Component elemento : panelLista.getComponents()) {
+                        if (elemento instanceof JToggleButton otro && otro != boton) {
+                            otro.setSelected(false);
+                        }
+                    }
+                }
                 archivoSeleccionado = archivo;
 
                 if (archivo.isDirectory()) {
@@ -229,8 +319,12 @@ public class GUISelector extends JDialog {
     }
 
     private boolean archivoValido(File archivo) {
-        if (archivo == null || !archivo.isFile()) {
+        if (archivo == null || !archivo.isFile() || !dentroDeBase(archivo)) {
             return false;
+        }
+
+        if (Arrays.asList(extensionesPermitidas).contains("*")) {
+            return true;
         }
 
         String nombre = archivo.getName().toLowerCase();
@@ -257,7 +351,7 @@ public class GUISelector extends JDialog {
             return;
         }
 
-        if (!archivoSeleccionado.isDirectory()) {
+        if (!archivoSeleccionado.isDirectory() || !dentroDeBase(archivoSeleccionado)) {
             mostrarMensaje("Solo puedes abrir carpetas.", true);
             return;
         }
@@ -268,14 +362,14 @@ public class GUISelector extends JDialog {
     }
 
     private void volverCarpeta() {
-        if (carpetaActual.equals(carpetaBase)) {
+        if (carpetaActual.getAbsoluteFile().equals(carpetaBase.getAbsoluteFile())) {
             mostrarMensaje("Ya estás en la carpeta base.", true);
             return;
         }
 
         File padre = carpetaActual.getParentFile();
 
-        if (padre != null) {
+        if (padre != null && dentroDeBase(padre)) {
             carpetaActual = padre;
             cargarArchivos(carpetaActual);
             mostrarMensaje("Volviste a: " + carpetaActual.getName(), false);
@@ -283,21 +377,35 @@ public class GUISelector extends JDialog {
     }
 
     private void aceptarSeleccion() {
+        if (seleccionMultiple && !archivosSeleccionados.isEmpty()) {
+            if (archivosSeleccionados.stream().allMatch(this::archivoValido)) {
+                seleccionConfirmada = true;
+                dispose();
+            } else {
+                mostrarMensaje("Uno de los archivos seleccionados ya no está disponible.", true);
+            }
+            return;
+        }
         if (archivoSeleccionado == null) {
             mostrarMensaje("Selecciona un archivo.", true);
             return;
         }
 
-        if (archivoSeleccionado.isDirectory()) {
+        if (!archivoValido(archivoSeleccionado)) {
             mostrarMensaje("Debes seleccionar un archivo, no una carpeta.", true);
             return;
         }
 
+        archivosSeleccionados.clear();
+        archivosSeleccionados.add(archivoSeleccionado);
+        seleccionConfirmada = true;
         dispose();
     }
 
     private void cancelarSeleccion() {
         archivoSeleccionado = null;
+        archivosSeleccionados.clear();
+        seleccionConfirmada = false;
         dispose();
     }
 
@@ -307,7 +415,12 @@ public class GUISelector extends JDialog {
     }
 
     public File getArchivoSeleccionado() {
-        return archivoSeleccionado;
+        File[] archivos = getArchivosSeleccionados();
+        return archivos.length == 0 ? null : archivos[0];
+    }
+
+    public File[] getArchivosSeleccionados() {
+        return seleccionConfirmada ? archivosSeleccionados.toArray(File[]::new) : new File[0];
     }
 }
 

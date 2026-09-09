@@ -13,14 +13,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.swing.BorderFactory;
-import javax.swing.JFileChooser;
+import proyecto2_programacion2.GUISelector;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.JTextPane;
-import javax.swing.filechooser.FileNameExtensionFilter;
+
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.AbstractDocument;
@@ -44,26 +44,9 @@ final class InstaPostComposer {
     }
 
     static void open(Component parent, String username, Runnable afterPublish) {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Selecciona una o varias imágenes");
-        chooser.setMultiSelectionEnabled(true);
-        chooser.setFileFilter(new FileNameExtensionFilter(
-                "Imágenes", "jpg", "jpeg", "png", "gif", "bmp", "webp"));
-        chooser.setAccessory(new JLabel("<html><div style='width:150px'>"
-                + "Usa Ctrl o Shift para seleccionar varias imágenes para el mismo post."
-                + "</div></html>"));
-        if (chooser.showOpenDialog(parent) != JFileChooser.APPROVE_OPTION) {
-            return;
-        }
-
-        File[] selectedImages = chooser.getSelectedFiles();
-        if (selectedImages == null || selectedImages.length == 0) {
-            File selected = chooser.getSelectedFile();
-            selectedImages = selected != null ? new File[]{selected} : new File[0];
-        }
+        File[] selectedImages = GUISelector.seleccionarArchivos(parent,
+                "Selecciona una o varias imágenes", "jpg", "jpeg", "png", "gif", "bmp", "webp");
         if (selectedImages.length == 0) {
-            JOptionPane.showMessageDialog(parent, "Selecciona al menos una imagen.",
-                    "Nueva publicación", JOptionPane.WARNING_MESSAGE);
             return;
         }
         if (selectedImages.length > MAX_IMAGES_PER_POST) {
