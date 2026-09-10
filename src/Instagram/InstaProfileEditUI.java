@@ -17,7 +17,7 @@ import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
+import proyecto2_programacion2.GUISelector;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -26,7 +26,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import javax.swing.filechooser.FileNameExtensionFilter;
+
 
 /** Formulario para editar los datos visibles del perfil. */
 public final class InstaProfileEditUI extends JPanel {
@@ -162,11 +162,10 @@ public final class InstaProfileEditUI extends JPanel {
     }
 
     private void selectPicture() {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Selecciona una foto de perfil");
-        chooser.setFileFilter(new FileNameExtensionFilter("Imágenes", "jpg", "jpeg", "png", "gif", "bmp"));
-        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            selectedPicture = chooser.getSelectedFile().getAbsolutePath();
+        File selected = GUISelector.seleccionarArchivo(this,
+                "Selecciona una foto de perfil", "jpg", "jpeg", "png", "gif", "bmp");
+        if (selected != null) {
+            selectedPicture = selected.getAbsolutePath();
             showPicture(selectedPicture);
         }
     }

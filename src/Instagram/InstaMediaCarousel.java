@@ -127,7 +127,7 @@ final class InstaMediaCarousel extends JPanel {
 
     private ImageIcon fitImage(String path, int maxWidth, int maxHeight) throws ImageLoadException {
         try {
-            BufferedImage source = ImageIO.read(new File(path));
+            BufferedImage source = ImageIO.read(new File(Logica.RutasSistema.resolverRutaAnterior(path)));
             if (source == null) {
                 throw new IOException("Formato no reconocido");
             }

@@ -350,7 +350,7 @@ public class instaManager {
             users.readBoolean();
             String pic = users.readUTF();
             if (uname.equals(username)) {
-                return pic;
+                return Logica.RutasSistema.resolverRutaAnterior(pic);
             }
         }
         return null;

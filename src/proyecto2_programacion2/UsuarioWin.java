@@ -4,6 +4,8 @@
  */
 package proyecto2_programacion2;
 
+import Logica.RutasSistema;
+
 /**
  *
  * @author denam
@@ -35,10 +37,10 @@ public class UsuarioWin implements Serializable {
         this.isAdmin=isAdmin;
         
         
-        ubicacion= new File("src/datos/windows/Z/infoUsuarios/"+this.nombre);
-        misDocumentos = new File("src/datos/windows/Z/infoUsuarios/"+this.nombre+"/misDocumentos");
-        musica = new File("src/datos/windows/Z/infoUsuarios/"+this.nombre+"/musica");
-        misImagenes = new File("src/datos/windows/Z/infoUsuarios/"+this.nombre+"/misImagenes");
+        ubicacion= RutasSistema.usuario(this.nombre);
+        misDocumentos = RutasSistema.documentos(this.nombre);
+        musica = RutasSistema.musica(this.nombre);
+        misImagenes = RutasSistema.imagenes(this.nombre);
         
         
         

@@ -4,6 +4,8 @@
  */
 package proyecto2_programacion2;
 
+import Logica.RutasSistema;
+
 /**
  *
  * @author denam
@@ -18,7 +20,7 @@ public class ArchivoUsuarioWin {
     private File archivo;
     
     public ArchivoUsuarioWin(){
-        archivo = new File("src/datos/windows/Z/usuarios.sop");
+        archivo = new File(RutasSistema.Z, "usuarios.sop");
         try{
          inicializarArchivo();
         }catch(IOException e){

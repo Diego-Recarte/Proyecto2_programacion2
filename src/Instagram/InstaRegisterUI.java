@@ -1,5 +1,7 @@
 package Instagram;
 
+import proyecto2_programacion2.GUISelector;
+
 import Logica.Excepciones.InvalidDataException;
 import Logica.Ventanas.genFondos;
 import java.awt.*;
@@ -9,7 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
-import javax.swing.filechooser.FileNameExtensionFilter;
+
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.plaf.basic.ComboPopup;
@@ -153,135 +155,17 @@ public class InstaRegisterUI extends JPanel {
     }
 
     private void seleccionarFotoPerfil() {
-
-        final File usersRoot = new File("src\\Z\\Usuarios");
-
-        String osUser = null;
-        try {
-            if (Logica.ManejoUsuarios.UserLogged.getInstance().getUserLogged() != null) {
-                osUser = Logica.ManejoUsuarios.UserLogged.getInstance().getUserLogged().getName();
-            }
-        } catch (Exception ex) {
-            osUser = null;
-        }
-        if (osUser == null || osUser.trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No hay usuario del sistema identificado.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
+        File seleccionada = GUISelector.seleccionarArchivo(this,
+                "Seleccionar foto de perfil", "jpg", "png", "jpeg", "gif", "bmp", "webp");
+        if (seleccionada == null) {
             return;
         }
-
-        final File userRoot = new File(usersRoot, osUser);
-        final File imagesFolder = new File(userRoot, "Mis Imagenes");
-        if (!imagesFolder.exists()) {
-            imagesFolder.mkdirs();
-        }
-
-        final String usersRootCanonical = safeCanonical(usersRoot);
-        final String userRootCanonical = safeCanonical(userRoot);
-
-        JFileChooser fileChooser = new JFileChooser(imagesFolder) {
-            @Override
-            public void approveSelection() {
-                File sel = getSelectedFile();
-                if (sel != null) {
-                    try {
-                        String selCan = sel.getCanonicalPath();
-                        if (selCan.startsWith(usersRootCanonical)
-                                && !selCan.startsWith(userRootCanonical)) {
-                            JOptionPane.showMessageDialog(this,
-                                    "Acceso denegado: solo puedes seleccionar imágenes de tu carpeta.",
-                                    "Acceso Denegado",
-                                    JOptionPane.WARNING_MESSAGE);
-                            return;
-                        }
-                    } catch (IOException ex) {
-                        JOptionPane.showMessageDialog(this,
-                                "Error verificando la ruta seleccionada.",
-                                "Error", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                }
-                super.approveSelection();
-            }
-
-            @Override
-            public void setCurrentDirectory(File dir) {
-                if (dir != null) {
-                    try {
-                        String dirCan = dir.getCanonicalPath();
-                        if (dirCan.startsWith(usersRootCanonical)
-                                && !dirCan.startsWith(userRootCanonical)) {
-                            super.setCurrentDirectory(imagesFolder);
-                            return;
-                        }
-                    } catch (IOException ex) {
-                        super.setCurrentDirectory(imagesFolder);
-                        return;
-                    }
-                }
-                super.setCurrentDirectory(dir);
-            }
-        };
-
-        fileChooser.setDialogTitle("Seleccionar foto de perfil (solo desde tu carpeta)");
-        fileChooser.setFileFilter(new FileNameExtensionFilter(
-                "Imágenes (JPG, PNG, JPEG, GIF, BMP, WEBP)",
-                "jpg", "png", "jpeg", "gif", "bmp", "webp"));
-
-        int res = fileChooser.showOpenDialog(this);
-        if (res != JFileChooser.APPROVE_OPTION) {
-            return;
-        }
-
-        File sel = fileChooser.getSelectedFile();
-        if (sel == null) {
-            return;
-        }
-
-        try {
-            String selCan = sel.getCanonicalPath();
-            if (selCan.startsWith(usersRootCanonical)
-                    && !selCan.startsWith(userRootCanonical)) {
-                JOptionPane.showMessageDialog(this,
-                        "Acceso denegado: solo puedes seleccionar imágenes de tu carpeta.",
-                        "Acceso Denegado",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            int dot = sel.getName().lastIndexOf('.');
-            String ext = (dot > 0) ? sel.getName().substring(dot + 1) : "jpg";
-            File dest = new File(userRoot, "profile." + ext);
-
-            if (!selCan.equals(dest.getCanonicalPath())) {
-                java.nio.file.Files.copy(sel.toPath(), dest.toPath(),
-                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            }
-
-            rutaFotoSeleccionada = dest.getAbsolutePath();
-
-            ImageIcon icon = new ImageIcon(rutaFotoSeleccionada);
-            Image img = icon.getImage().getScaledInstance(
-                    lblFotoPreview.getWidth(),
-                    lblFotoPreview.getHeight(),
-                    Image.SCALE_SMOOTH);
-
-            lblFotoPreview.setIcon(new ImageIcon(img));
-            lblFotoPreview.setText("");
-
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Error al procesar la imagen: " + ex.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private String safeCanonical(File f) {
-        try {
-            return f.getCanonicalPath();
-        } catch (IOException ex) {
-            return f.getAbsolutePath();
-        }
+        rutaFotoSeleccionada = seleccionada.getAbsolutePath();
+        ImageIcon icon = new ImageIcon(rutaFotoSeleccionada);
+        Image img = icon.getImage().getScaledInstance(
+                lblFotoPreview.getWidth(), lblFotoPreview.getHeight(), Image.SCALE_SMOOTH);
+        lblFotoPreview.setIcon(new ImageIcon(img));
+        lblFotoPreview.setText("");
     }
 
     private void realizarRegistro() {

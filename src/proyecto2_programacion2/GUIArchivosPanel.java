@@ -9,8 +9,6 @@ package proyecto2_programacion2;
  * @author denam
  */
 
-
-
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
@@ -40,7 +38,7 @@ public class GUIArchivosPanel extends JPanel {
         this.carpetaBase = base;
 
         setLayout(new BorderLayout(10, 10));
-        setPreferredSize(new Dimension(300,  600));
+        setPreferredSize(new Dimension(300, 600));
         setMaximumSize(new Dimension(300, 600));
         setMinimumSize(new Dimension(300, 600));
         setBackground(Color.GRAY);
@@ -293,7 +291,6 @@ public class GUIArchivosPanel extends JPanel {
 
         mostrarPropiedades(carpetaOrganizar);
         buscador.recargarArbol();
-      
     }
 
     private void eliminarSiEstaVacia(File dir) {
@@ -399,12 +396,12 @@ public class GUIArchivosPanel extends JPanel {
         if (nodo == null) {
             throw new BuscadorException("Selecciona un archivo para cargar.");
         }
-        
 
         archivoSeleccionado = (File) nodo.getUserObject();
-        if (archivoSeleccionado.isDirectory()){
-             throw new BuscadorException("Selecciona un archivo");
+        if (archivoSeleccionado.isDirectory()) {
+            throw new BuscadorException("Selecciona un archivo");
         }
+
         mostrarPropiedades(archivoSeleccionado);
 
         if (archivoSeleccionado.isDirectory()) {
@@ -458,9 +455,9 @@ public class GUIArchivosPanel extends JPanel {
     public void pedirCrearCarpetaDentro(File archivo) {
         buscador.mostrarEntrada("Nueva carpeta:", () -> {
             try {
-                if(archivo.isFile()){
+                if (archivo.isFile()) {
                     throw new BuscadorException("Seleccione una carpeta.");
-               }
+                }
                 crearCarpetaDentro(archivo);
                 buscador.mostrarMensaje("Carpeta creada correctamente.", false);
                 buscador.ocultarEntrada();
@@ -470,10 +467,8 @@ public class GUIArchivosPanel extends JPanel {
         });
     }
 
-    public void crearCarpetaDentro(File carpetaActual )throws BuscadorException {
+    public void crearCarpetaDentro(File carpetaActual) throws BuscadorException {
         String nombre = buscador.getTextoEntrada();
-        
-        
 
         if (nombre.isEmpty()) {
             throw new BuscadorException("Debes escribir un nombre válido.");

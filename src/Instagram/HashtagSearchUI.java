@@ -190,7 +190,6 @@ public class HashtagSearchUI extends JPanel {
         JPanel suggestions = new JPanel(new BorderLayout(8, 3));
         suggestions.setBackground(new Color(20, 20, 20));
         suggestions.setBorder(BorderFactory.createEmptyBorder(4, 12, 7, 12));
-        suggestions.setPreferredSize(new Dimension(400, 64));
 
         suggestionTitle.setForeground(new Color(185, 185, 185));
         suggestionTitle.setFont(new Font("Segoe UI", Font.BOLD, 11));
@@ -203,7 +202,6 @@ public class HashtagSearchUI extends JPanel {
         suggestionList.setFont(new Font("Segoe UI", Font.BOLD, 12));
         suggestionList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
         suggestionList.setVisibleRowCount(1);
-        suggestionList.setFixedCellWidth(116);
         suggestionList.setFixedCellHeight(28);
         suggestionList.setCursor(new Cursor(Cursor.HAND_CURSOR));
         suggestionList.setCellRenderer(new DefaultListCellRenderer() {
@@ -222,6 +220,10 @@ public class HashtagSearchUI extends JPanel {
         suggestionScroll.setBorder(null);
         suggestionScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         suggestionScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        // Reserva espacio para la fila completa incluso cuando aparece el scroll.
+        suggestionScroll.setPreferredSize(new Dimension(0,
+                suggestionList.getFixedCellHeight()
+                + suggestionScroll.getHorizontalScrollBar().getPreferredSize().height));
         suggestions.add(suggestionScroll, BorderLayout.CENTER);
         area.add(suggestions, BorderLayout.CENTER);
         return area;

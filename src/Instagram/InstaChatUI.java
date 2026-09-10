@@ -39,7 +39,7 @@ import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
+import proyecto2_programacion2.GUISelector;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -55,7 +55,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
-import javax.swing.filechooser.FileNameExtensionFilter;
+
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -429,14 +429,13 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
     }
 
     private void importSticker(Component source) {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Importar sticker personal");
-        chooser.setFileFilter(new FileNameExtensionFilter("Stickers PNG o JPG", "png", "jpg", "jpeg"));
-        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+        File selected = GUISelector.seleccionarArchivo(this,
+                "Importar sticker personal", "png", "jpg", "jpeg");
+        if (selected == null) {
             return;
         }
         try {
-            instaController.getInstance().getInsta().importSticker(currentUser, chooser.getSelectedFile());
+            instaController.getInstance().getInsta().importSticker(currentUser, selected);
             showStickerMenu(source);
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "No se pudo importar", JOptionPane.ERROR_MESSAGE);
@@ -455,13 +454,11 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
     }
 
     private void chooseImage() {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Enviar imagen por chat");
-        chooser.setFileFilter(new FileNameExtensionFilter("Imágenes", "jpg", "jpeg", "png", "gif", "bmp"));
-        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+        File file = GUISelector.seleccionarArchivo(this,
+                "Enviar imagen por chat", "jpg", "jpeg", "png", "gif", "bmp");
+        if (file == null) {
             return;
         }
-        File file = chooser.getSelectedFile();
         if (file.length() > MAX_IMAGE_BYTES) {
             JOptionPane.showMessageDialog(this, "La imagen no puede superar 3 MB.", "Imagen demasiado grande", JOptionPane.WARNING_MESSAGE);
             return;

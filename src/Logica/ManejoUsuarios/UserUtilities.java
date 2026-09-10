@@ -3,6 +3,8 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package Logica.ManejoUsuarios;
+
+import Logica.RutasSistema;
 import java.io.File;
 import java.io.IOException;
 /**
@@ -21,7 +23,7 @@ public class UserUtilities {
         this.name=name;
         this.password=password;
         this.status=status;
-        UserRoute="src\\Z\\Usuarios\\"+name;
+        UserRoute=RutasSistema.usuario(name).getPath();
         UserMainDir = new File(UserRoute);
     }
     
@@ -82,14 +84,14 @@ public class UserUtilities {
         if(userFile.exists()){
             System.out.println("No hay necesidad de crear archivos para "+name);
         }else{
-            userFile.mkdir();
+            userFile.mkdirs();
         };
     }
     
     public  void createInicialDirs(){
-        File myMusic= new File(UserRoute,"Musica");
-        File myDocs = new File(UserRoute,"Mis Documentos");
-        File myImages = new File(UserRoute, "Mis Imagenes");
+        File myMusic= new File(UserRoute,RutasSistema.MUSICA);
+        File myDocs = new File(UserRoute,RutasSistema.DOCUMENTOS);
+        File myImages = new File(UserRoute, RutasSistema.IMAGENES);
         
         if(myMusic.exists()){
             System.out.println("YA EXISTE MUSIC PARA "+name);

@@ -66,7 +66,7 @@ final class InstaPostMedia {
 
     static String coverPath(String mediaReference) {
         List<String> paths = decode(mediaReference);
-        return paths.isEmpty() ? "" : paths.get(0);
+        return paths.isEmpty() ? "" : Logica.RutasSistema.resolverRutaAnterior(paths.get(0));
     }
 
     static boolean isCarousel(String mediaReference) {

@@ -4,6 +4,8 @@
  */
 package proyecto2_programacion2;
 
+import Logica.RutasSistema;
+
 /**
  *
  * @author denam
@@ -68,7 +70,7 @@ public class WordArchivos {
 
     public static File archivoDocumento(String nombre) {
         
-        return new File("src/datos/windows/Z/infoUsuarios/"+usuarioWinActivo.nombre+"/misDocumentos", nombre.trim() + EXTENSION);
+        return new File(RutasSistema.documentos(usuarioWinActivo.nombre), nombre.trim() + EXTENSION);
     }
     
  /**
