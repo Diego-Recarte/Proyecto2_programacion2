@@ -208,7 +208,7 @@ public class GUIEscritorio extends JPanel {
         JPanel barra = new JPanel();
         barra.setLayout(new FlowLayout(FlowLayout.LEADING, 12, 6));
         barra.setPreferredSize(new Dimension(pantalla.width, 60));
-        barra.setBackground(Color.DARK_GRAY);
+        barra.setBackground(new Color(35, 35, 35, 199));
 
         JButton btnWindowsBarra = crearBotonBarra("/datos/windows/Z/imagenes/windows/iconosApp/windows.png");
         JButton btnInstaBarra = crearBotonBarra("/datos/windows/Z/imagenes/windows/iconosApp/insta.png");

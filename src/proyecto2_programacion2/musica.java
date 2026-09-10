@@ -88,7 +88,7 @@ public class musica implements Serializable {
     }
     
     public File guardarComoMP5(String rutaCarpeta) throws IOException {
-        File archivo = new File(rutaCarpeta, nombre + ".mp5");
+        File archivo = new File(rutaCarpeta, nombre.substring(0, nombre.length()-4) + ".mp5");
 
         try (FileOutputStream fos = new FileOutputStream(archivo);
              ObjectOutputStream oos = new ObjectOutputStream(fos)) {

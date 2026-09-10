@@ -12,12 +12,15 @@ package proyecto2_programacion2;
 import javazoom.jl.player.advanced.AdvancedPlayer;
 import java.awt.*;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.tree.*;
 
 public class Buscador extends JDialog {
 
-    private JTree arbolArchivos;
+    public JTree arbolArchivos;
     private DefaultTreeModel modeloArbol;
     private DefaultMutableTreeNode nodoRaiz;
 
@@ -51,7 +54,7 @@ public class Buscador extends JDialog {
         this.perfil = perfil;
 
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        setSize(1400, 800);
+        setSize(900, 600);
         setLocationRelativeTo(perfil);
         setLayout(new BorderLayout(10, 10));
         getContentPane().setBackground(Color.BLACK);
@@ -66,9 +69,9 @@ public class Buscador extends JDialog {
             carpetaBase.mkdirs();
         }
 
+        initExplorador();
         initPanelSuperior();
         initArbolIzquierdo();
-        initExplorador();
 
         setVisible(true);
     }
@@ -86,7 +89,8 @@ public class Buscador extends JDialog {
         labelMensaje.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
         labelMensaje.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JPanel panelOrden = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 8));
+        JPanel panelOrden = new JPanel();
+        panelOrden.setLayout(new BoxLayout(panelOrden, BoxLayout.X_AXIS));
         panelOrden.setBackground(Color.BLACK);
         panelOrden.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -96,10 +100,15 @@ public class Buscador extends JDialog {
 
         comboOrden = new JComboBox<>(new String[]{"Nombre", "Fecha", "Tipo", "Tamaño"});
         comboOrden.setFont(new Font("Arial", Font.PLAIN, 13));
+        
         comboOrden.addActionListener(e -> cambiarOrden());
+        
+        
 
         panelOrden.add(labelOrden);
         panelOrden.add(comboOrden);
+
+        initBotones(panelOrden);
 
         panelEntrada = new JPanel(new BorderLayout(8, 8));
         panelEntrada.setBackground(Color.BLACK);
@@ -140,15 +149,178 @@ public class Buscador extends JDialog {
         add(contenedorSuperior, BorderLayout.NORTH);
     }
 
+    private void initBotones(JPanel panel) {
+
+        JButton copiar = new JButton("Copiar");
+        JButton pegar = new JButton("Pegar");
+        JButton renombrar = new JButton("Renombrar");
+        JButton cargar = new JButton("Cargar");
+        JButton eliminar = new JButton("Eliminar");
+        JButton crearCarpeta = new JButton("Crear carpeta");
+        JButton importarArchivo = new JButton("Importar");
+        JButton organizar = new JButton("Organizar");
+
+        configurarBoton(copiar);
+        configurarBoton(pegar);
+        configurarBoton(renombrar);
+        configurarBoton(cargar);
+        configurarBoton(eliminar);
+        configurarBoton(crearCarpeta);
+        configurarBoton(importarArchivo);
+        configurarBoton(organizar);
+
+        crearCarpeta.setFont(new Font("Arial", Font.BOLD, 9));
+
+        copiar.addActionListener(e -> {
+            try {
+                exploradorPanel.copiarArchivo();
+                mostrarMensaje("Elemento copiado: " + exploradorPanel.archivoCopiado.getName(), false);
+            } catch (BuscadorException ex) {
+                mostrarMensaje(ex.getMessage(), true);
+            }
+        });
+
+        pegar.addActionListener(e -> {
+            try {
+                exploradorPanel.pegarArchivo();
+                mostrarMensaje("Elemento pegado correctamente.", false);
+            } catch (BuscadorException ex) {
+                mostrarMensaje(ex.getMessage(), true);
+            }
+        });
+
+        renombrar.addActionListener(e -> exploradorPanel.pedirRenombrarArchivo());
+
+        cargar.addActionListener(e -> {
+            try {
+                exploradorPanel.cargarArchivo();
+            } catch (BuscadorException ex) {
+                mostrarMensaje(ex.getMessage(), true);
+            }
+        });
+
+        eliminar.addActionListener(e -> {
+            try {
+                DefaultMutableTreeNode nodo = (DefaultMutableTreeNode) arbolArchivos.getLastSelectedPathComponent();
+
+                if (nodo == null) {
+                    return;
+                }
+
+                File archivo = (File) nodo.getUserObject();
+                exploradorPanel.eliminarArchivo(archivo);
+                mostrarMensaje("Elemento eliminado correctamente.", false);
+            } catch (BuscadorException ex) {
+                mostrarMensaje(ex.getMessage(), true);
+            }
+        });
+
+        crearCarpeta.addActionListener(e -> {
+
+            DefaultMutableTreeNode nodo = (DefaultMutableTreeNode) arbolArchivos.getLastSelectedPathComponent();
+
+            if (nodo == null) {
+                return;
+            }
+
+            File archivo = (File) nodo.getUserObject();
+            exploradorPanel.pedirCrearCarpetaDentro(archivo);
+
+        });
+
+        importarArchivo.addActionListener(e -> {
+            try {
+                exploradorPanel.importarArchivoDesdePC();
+                mostrarMensaje("Archivo importado correctamente.", false);
+            } catch (BuscadorException ex) {
+                mostrarMensaje(ex.getMessage(), true);
+            }
+        });
+
+        organizar.addActionListener(e -> {
+            try {
+                exploradorPanel.organizarCarpeta();
+                mostrarMensaje("Archivos organizados correctamente.", false);
+            } catch (BuscadorException ex) {
+                mostrarMensaje(ex.getMessage(), true);
+            }
+        });
+
+        panel.add(copiar);
+        panel.add(pegar);
+        panel.add(renombrar);
+        panel.add(cargar);
+        panel.add(eliminar);
+        panel.add(crearCarpeta);
+        panel.add(importarArchivo);
+        panel.add(organizar);
+    }
+
+    private void configurarBotonBarra(JButton boton) {
+        boton.setFont(new Font("Arial", Font.BOLD, 6));
+        boton.setForeground(Color.WHITE);
+        boton.setBackground(Color.BLACK);
+        boton.setFocusPainted(false);
+    }
+
     private void initArbolIzquierdo() {
         nodoRaiz = new DefaultMutableTreeNode(carpetaBase);
         modeloArbol = new DefaultTreeModel(nodoRaiz);
-        arbolArchivos = new JTree(modeloArbol);
+
+        arbolArchivos = new JTree(modeloArbol) {
+            @Override
+            public String convertValueToText(Object value, boolean selected, boolean expanded,
+                    boolean leaf, int row, boolean hasFocus) {
+
+                DefaultMutableTreeNode nodo = (DefaultMutableTreeNode) value;
+                Object obj = nodo.getUserObject();
+
+                if (obj instanceof File archivo) {
+                    String ruta = archivo.getPath().replace("\\", "/");
+
+                    int prefijo = ruta.lastIndexOf("/");
+
+                    return ruta.substring(prefijo + 1);
+                }
+
+                return super.convertValueToText(value, selected, expanded, leaf, row, hasFocus);
+            }
+
+        };
 
         arbolArchivos.setRootVisible(true);
         arbolArchivos.setShowsRootHandles(true);
         arbolArchivos.setBackground(Color.BLACK);
         arbolArchivos.setForeground(Color.WHITE);
+
+        DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer() {
+            @Override
+            public Component getTreeCellRendererComponent(
+                    JTree tree, Object value, boolean selected, boolean expanded,
+                    boolean leaf, int row, boolean hasFocus) {
+
+                super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+
+                DefaultMutableTreeNode nodo = (DefaultMutableTreeNode) value;
+                Object obj = nodo.getUserObject();
+
+                if (obj instanceof File archivo) {
+                    if (archivo.isDirectory()) {
+                        setIcon(expanded ? getDefaultOpenIcon() : getDefaultClosedIcon());
+                    } else {
+                        setIcon(getDefaultLeafIcon());
+                    }
+                }
+
+                setBackgroundNonSelectionColor(Color.BLACK);
+                setTextNonSelectionColor(Color.WHITE);
+                setTextSelectionColor(Color.WHITE);
+
+                return this;
+            }
+        };
+
+        arbolArchivos.setCellRenderer(renderer);
 
         arbolArchivos.addTreeSelectionListener(e -> {
             DefaultMutableTreeNode nodo = (DefaultMutableTreeNode) arbolArchivos.getLastSelectedPathComponent();
@@ -157,25 +329,31 @@ public class Buscador extends JDialog {
             File archivo = (File) nodo.getUserObject();
             carpetaSeleccionada = archivo;
 
+            exploradorPanel.setCriterioOrden(criterioActual);
+            exploradorPanel.mostrarArchivoSeleccionado(archivo);
+
             if (archivo.isDirectory()) {
-                exploradorPanel.setCarpetaActual(archivo);
-                exploradorPanel.setCriterioOrden(criterioActual);
-                exploradorPanel.recargarArchivos();
                 mostrarMensaje("Carpeta seleccionada: " + archivo.getName(), false);
+            } else {
+                mostrarMensaje("Archivo seleccionado: " + archivo.getName(), false);
             }
         });
 
         JScrollPane scrollArbol = new JScrollPane(arbolArchivos);
-        scrollArbol.setPreferredSize(new Dimension(400, 800));
+        scrollArbol.setPreferredSize(new Dimension(600, 800));
+        scrollArbol.setMinimumSize(new Dimension(600, 800));
+        scrollArbol.setMaximumSize(new Dimension(600, 800));
         scrollArbol.setBorder(BorderFactory.createTitledBorder("Explorador"));
 
-        add(scrollArbol, BorderLayout.WEST);
+        add(scrollArbol, BorderLayout.CENTER);
 
-        cargarArbolEnThread();
+        cargarArbolEnThread(false);
     }
 
-    private void cargarArbolEnThread() {
+    private void cargarArbolEnThread(boolean restaurarExpansion) {
         mostrarMensaje("Cargando árbol de archivos...", false);
+
+        List<String> rutasExpandidas = restaurarExpansion ? obtenerRutasExpandidas() : new ArrayList<>();
 
         Thread hiloArbol = new Thread(() -> {
             DefaultMutableTreeNode nuevaRaiz = crearNodoArchivo(carpetaBase);
@@ -185,8 +363,11 @@ public class Buscador extends JDialog {
                 modeloArbol.setRoot(nodoRaiz);
                 modeloArbol.reload();
 
+                if (restaurarExpansion) {
+                    restaurarRutasExpandidas(rutasExpandidas);
+                }
 
-                mostrarMensaje("Árbol cargado correctamente.", false);
+               
             });
         });
 
@@ -194,13 +375,100 @@ public class Buscador extends JDialog {
         hiloArbol.start();
     }
 
+    private List<String> obtenerRutasExpandidas() {
+        List<String> rutas = new ArrayList<>();
+
+        TreePath raizPath = new TreePath(modeloArbol.getRoot());
+        Enumeration<TreePath> expandidas = arbolArchivos.getExpandedDescendants(raizPath);
+
+        if (expandidas != null) {
+            while (expandidas.hasMoreElements()) {
+                TreePath path = expandidas.nextElement();
+                String ruta = convertirTreePathARuta(path);
+                if (ruta != null) {
+                    rutas.add(ruta);
+                }
+            }
+        }
+
+        return rutas;
+    }
+
+    private String convertirTreePathARuta(TreePath path) {
+        Object[] nodos = path.getPath();
+        StringBuilder sb = new StringBuilder();
+
+        for (Object obj : nodos) {
+            DefaultMutableTreeNode nodo = (DefaultMutableTreeNode) obj;
+            Object userObject = nodo.getUserObject();
+
+            if (userObject instanceof File archivo) {
+                sb.append(archivo.getAbsolutePath()).append("||");
+            }
+        }
+
+        return sb.toString();
+    }
+
+    private void restaurarRutasExpandidas(List<String> rutasExpandidas) {
+        if (rutasExpandidas == null || rutasExpandidas.isEmpty()) {
+            return;
+        }
+
+        for (int i = 0; i < arbolArchivos.getRowCount(); i++) {
+            arbolArchivos.collapseRow(i);
+        }
+
+        expandirNodosGuardados(nodoRaiz, new TreePath(nodoRaiz), rutasExpandidas);
+    }
+
+    private void expandirNodosGuardados(DefaultMutableTreeNode nodo, TreePath pathActual, List<String> rutasExpandidas) {
+        String rutaActual = convertirTreePathARuta(pathActual);
+
+        if (rutasExpandidas.contains(rutaActual)) {
+            arbolArchivos.expandPath(pathActual);
+        }
+
+        Enumeration<?> hijos = nodo.children();
+        while (hijos.hasMoreElements()) {
+            DefaultMutableTreeNode hijo = (DefaultMutableTreeNode) hijos.nextElement();
+            expandirNodosGuardados(hijo, pathActual.pathByAddingChild(hijo), rutasExpandidas);
+        }
+    }
+
     private DefaultMutableTreeNode crearNodoArchivo(File archivo) {
         DefaultMutableTreeNode nodo = new DefaultMutableTreeNode(archivo);
 
         if (archivo.isDirectory()) {
             File[] hijos = archivo.listFiles();
+
             if (hijos != null) {
-                java.util.Arrays.sort(hijos, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+
+                if (carpetaSeleccionada != null && archivo.equals(carpetaSeleccionada)) {
+                    java.util.Arrays.sort(hijos, (a, b) -> {
+                        switch (criterioActual) {
+                            case NOMBRE:
+                                return a.getName().compareToIgnoreCase(b.getName());
+
+                            case FECHA:
+                                return Long.compare(a.lastModified(), b.lastModified());
+
+                            case TIPO:
+                                String tipoA = a.isDirectory() ? "Carpeta" : obtenerTipoArchivo(a);
+                                String tipoB = b.isDirectory() ? "Carpeta" : obtenerTipoArchivo(b);
+                                return tipoA.compareToIgnoreCase(tipoB);
+
+                            case TAMANIO:
+                                long tamA = a.isFile() ? a.length() : 0;
+                                long tamB = b.isFile() ? b.length() : 0;
+                                return Long.compare(tamA, tamB);
+
+                            default:
+                                return a.getName().compareToIgnoreCase(b.getName());
+                        }
+                    });
+                }
+
                 for (File hijo : hijos) {
                     nodo.add(crearNodoArchivo(hijo));
                 }
@@ -214,12 +482,22 @@ public class Buscador extends JDialog {
         carpetaSeleccionada = carpetaBase;
         exploradorPanel = new GUIArchivosPanel(this, carpetaSeleccionada, carpetaBase);
         exploradorPanel.setCriterioOrden(criterioActual);
-        add(exploradorPanel, BorderLayout.CENTER);
+        add(exploradorPanel, BorderLayout.EAST);
     }
 
-    private void cambiarOrden() {
+    private void cambiarOrden(){
         String seleccion = (String) comboOrden.getSelectedItem();
-        if (seleccion == null) return;
+        if (seleccion == null) {
+            try{
+                throw new BuscadorException("El archivo seleccionado no es un documento válido.");
+            }catch (BuscadorException e){
+                
+            }
+            
+            
+        }
+     
+        
 
         switch (seleccion) {
             case "Nombre":
@@ -239,13 +517,14 @@ public class Buscador extends JDialog {
         if (exploradorPanel != null) {
             exploradorPanel.setCriterioOrden(criterioActual);
             exploradorPanel.recargarArchivos();
+            recargarArbol();
         }
 
         mostrarMensaje("Orden aplicado: " + seleccion, false);
     }
 
     public void recargarArbol() {
-        cargarArbolEnThread();
+        cargarArbolEnThread(true);
     }
 
     private void configurarBoton(JButton boton) {
@@ -347,5 +626,16 @@ public class Buscador extends JDialog {
         }
 
         new GUIReproductor(perfil, archivo);
+    }
+
+    private String obtenerTipoArchivo(File archivo) {
+        String nombre = archivo.getName();
+        int punto = nombre.lastIndexOf('.');
+
+        if (punto > 0 && punto < nombre.length() - 1) {
+            return nombre.substring(punto + 1);
+        }
+
+        return "Sin extensión";
     }
 }

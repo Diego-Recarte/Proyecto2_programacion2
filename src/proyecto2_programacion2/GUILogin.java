@@ -61,13 +61,15 @@ public class GUILogin extends JPanel {
 
     public void inicializarBotones(CardLayout principal, JPanel cards) {
         JPanel panelLogin = new JPanel();
-        panelLogin.setLayout(new GridLayout(7, 1, 10, 10));
+        
+        panelLogin.setLayout(new GridLayout(7, 1, 30, 30));
         panelLogin.setBackground(Color.WHITE);
-        panelLogin.setPreferredSize(new Dimension(350, 280));
-        panelLogin.setOpaque(false);
+        panelLogin.setPreferredSize(new Dimension(380, 310));
+        panelLogin.setBackground(new Color(35, 35, 35, 200));
 
         JLabel lblUsuario = new JLabel("Usuario");
         lblUsuario.setFont(new Font("Arial", Font.BOLD, 16));
+        lblUsuario.setForeground(Color.WHITE);
         panelLogin.add(lblUsuario);
 
         user = new JTextField();
@@ -76,6 +78,7 @@ public class GUILogin extends JPanel {
 
         JLabel lblPassword = new JLabel("Contraseña");
         lblPassword.setFont(new Font("Arial", Font.BOLD, 16));
+        lblPassword.setForeground(Color.WHITE);
         panelLogin.add(lblPassword);
 
         contra = new JPasswordField();
@@ -83,9 +86,14 @@ public class GUILogin extends JPanel {
         panelLogin.add(contra);
 
         JCheckBox chkMostrar = new JCheckBox("Mostrar contraseña");
+        chkMostrar.setForeground(Color.white);
+        
         chkMostrar.setBackground(Color.WHITE);
         chkMostrar.setFocusable(false);
         chkMostrar.setOpaque(false);
+        chkMostrar.setPreferredSize(new Dimension (40, 30));
+        chkMostrar.setMinimumSize(new Dimension (40, 30));
+        chkMostrar.setMaximumSize(new Dimension (40, 30));
 
         chkMostrar.addActionListener(e -> {
             if (chkMostrar.isSelected()) {

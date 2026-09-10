@@ -14,10 +14,13 @@ import java.awt.*;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.io.*;
+import java.util.Arrays;
 
 public class GUICrearUsuarios extends JPanel {
 
     private JPasswordField contra;
+    private JPasswordField confirmacontra;
+    private  JCheckBox chkadmin;
     private JTextField user;
     private JLabel label;
     private Timer tempo;
@@ -79,13 +82,14 @@ public class GUICrearUsuarios extends JPanel {
 
     public void Inicializarbotones(CardLayout principal, JPanel cards) {
         JPanel panelLogin = new JPanel();
-        panelLogin.setLayout(new GridLayout(8, 1, 8, 8));
+        panelLogin.setLayout(new GridLayout(12, 1, 8, 8));
         panelLogin.setBackground(Color.WHITE);
         panelLogin.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         panelLogin.setPreferredSize(new Dimension(350, 420));
         panelLogin.setOpaque(false);
 
         JLabel lblUsuario = new JLabel("Usuario");
+        lblUsuario.setForeground(Color.white);
         lblUsuario.setFont(new Font("Arial", Font.BOLD, 16));
         panelLogin.add(lblUsuario);
 
@@ -94,6 +98,7 @@ public class GUICrearUsuarios extends JPanel {
         panelLogin.add(user);
 
         JLabel lblPassword = new JLabel("Contraseña");
+        lblPassword.setForeground(Color.white);
         lblPassword.setFont(new Font("Arial", Font.BOLD, 16));
         panelLogin.add(lblPassword);
 
@@ -102,6 +107,8 @@ public class GUICrearUsuarios extends JPanel {
         panelLogin.add(contra);
 
         JCheckBox chkMostrar = new JCheckBox("Mostrar contraseña");
+        chkMostrar.setForeground(Color.white);
+        chkMostrar.setForeground(Color.white);
         chkMostrar.setOpaque(false);
         chkMostrar.setBackground(Color.WHITE);
         chkMostrar.setFocusable(false);
@@ -126,6 +133,63 @@ public class GUICrearUsuarios extends JPanel {
         paneltipo.add(panelradio);
 
         panelLogin.add(paneltipo);
+        
+        JLabel lblconfirmar= new JLabel(" Confirmar Contraseña");
+        lblconfirmar.setForeground(Color.white);
+        lblconfirmar.setFont(new Font("Arial", Font.BOLD, 16));
+        panelLogin.add(lblconfirmar);
+
+        confirmacontra = new JPasswordField();
+        confirmacontra.setFont(new Font("Arial", Font.PLAIN, 15));
+        panelLogin.add(confirmacontra);
+
+        JCheckBox chkconfirmaMostrar = new JCheckBox("Mostrar confirmacion");
+        chkconfirmaMostrar.setForeground(Color.white);
+        chkconfirmaMostrar.setOpaque(false);
+        chkconfirmaMostrar.setBackground(Color.WHITE);
+        chkconfirmaMostrar.setFocusable(false);
+
+        chkconfirmaMostrar.addActionListener(e -> {
+            if (chkconfirmaMostrar.isSelected()) {
+                confirmacontra.setEchoChar((char) 0);
+            } else {
+                confirmacontra.setEchoChar('•');
+            }
+        });
+
+        panelLogin.add(chkconfirmaMostrar);
+
+        JPanel panelradioconfi = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelradioconfi.setOpaque(false);
+        panelradioconfi.setPreferredSize(new Dimension(100, 20));
+
+        JPanel paneltipoconfi = new JPanel(new GridLayout(1, 1));
+        paneltipoconfi.setOpaque(false);
+        paneltipoconfi.setPreferredSize(new Dimension(330, 40));
+        paneltipoconfi.add(panelradioconfi);
+        paneltipoconfi.add(paneltipo);
+        
+        
+        chkadmin = new JCheckBox("Cuenta administrador");
+        chkadmin.setForeground(Color.white);
+        chkadmin.setOpaque(false);
+        chkadmin.setBackground(Color.WHITE);
+        chkadmin.setFocusable(false);
+        chkadmin.setHorizontalAlignment(SwingConstants.CENTER);
+
+        
+        ArchivoUsuarioWin archivo = new ArchivoUsuarioWin();
+        if (!archivo.existeAdmin()){
+            chkadmin.setVisible(false);
+        }else{
+             chkadmin.setVisible(true);
+        }
+
+        panelLogin.add(chkadmin);
+        
+        
+        
+        
 
         label = new JLabel("Texto");
         label.setFont(new Font("Arial", Font.BOLD, 14));
@@ -147,10 +211,18 @@ public class GUICrearUsuarios extends JPanel {
             int compC = ComprobarC();
 
             if (compU == 2 && compC == 2) {
-                Seguir(principal, cards);
+                if (Arrays.equals(contra.getPassword(), confirmacontra.getPassword())) {
+                    Seguir(principal, cards);
+                }else{
+                    label.setText("La verificacion no es igual");
+                    label.setVisible(true);
+                    tempo.start();
+                }
+                
             } else {
                 if (compU == 0 && compC == 0) {
                     label.setText("Falta User y Contra");
+                    
                 }
                 label.setVisible(true);
                 repaint();
@@ -276,7 +348,13 @@ public class GUICrearUsuarios extends JPanel {
                     archivo.login(nombre, contra);
                     padre.mostrarEscritorio();
                 } else {
-                    UsuarioWin win = new UsuarioWin(nombre, contra.getPassword(), false);
+                    UsuarioWin win ;
+                    if (chkadmin.isSelected()){
+                          win = new UsuarioWin(nombre, contra.getPassword(), true);
+                    }else{
+                         win = new UsuarioWin(nombre, contra.getPassword(), false);
+                    }
+                    
                     archivo.agregarUsuario(win);
                     archivo.login(nombre, contra);
                     padre.mostrarEscritorio();

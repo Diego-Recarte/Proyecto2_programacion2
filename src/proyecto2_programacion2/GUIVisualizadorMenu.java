@@ -25,7 +25,7 @@ public class GUIVisualizadorMenu extends JPanel {
 
     private JLabel labeltitulo;
     private JPanel panelGrid;
-
+    private int filas;
     private GUIVisualizadorPantalla padre;
     private CardLayout principal;
     private JPanel cards;
@@ -126,14 +126,21 @@ public class GUIVisualizadorMenu extends JPanel {
         panelGrid.add(vacio, BorderLayout.CENTER);
     } else {
 
-        int filas = (int) Math.ceil((double) archivos.length / 2);
+        int Filas = (int) Math.ceil((double) archivos.length / 2);
+        if (Filas<5){
+            Filas =5;
+        }
+        this.filas= Filas;
 
-        panelGrid.setLayout(new GridLayout(filas, 2, 10, 10));
-
+        panelGrid.setLayout(new GridLayout(Filas, 4, 10, 10));
+        int contador=0;
         for (File archivoImagen : archivos) {
             JButton boton = crearBotonImagen(archivoImagen);
             panelGrid.add(boton);
+            contador++;
         }
+        rellenarEspacios( contador);
+        
     }
 
     panelGrid.revalidate();
@@ -154,9 +161,12 @@ public class GUIVisualizadorMenu extends JPanel {
         boton.putClientProperty("file", archivoImagen);
         boton.setBackground(Color.BLACK);
         boton.setFocusPainted(false);
+        boton.setPreferredSize(new Dimension(200,120));
+        boton.setMinimumSize(new Dimension(200,120));
+        boton.setMaximumSize(new Dimension(200,120));
 
         ImageIcon iconoOriginal = new ImageIcon(archivoImagen.getAbsolutePath());
-        Image miniatura = iconoOriginal.getImage().getScaledInstance(300, 220, Image.SCALE_SMOOTH);
+        Image miniatura = iconoOriginal.getImage().getScaledInstance(100, 80, Image.SCALE_SMOOTH);
         boton.setIcon(new ImageIcon(miniatura));
         boton.setText(archivoImagen.getName());
         boton.setHorizontalTextPosition(SwingConstants.CENTER);
@@ -172,4 +182,18 @@ public class GUIVisualizadorMenu extends JPanel {
 
         return boton;
         }
+    
+    
+    private void rellenarEspacios(int contador){
+        int columnas = 4;
+        int contadorFilas = filas - (contador /6);
+        int espaciosVacios = columnas * contadorFilas;
+        for (int i =0; i< espaciosVacios; i++){
+            panelGrid.add(new JLabel(""));
+        }
+    
     }
+}
+
+
+

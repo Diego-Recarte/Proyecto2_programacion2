@@ -16,9 +16,7 @@ public class Proyecto2_programacion2 {
      */
     public static void main(String[] args) {
         // TODO code application logic here
-         SwingUtilities.invokeLater(() -> {
-            new GUIPantallaPrincipal().setVisible(true);
-        });
+         SwingUtilities.invokeLater(() -> new GUIPantallaPrincipal().setVisible(true));
         
         //cuenta admin. nombre: Admin, contra Admin123!
     }
