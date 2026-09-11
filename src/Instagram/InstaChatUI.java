@@ -2,8 +2,6 @@ package Instagram;
 
 import Instagram.sockets.ChatClient;
 import Instagram.sockets.ChatMessage;
-import Instagram.sockets.ChatServer;
-import Instagram.sockets.LocalChatServer;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -89,6 +87,11 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
     private String currentPeer;
     private boolean closing;
     private int unreadCount;
+    private InstaSession session;
+    private Window chatWindow;
+    private final java.awt.event.WindowFocusListener focusListener = new java.awt.event.WindowAdapter() {
+        @Override public void windowGainedFocus(java.awt.event.WindowEvent e) { markVisibleRead(); }
+    };
 
     public InstaChatUI(String currentUser) {
         this(currentUser, null);
@@ -113,7 +116,6 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
         } else {
             cards.show(center, "CONTACTS");
         }
-        connectInBackground();
     }
 
     private JPanel createHeader() {
@@ -291,39 +293,25 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
         }
     }
 
-    private void connectInBackground() {
-        String host = System.getProperty("instagram.chat.host", "127.0.0.1");
-        int port = Integer.getInteger("instagram.chat.port", ChatServer.DEFAULT_PORT);
-        new SwingWorker<ChatClient, Void>() {
-            @Override
-            protected ChatClient doInBackground() throws Exception {
-                LocalChatServer.ensureAvailable(host, port);
-                ChatClient connectedClient = new ChatClient(host, port, currentUser);
-                connectedClient.addListener(InstaChatUI.this);
-                connectedClient.connect();
-                return connectedClient;
-            }
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        closing = false;
+        session = InstaSession.ensure(this, currentUser);
+        if (session != null) session.addListener(this);
+        chatWindow = SwingUtilities.getWindowAncestor(this);
+        if (chatWindow != null) chatWindow.addWindowFocusListener(focusListener);
+    }
 
-            @Override
-            protected void done() {
-                try {
-                    ChatClient connectedClient = get();
-                    if (closing) {
-                        connectedClient.close();
-                        return;
-                    }
-                    client = connectedClient;
-                    sendButton.setEnabled(true);
-                    if (currentPeer != null) {
-                        client.requestHistory(currentPeer);
-                    }
-                } catch (Exception ex) {
-                    connectionLabel.setForeground(ACCENT);
-                    connectionLabel.setText("Sin conexión: " + rootMessage(ex));
-                    sendButton.setEnabled(false);
-                }
-            }
-        }.execute();
+    boolean isReading(String peer) {
+        return !closing && isShowing() && peer.equals(currentPeer);
+    }
+
+    private void markVisibleRead() {
+        if (currentPeer != null && isShowing() && chatWindow != null && chatWindow.isFocused()
+                && client != null && client.isConnected()) {
+            try { client.markRead(currentPeer); } catch (IOException ignored) { }
+        }
     }
 
     private void openConversation(String peer) {
@@ -486,15 +474,11 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
     @Override
     public void onMessage(ChatMessage message) {
         SwingUtilities.invokeLater(() -> {
+            if (closing) return;
             if (currentPeer != null && isCurrentConversation(message) && visibleMessageIds.add(message.getId())) {
                 messageModel.addElement(message);
                 messageList.ensureIndexIsVisible(messageModel.size() - 1);
-                if (currentUser.equals(message.getRecipient()) && client != null) {
-                    try {
-                        client.markRead(currentPeer);
-                    } catch (IOException ignored) {
-                    }
-                }
+                if (currentUser.equals(message.getRecipient())) markVisibleRead();
             } else if (currentUser.equals(message.getRecipient())) {
                 connectionLabel.setForeground(ACCENT);
                 connectionLabel.setText("Nuevo mensaje de @" + message.getSender());
@@ -528,8 +512,10 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
     @Override
     public void onHistoryFinished(String peer) {
         SwingUtilities.invokeLater(() -> {
+            if (closing) return;
             if (peer.equals(currentPeer) && !messageModel.isEmpty()) {
                 messageList.ensureIndexIsVisible(messageModel.size() - 1);
+                markVisibleRead();
             }
         });
     }
@@ -537,9 +523,15 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
     @Override
     public void onConnectionChanged(boolean connected, String detail) {
         SwingUtilities.invokeLater(() -> {
+            if (closing) return;
+            client = session == null ? null : session.client();
             connectionLabel.setText(connected ? "Conectado al chat" : detail);
             connectionLabel.setForeground(connected ? new Color(70, 200, 100) : ACCENT);
             sendButton.setEnabled(connected);
+            if (connected && currentPeer != null && client != null) {
+                try { client.requestHistory(currentPeer); }
+                catch (IOException ex) { connectionLabel.setText(ex.getMessage()); }
+            }
         });
     }
 
@@ -608,9 +600,9 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
     @Override
     public void removeNotify() {
         closing = true;
-        if (client != null) {
-            client.close();
-        }
+        if (session != null) session.removeListener(this);
+        if (chatWindow != null) chatWindow.removeWindowFocusListener(focusListener);
+        client = null;
         super.removeNotify();
     }
 

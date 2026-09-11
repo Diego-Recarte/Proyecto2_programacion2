@@ -30,6 +30,13 @@ public class InstaLoginUI extends JPanel {
         initComponentes();
     }
 
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        InstaSession session = InstaSession.find(this);
+        if (session != null) session.close();
+    }
+
     private void initComponentes() {
         int startY = 140;
 

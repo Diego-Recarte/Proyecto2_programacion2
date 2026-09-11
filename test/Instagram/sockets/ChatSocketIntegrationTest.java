@@ -74,6 +74,11 @@ public final class ChatSocketIntegrationTest {
 
                 @Override
                 public void onHistoryFinished(String peer) {
+                    try {
+                        luisReconnected.markRead(peer);
+                    } catch (java.io.IOException ex) {
+                        throw new AssertionError(ex);
+                    }
                     historyFinished.countDown();
                 }
 

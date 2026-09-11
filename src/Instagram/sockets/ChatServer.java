@@ -192,12 +192,14 @@ public final class ChatServer implements AutoCloseable {
         }
 
         private void sendHistory(String peer) throws IOException {
-            send(SocketProtocol.withArgument(SocketProtocol.HISTORY_START, peer));
-            for (ChatMessage message : historyStore.between(username, peer)) {
-                send(SocketProtocol.message(SocketProtocol.MESSAGE, message));
+            // El bloque no puede mezclarse con mensajes en vivo de otros clientes.
+            synchronized (outputLock) {
+                send(SocketProtocol.withArgument(SocketProtocol.HISTORY_START, peer));
+                for (ChatMessage message : historyStore.between(username, peer)) {
+                    send(SocketProtocol.message(SocketProtocol.MESSAGE, message));
+                }
+                send(SocketProtocol.withArgument(SocketProtocol.HISTORY_END, peer));
             }
-            send(SocketProtocol.withArgument(SocketProtocol.HISTORY_END, peer));
-            markRead(peer);
         }
 
         private void markRead(String peer) throws IOException {

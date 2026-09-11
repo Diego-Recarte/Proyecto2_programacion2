@@ -60,6 +60,12 @@ public final class InstaFeedUI extends JPanel {
     private volatile ArrayList<String[]> feedPosts = new ArrayList<>();
     private volatile ScheduledExecutorService refreshExecutor;
     private volatile boolean feedRendered;
+    private static final int PAGE_SIZE = 5;
+    private int renderedPosts;
+    private boolean appending;
+    private final JLabel feedEnd = new JLabel("", SwingConstants.CENTER);
+    private final JButton newPosts = new JButton("Nuevas publicaciones · Ver");
+    private ArrayList<String[]> pendingPosts;
 
     public InstaFeedUI(String currentUser) {
         this.currentUser = currentUser;
@@ -67,7 +73,12 @@ public final class InstaFeedUI extends JPanel {
         setPreferredSize(new Dimension(400, 650));
         setBackground(BACKGROUND);
 
-        add(createHeader(), BorderLayout.NORTH);
+        JPanel top = new JPanel(new BorderLayout());
+        top.add(createHeader(), BorderLayout.NORTH);
+        newPosts.setVisible(false);
+        newPosts.addActionListener(e -> showPendingPosts());
+        top.add(newPosts, BorderLayout.SOUTH);
+        add(top, BorderLayout.NORTH);
 
         feedPanel.setLayout(new BoxLayout(feedPanel, BoxLayout.Y_AXIS));
         feedPanel.setBackground(BACKGROUND);
@@ -76,6 +87,10 @@ public final class InstaFeedUI extends JPanel {
         feedScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         feedScroll.getVerticalScrollBar().setUnitIncrement(18);
         feedScroll.getViewport().setBackground(BACKGROUND);
+        feedEnd.setForeground(Color.GRAY);
+        feedEnd.setAlignmentX(Component.LEFT_ALIGNMENT);
+        feedEnd.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
+        feedScroll.getVerticalScrollBar().addAdjustmentListener(e -> appendNearEnd());
         add(feedScroll, BorderLayout.CENTER);
 
         add(createNavigation(), BorderLayout.SOUTH);
@@ -85,6 +100,7 @@ public final class InstaFeedUI extends JPanel {
     @Override
     public void addNotify() {
         super.addNotify();
+        InstaSession.ensure(this, currentUser);
         startRealtimeRefresh();
     }
 
@@ -114,6 +130,7 @@ public final class InstaFeedUI extends JPanel {
         interactions.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 25));
         interactions.addActionListener(e -> show(new InteractionsUI(currentUser)));
         JButton chat = iconButton("✉", "Mensajes");
+        InstaMessageBadge.install(chat);
         chat.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 23));
         chat.addActionListener(e -> show(new InstaChatUI(currentUser)));
         actions.add(people);
@@ -125,6 +142,13 @@ public final class InstaFeedUI extends JPanel {
 
     private void loadFeed() {
         requestRefresh(true);
+    }
+
+    private void showPendingPosts() {
+        if (pendingPosts != null) {
+            feedScroll.getVerticalScrollBar().setValue(0);
+            renderFeed(pendingPosts);
+        }
     }
 
     private synchronized void startRealtimeRefresh() {
@@ -175,7 +199,13 @@ public final class InstaFeedUI extends JPanel {
             if (forceRender || !feedRendered || !samePosts(feedPosts, latest)) {
                 SwingUtilities.invokeLater(() -> {
                     if (generation == refreshGeneration.get() && isDisplayable()) {
-                        renderFeed(latest);
+                        if (!forceRender && feedRendered && !feedPosts.isEmpty()
+                                && feedScroll.getVerticalScrollBar().getValue() > 100) {
+                            pendingPosts = latest;
+                            newPosts.setVisible(true);
+                        } else {
+                            renderFeed(latest);
+                        }
                     }
                 });
             }
@@ -192,8 +222,12 @@ public final class InstaFeedUI extends JPanel {
 
     private void renderFeed(ArrayList<String[]> latest) {
         int previousScroll = feedScroll.getVerticalScrollBar().getValue();
+        int previousCount = renderedPosts;
+        pendingPosts = null;
+        newPosts.setVisible(false);
         feedPosts = new ArrayList<>(latest);
         feedRendered = true;
+        renderedPosts = 0;
         feedPanel.removeAll();
         if (feedPosts.isEmpty()) {
             feedPanel.add(Box.createVerticalStrut(150));
@@ -205,20 +239,42 @@ public final class InstaFeedUI extends JPanel {
             empty.setAlignmentX(Component.CENTER_ALIGNMENT);
             feedPanel.add(empty);
         } else {
-            for (int index = 0; index < feedPosts.size(); index++) {
-                JPanel card = createPostCard(feedPosts.get(index), index);
-                JPanel wrapper = new JPanel(new GridBagLayout());
-                wrapper.setBackground(BACKGROUND);
-                wrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
-                wrapper.add(card);
-                wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, card.getPreferredSize().height));
-                feedPanel.add(wrapper);
-                feedPanel.add(Box.createVerticalStrut(8));
-            }
+            appendPosts(Math.max(PAGE_SIZE, previousScroll > 0 ? previousCount : PAGE_SIZE));
         }
         feedPanel.revalidate();
         feedPanel.repaint();
         SwingUtilities.invokeLater(() -> feedScroll.getVerticalScrollBar().setValue(previousScroll));
+    }
+
+    private void appendNearEnd() {
+        javax.swing.JScrollBar bar = feedScroll.getVerticalScrollBar();
+        if (feedRendered && !appending && renderedPosts < feedPosts.size()
+                && bar.getValue() + bar.getVisibleAmount() >= bar.getMaximum() - 450) {
+            appendPosts(PAGE_SIZE);
+        }
+    }
+
+    private void appendPosts(int count) {
+        appending = true;
+        feedPanel.remove(feedEnd);
+        int end = Math.min(feedPosts.size(), renderedPosts + count);
+        while (renderedPosts < end) {
+            int index = renderedPosts++;
+            JPanel card = createPostCard(feedPosts.get(index), index);
+            JPanel wrapper = new JPanel(new GridBagLayout());
+            wrapper.setBackground(BACKGROUND);
+            wrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
+            wrapper.add(card);
+            wrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, card.getPreferredSize().height));
+            feedPanel.add(wrapper);
+            feedPanel.add(Box.createVerticalStrut(8));
+        }
+        feedEnd.setText(renderedPosts < feedPosts.size() ? "Desliza para ver más"
+                : "Estás al día · No hay más publicaciones");
+        feedPanel.add(feedEnd);
+        feedPanel.revalidate();
+        feedPanel.repaint();
+        SwingUtilities.invokeLater(() -> appending = false);
     }
 
     private void showLoadingState() {
@@ -419,6 +475,7 @@ public final class InstaFeedUI extends JPanel {
         JButton add = navButton(InstaNavIcon.Type.ADD, "Nueva publicación");
         add.addActionListener(e -> composePost());
         JButton messages = navButton(InstaNavIcon.Type.MESSAGE, "Mensajes");
+        InstaMessageBadge.install(messages);
         messages.addActionListener(e -> show(new InstaChatUI(currentUser)));
         JButton profile = navButton(InstaNavIcon.Type.PROFILE, "Perfil");
         profile.addActionListener(e -> show(new InstaProfileUI(currentUser)));

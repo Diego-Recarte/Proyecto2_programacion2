@@ -440,6 +440,7 @@ public class VisibilidadProfileUI extends JPanel {
         bar.add(btnSubir);
 
         JButton btnChat = crearBotonNav("Mensajes", InstaNavIcon.Type.MESSAGE);
+        InstaMessageBadge.install(btnChat);
         btnChat.setForeground(COLOR_BTN);
         btnChat.addActionListener(e -> {
             Window window = SwingUtilities.getWindowAncestor(this);
