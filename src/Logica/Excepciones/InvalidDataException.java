@@ -4,10 +4,6 @@
  */
 package Logica.Excepciones;
 
-/**
- *
- * @author esteb
- */
 public class InvalidDataException extends Exception {
 
     public InvalidDataException(String message) {

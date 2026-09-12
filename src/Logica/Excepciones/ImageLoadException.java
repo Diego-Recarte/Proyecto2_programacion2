@@ -4,10 +4,6 @@
  */
 package Logica.Excepciones;
 
-/**
- *
- * @author esteb
- */
 public class ImageLoadException extends Exception {
     public ImageLoadException(String message) {
         super(message);

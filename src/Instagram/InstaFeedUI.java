@@ -373,7 +373,8 @@ public final class InstaFeedUI extends JPanel {
                 image.setText("");
                 imageWidth = icon.getIconWidth();
                 imageHeight = icon.getIconHeight();
-            } catch (ImageLoadException ignored) {
+            } catch (ImageLoadException ex) {
+                image.setToolTipText(ex.getCause() == null ? ex.getMessage() : ex.getCause().getMessage());
             }
             Dimension imageSize = new Dimension(imageWidth, imageHeight);
             image.setPreferredSize(imageSize);
@@ -592,10 +593,7 @@ public final class InstaFeedUI extends JPanel {
 
     private ImageIcon fitFeedImage(String path, int maxWidth, int maxHeight) throws ImageLoadException {
         try {
-            BufferedImage source = ImageIO.read(new File(path));
-            if (source == null) {
-                throw new IOException("Formato no reconocido");
-            }
+            BufferedImage source = InstaPostMedia.readImage(path);
             double scale = Math.min((double) maxWidth / source.getWidth(), (double) maxHeight / source.getHeight());
             int width = Math.max(1, (int) Math.round(source.getWidth() * scale));
             int height = Math.max(1, (int) Math.round(source.getHeight() * scale));

@@ -60,6 +60,13 @@ final class InstaPostComposer {
                         "Nueva publicación", JOptionPane.WARNING_MESSAGE);
                 return;
             }
+            try {
+                InstaPostMedia.readImage(selectedImage.getAbsolutePath());
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(parent, "No se puede publicar " + selectedImage.getName()
+                        + ": " + ex.getMessage(), "Nueva publicación", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
         }
 
         File userDirectory = new File(new File("Instagram", "users"), username);
@@ -118,7 +125,7 @@ final class InstaPostComposer {
                 File destination = new File(imagesDirectory,
                         postId + "_" + (index + 1) + "_" + cleanFileName);
                 Files.copy(selected.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                storedPaths.add(destination.getAbsolutePath());
+                storedPaths.add(destination.toPath().normalize().toString().replace('\\', '/'));
             }
 
             instaManager manager = instaController.getInstance().getInsta();
