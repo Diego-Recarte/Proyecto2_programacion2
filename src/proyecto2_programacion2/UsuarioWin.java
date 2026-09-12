@@ -10,48 +10,49 @@ import Logica.RutasSistema;
  *
  * @author denam
  */
+
 import java.io.File;
-import java.util.*;
-import java.io.IOException;
 import java.io.Serializable;
+import java.util.Calendar;
 
 public class UsuarioWin implements Serializable {
+
     private static final long serialVersionUID = 1L;
-    
+
     private String nombre;
-    private char [] password;
-    private File misDocumentos ;
-    private File musica ;
-    private File misImagenes ;
+    private char[] password;
+    private File misDocumentos;
+    private File musica;
+    private File misImagenes;
     private File ubicacion;
     private boolean isActivo;
     private boolean isAdmin;
- 
-            
-            
-    
-    public UsuarioWin(String nombre, char [] password, boolean isAdmin){
-        this.nombre= nombre;
-        this.password= String.valueOf(password).trim().toCharArray();
+
+    // NUEVOS ATRIBUTOS
+    private int edad;
+    private String genero;
+    private Calendar fechaRegistro;
+
+    public UsuarioWin(String nombre, char[] password, boolean isAdmin,int edad, String genero) {
+
+        this.nombre = nombre;
+        this.password = String.valueOf(password).trim().toCharArray();
         isActivo = true;
-        this.isAdmin=isAdmin;
-        
-        
-        ubicacion= RutasSistema.usuario(this.nombre);
+        this.isAdmin = isAdmin;
+
+        this.edad = edad;
+        this.genero = genero;
+        this.fechaRegistro = Calendar.getInstance();
+
+        ubicacion = RutasSistema.usuario(this.nombre);
         misDocumentos = RutasSistema.documentos(this.nombre);
         musica = RutasSistema.musica(this.nombre);
         misImagenes = RutasSistema.imagenes(this.nombre);
-        
-        
-        
+
         ubicacion.mkdirs();
         misDocumentos.mkdirs();
         musica.mkdirs();
-         misImagenes.mkdirs();
-        
-        
-       
-        
+        misImagenes.mkdirs();
     }
 
     public String getNombre() {
@@ -69,18 +70,16 @@ public class UsuarioWin implements Serializable {
     public char[] getPassword() {
         return password;
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+    public int getEdad() {
+        return edad;
+    }
+
+    public String getGenero() {
+        return genero;
+    }
+
+    public Calendar getFechaRegistro() {
+        return fechaRegistro;
+    }
 }

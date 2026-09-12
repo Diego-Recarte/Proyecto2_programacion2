@@ -16,7 +16,7 @@ public final class RutasCompartidasTest {
         require(!RutasSistema.Z.exists(), "La prueba necesita un directorio vacío.");
         new UserManager();
         try {
-            UsuarioWin usuario = new UsuarioWin("compartido", "prueba".toCharArray(), false);
+            UsuarioWin usuario = new UsuarioWin("compartido", "prueba".toCharArray(), false, 19,"Masculino");
             UserManager.addUser("compartido", "prueba");
             ArchivoUsuarioWin archivo = new ArchivoUsuarioWin();
             archivo.agregarUsuario(usuario);

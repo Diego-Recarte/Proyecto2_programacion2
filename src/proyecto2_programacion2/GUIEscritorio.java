@@ -95,25 +95,79 @@ public class GUIEscritorio extends JPanel {
     public void initBotones(GUIPantallaPrincipal padre, CardLayout principal, JPanel cards) {
         windows = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/windows.png", 50, 50, "");
         insta = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/insta.png", 50, 150, "Insta+");
-        terminal = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/cmd.png", 50, 250, "CMD");
-        reproductor = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/reproductor.png", 50, 350, "reproductor");
+        terminal = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/cmd.png", 50, 50, "CMD");
+        reproductor = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/reproductor.png", 50, 250, "reproductor");
         buscador = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/buscador.png", 150, 50, "buscador");
-        visualizador = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/visualizador.png", 250, 250, "Visualizador");
-        visualizador.addActionListener(ev->{
-        new GUIVisualizadorPantalla (padre, null);
+        visualizador = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/visualizador.png", 150, 150, "Visualizador");
+        
+       
+        terminal.addMouseListener(new MouseAdapter() {
+            @Override
+           
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                     new PanelCMD(padre);
+                }
+            }
+        });
+        
+        
+        visualizador.addMouseListener(new MouseAdapter() {
+            @Override
+           
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                     new GUIVisualizadorPantalla (padre, null);
+                }
+            }
         });
         
         word = crearBotonEscritorio("/datos/windows/Z/imagenes/windows/iconosApp/word.png", 150, 250, "Word");
-         buscador.addActionListener(ev->{
-        new Buscador(padre);
+        
+        
+         buscador.addMouseListener(new MouseAdapter() {
+            @Override
+           
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                     new Buscador(padre);
+                }
+            }
         });
+       
+         word.addMouseListener(new MouseAdapter() {
+            @Override
+           
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    new GUIpantallaWord(padre, null,false);
+                }
+            }
+        });
+        
+         
+         insta.addMouseListener(new MouseAdapter() {
+            @Override
+           
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    abrirInstagram();
+                }
+            }
+        });
+         
+         reproductor.addMouseListener(new MouseAdapter() {
+            @Override
+           
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    abrirReproductor(padre);
+                }
+            }
+        });
+  
 
-        word.addActionListener(ev -> new GUIpantallaWord(padre, null,false));
-
-        insta.addActionListener(ev -> abrirInstagram());
-        reproductor.addActionListener(ev -> abrirReproductor(padre));
-
-
+         escritorio.add(terminal);
         escritorio.add(insta);
         escritorio.add(reproductor);
         escritorio.add(buscador);
@@ -128,9 +182,9 @@ public class GUIEscritorio extends JPanel {
     private JButton crearBotonEscritorio(String ruta, int x, int y, String nombre) {
         JButton boton = new JButton();
 
-        aplicarTamanoBotonYIcono(boton, ruta, 90, 90, nombre);
+        aplicarTamanoBotonYIcono(boton, ruta, 60, 60, nombre);
 
-        boton.setBounds(x, y, 90, 120);
+        boton.setBounds(x, y, 90, 80);
         boton.setFocusPainted(false);
         boton.setBorderPainted(false);
         boton.setContentAreaFilled(false);
@@ -186,6 +240,7 @@ public class GUIEscritorio extends JPanel {
             public void mousePressed(MouseEvent e) {
                 clickOffset[0] = e.getPoint();
             }
+            
         });
 
         boton.addMouseMotionListener(new MouseMotionAdapter() {
