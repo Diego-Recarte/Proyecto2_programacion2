@@ -27,8 +27,6 @@ public class UsuarioWin implements Serializable {
     private File ubicacion;
     private boolean isActivo;
     private boolean isAdmin;
-
-    // NUEVOS ATRIBUTOS
     private int edad;
     private String genero;
     private Calendar fechaRegistro;
