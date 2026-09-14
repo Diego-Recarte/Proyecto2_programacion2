@@ -29,6 +29,10 @@ public class GUIArchivosPanel extends JPanel {
 
     private JPanel panelListaArchivos;
     private JTextArea labelRuta;
+    
+    private final BuscadorLista listaImagenes = new BuscadorLista();
+    private final BuscadorLista listaDocumentos = new BuscadorLista();
+    private final BuscadorLista listaMusica = new BuscadorLista();
 
     private Buscador.CriterioOrden criterioOrden = Buscador.CriterioOrden.NOMBRE;
 
@@ -253,6 +257,10 @@ public class GUIArchivosPanel extends JPanel {
         if (archivos == null) {
             throw new BuscadorException("No se pudo leer la carpeta.");
         }
+        
+        listaImagenes.clear();
+        listaDocumentos.clear();
+        listaMusica.clear();
 
         File carpetaImagenes = new File(carpetaOrganizar, "misimagenes");
         File carpetaDocumentos = new File(carpetaOrganizar, "misdocumentos");
@@ -263,34 +271,73 @@ public class GUIArchivosPanel extends JPanel {
 
             String extension = obtenerTipoArchivo(archivo).toLowerCase();
             File destino = null;
+            BuscadorLista Destino= null;
 
             if (extension.equals("jpg") || extension.equals("jpeg") || extension.equals("png")) {
                 carpetaImagenes.mkdirs();
                 destino = new File(carpetaImagenes, archivo.getName());
+                Destino = listaImagenes;
             } else if (extension.equals("txt") || extension.equals("pdf") || extension.equals("doc")
                     || extension.equals("docx") || extension.equals("pwrd")) {
                 carpetaDocumentos.mkdirs();
                 destino = new File(carpetaDocumentos, archivo.getName());
+                Destino = listaDocumentos;
             } else if (extension.equals("mp3") || extension.equals("wav") || extension.equals("mp5")) {
                 carpetaMusica.mkdirs();
                 destino = new File(carpetaMusica, archivo.getName());
+                Destino = listaMusica;
             }
 
             if (destino != null && !destino.exists()) {
-                try {
-                    Files.move(archivo.toPath(), destino.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                } catch (IOException e) {
-                    throw new BuscadorException("Error al organizar: " + archivo.getName());
-                }
+
+                    Destino.add(new BuscadorNodo(destino, archivo));
+                
             }
+        }
+        BuscadorNodo temporal = listaImagenes.getInicio();
+        while (temporal != null){
+            try{
+            Files.move(temporal.getRuta().toPath(), temporal.getdestino().toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }catch(IOException e ){
+            
+            }
+            carpetaImagenes.mkdirs();
+            temporal = temporal.getSiguiente();
+
+        }
+        
+         temporal = listaDocumentos.getInicio();
+        while (temporal != null){
+            try{
+            Files.move(temporal.getRuta().toPath(), temporal.getdestino().toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }catch(IOException e ){
+            
+            }
+            carpetaDocumentos.mkdirs();
+            temporal = temporal.getSiguiente();
+
+        }
+         temporal = listaMusica.getInicio();
+         while (temporal != null){
+            try{
+            Files.move(temporal.getRuta().toPath(), temporal.getdestino().toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }catch(IOException e ){
+            
+            }
+            carpetaMusica.mkdirs();
+            temporal = temporal.getSiguiente();
+
         }
 
         eliminarSiEstaVacia(carpetaImagenes);
         eliminarSiEstaVacia(carpetaDocumentos);
         eliminarSiEstaVacia(carpetaMusica);
 
-        mostrarPropiedades(carpetaOrganizar);
-        buscador.recargarArbol();
+      
+        SwingUtilities.invokeLater(() -> {
+            mostrarPropiedades(carpetaOrganizar);
+            buscador.recargarArbol();
+        });
     }
 
     private void eliminarSiEstaVacia(File dir) {

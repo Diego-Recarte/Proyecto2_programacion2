@@ -240,12 +240,34 @@ public class Buscador extends JDialog {
         });
 
         organizar.addActionListener(e -> {
-            try {
+            
+            
+            organizar.setEnabled(false);
+            mostrarMensaje("Ordenando archivos...",false);
+            Thread hiloOrganizador = new Thread (()->{
+                try {
                 exploradorPanel.organizarCarpeta();
-                mostrarMensaje("Archivos organizados correctamente.", false);
-            } catch (BuscadorException ex) {
-                mostrarMensaje(ex.getMessage(), true);
-            }
+                SwingUtilities.invokeLater(() ->{
+                 mostrarMensaje("Archivos organizados correctamente.", false);
+                 organizar.setEnabled(true);
+                
+                });
+               
+                
+                
+                
+                
+                } catch (BuscadorException ex) {
+                   SwingUtilities.invokeLater(() ->{
+                    mostrarMensaje(ex.getMessage(), true);
+                    organizar.setEnabled(true);
+
+                   });
+                    
+                }
+            });
+             hiloOrganizador.start();
+            
         });
 
         panel.add(copiar);
