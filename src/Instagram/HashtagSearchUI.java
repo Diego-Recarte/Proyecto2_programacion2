@@ -1,10 +1,12 @@
 package Instagram;
 
+import Logica.Ventanas.InstaWindowLayout;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
-import java.util.ArrayList;
+import Logica.Estructuras.ListaEnlazada;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -13,7 +15,7 @@ public class HashtagSearchUI extends JPanel {
     private final String currentUser;
     private final DefaultListModel<String> listModel;
     private final JList<String> resultList;
-    private final java.util.List<String[]> postsHolder;
+    private final ListaEnlazada<String[]> postsHolder;
     private final DefaultListModel<String> suggestionModel;
     private final JList<String> suggestionList;
     private final JLabel suggestionTitle;
@@ -37,7 +39,7 @@ public class HashtagSearchUI extends JPanel {
 
     public HashtagSearchUI(String currentUser, String initialHashtag) {
         this.currentUser = currentUser;
-        this.postsHolder = new ArrayList<>();
+        this.postsHolder = new ListaEnlazada<>();
         this.listModel = new DefaultListModel<>();
         this.resultList = new JList<>(listModel);
         this.suggestionModel = new DefaultListModel<>();
@@ -47,6 +49,7 @@ public class HashtagSearchUI extends JPanel {
         this.suggestionTimer = new Timer(250, event -> cargarSugerencias());
         this.suggestionTimer.setRepeats(false);
 
+        putClientProperty("insta.manager", instaController.getInstance().getInsta(currentUser));
         setLayout(new BorderLayout());
         setBackground(COLOR_BG);
         setPreferredSize(new Dimension(400, 650));
@@ -129,6 +132,7 @@ public class HashtagSearchUI extends JPanel {
                 ejecutarBusqueda(searchField.getText());
             });
         }
+        InstaWindowLayout.install(this);
     }
 
     private void abrirPostEnContexto(String[] post) {
@@ -144,15 +148,16 @@ public class HashtagSearchUI extends JPanel {
             String fecha = post.length > 2 ? post[2] : "";
             String owner = post.length > 4 ? post[4] : autor;
 
-            instaManager manager = instaController.getInstance().getInsta();
-            ArrayList<String[]> ownerPosts = new ArrayList<>();
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
+            ListaEnlazada<String[]> ownerPosts = new ListaEnlazada<>();
             if (manager != null) {
                 ownerPosts = manager.getPosts(owner);
             }
 
             int startIndex = 0;
-            for (int i = 0; i < ownerPosts.size(); i++) {
-                String[] p = ownerPosts.get(i);
+            int position = 0;
+            for (String[] p : ownerPosts) {
+                int i = position++;
                 String pImg = p.length > 0 ? p[0] : "";
                 String pAutor = p.length > 1 ? p[1] : "";
                 String pFecha = p.length > 2 ? p[2] : "";
@@ -287,11 +292,11 @@ public class HashtagSearchUI extends JPanel {
         suggestionRequestId++;
         suggestionTitle.setText("Resultados para #" + q);
         listModel.addElement("Buscando #" + q + "...");
-        new SwingWorker<ArrayList<String[]>, Void>() {
+        new SwingWorker<ListaEnlazada<String[]>, Void>() {
             @Override
-            protected ArrayList<String[]> doInBackground() throws Exception {
-                instaManager manager = instaController.getInstance().getInsta();
-                return manager != null ? manager.getPostsByHashtag(q) : new ArrayList<>();
+            protected ListaEnlazada<String[]> doInBackground() throws Exception {
+                instaManager manager = instaController.getInstance().getInsta(currentUser);
+                return manager != null ? manager.getPostsByHashtag(q) : new ListaEnlazada<>();
             }
 
             @Override
@@ -302,10 +307,10 @@ public class HashtagSearchUI extends JPanel {
                 listModel.clear();
                 postsHolder.clear();
                 try {
-                    ArrayList<String[]> results = get();
+                    ListaEnlazada<String[]> results = get();
                     java.util.Set<String> seen = new java.util.HashSet<>();
                     for (String[] post : results) {
-                        String key = value(post, 0) + "|" + value(post, 1) + "|" + value(post, 2);
+                        String key = value(post, 0) + "|" + value(post, 1) + "|" + value(post, 2) + "|" + value(post, 3);
                         if (seen.add(key)) {
                             postsHolder.add(post);
                             listModel.addElement("[" + value(post, 2) + "] @" + value(post, 1)
@@ -325,6 +330,14 @@ public class HashtagSearchUI extends JPanel {
         }.execute();
     }
 
+    void refreshActiveState(java.util.Set<String> activeUsers) {
+        java.util.Iterator<String[]> rows = postsHolder.iterator(); int index = 0;
+        while (rows.hasNext()) {
+            if (!activeUsers.contains(value(rows.next(), 1))) { rows.remove(); listModel.remove(index); }
+            else index++;
+        }
+    }
+
     private void programarSugerencias() {
         if (!applyingSuggestion) {
             suggestionTimer.restart();
@@ -335,11 +348,11 @@ public class HashtagSearchUI extends JPanel {
         String prefix = normalizarConsulta(searchField.getText());
         int requestId = ++suggestionRequestId;
         suggestionTitle.setText(prefix.isBlank() ? "Hashtags populares" : "Sugerencias para #" + prefix);
-        new SwingWorker<ArrayList<String>, Void>() {
+        new SwingWorker<ListaEnlazada<String>, Void>() {
             @Override
-            protected ArrayList<String> doInBackground() throws Exception {
-                instaManager manager = instaController.getInstance().getInsta();
-                return manager != null ? manager.getHashtagSuggestions(prefix, 12) : new ArrayList<>();
+            protected ListaEnlazada<String> doInBackground() throws Exception {
+                instaManager manager = instaController.getInstance().getInsta(currentUser);
+                return manager != null ? manager.getHashtagSuggestions(prefix, 12) : new ListaEnlazada<>();
             }
 
             @Override
@@ -401,7 +414,7 @@ public class HashtagSearchUI extends JPanel {
         return full.substring(0, 60) + "...";
     }
 
-    private void abrirPost(ArrayList<String[]> posts, int index) {
+    private void abrirPost(ListaEnlazada<String[]> posts, int index) {
         Window w = SwingUtilities.getWindowAncestor(this);
         if (!(w instanceof JFrame)) {
             return;

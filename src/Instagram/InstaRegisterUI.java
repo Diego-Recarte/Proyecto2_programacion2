@@ -1,5 +1,7 @@
 package Instagram;
 
+import Logica.Ventanas.InstaWindowLayout;
+
 import proyecto2_programacion2.GUISelector;
 
 import Logica.Excepciones.InvalidDataException;
@@ -45,6 +47,7 @@ public class InstaRegisterUI extends JPanel {
         setBackground(COLOR_BG);
         setPreferredSize(new Dimension(400, 650));
         initComponentes();
+        InstaWindowLayout.install(this);
     }
 
     private void initComponentes() {

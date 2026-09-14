@@ -1,5 +1,8 @@
 package Instagram;
 
+import Logica.Ventanas.InstaImages;
+import Logica.Ventanas.InstaWindowLayout;
+
 import Instagram.sockets.ChatClient;
 import Instagram.sockets.ChatMessage;
 import java.awt.BorderLayout;
@@ -24,7 +27,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import Logica.Estructuras.ListaEnlazada;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashSet;
@@ -69,6 +72,8 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
     private static final int MAX_IMAGE_BYTES = 3 * 1024 * 1024;
 
     private final String currentUser;
+    private final java.util.Map<String, ImageIcon> avatarCache = new java.util.HashMap<>();
+    private final java.util.Map<String, ImageIcon> messageImageCache = new java.util.HashMap<>();
     private final DefaultListModel<Contact> contactModel = new DefaultListModel<>();
     private final JList<Contact> contactList = new JList<>(contactModel);
     private final DefaultListModel<ChatMessage> messageModel = new DefaultListModel<>();
@@ -99,6 +104,7 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
 
     public InstaChatUI(String currentUser, String peer) {
         this.currentUser = currentUser;
+        putClientProperty("insta.manager", instaController.getInstance().getInsta(currentUser));
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(400, 650));
         setBackground(BACKGROUND);
@@ -116,6 +122,7 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
         } else {
             cards.show(center, "CONTACTS");
         }
+        InstaWindowLayout.install(this);
     }
 
     private JPanel createHeader() {
@@ -279,8 +286,8 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
     private void loadContacts() {
         contactModel.clear();
         try {
-            instaManager manager = instaController.getInstance().getInsta();
-            ArrayList<String> users = manager != null ? manager.searchUsers("") : new ArrayList<>();
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
+            ListaEnlazada<String> users = manager != null ? manager.searchUsers("") : new ListaEnlazada<>();
             users.stream()
                     .filter(user -> !user.equalsIgnoreCase(currentUser))
                     .sorted(String.CASE_INSENSITIVE_ORDER)
@@ -380,12 +387,12 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
         JPopupMenu menu = new JPopupMenu();
         menu.setLayout(new GridLayout(0, 3, 4, 4));
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
             for (String[] sticker : manager.getStickers(currentUser)) {
                 JButton button = new JButton(stickerIcon(sticker[1], 54));
                 button.setToolTipText(sticker[0]);
                 button.setPreferredSize(new Dimension(68, 68));
-                button.addActionListener(e -> sendSticker(new File(sticker[1])));
+                button.addActionListener(e -> sendSticker(sticker[1]));
                 menu.add(button);
             }
         } catch (IOException ex) {
@@ -400,20 +407,18 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
         menu.show(source, 0, -menu.getPreferredSize().height);
     }
 
-    private void sendSticker(File file) {
-        if (!file.isFile() || file.length() > MAX_IMAGE_BYTES) {
-            JOptionPane.showMessageDialog(this, "El sticker no está disponible o supera 3 MB.",
-                    "Sticker", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        try {
-            String payload = file.getName() + "\n"
-                    + Base64.getEncoder().encodeToString(Files.readAllBytes(file.toPath()));
-            send(ChatMessage.Type.STICKER, payload);
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "No se pudo leer el sticker: " + ex.getMessage(),
-                    "Sticker", JOptionPane.ERROR_MESSAGE);
-        }
+    private void sendSticker(String reference) {
+        new javax.swing.SwingWorker<String, Void>() {
+            @Override protected String doInBackground() throws IOException {
+                byte[] bytes = instaController.getInstance().getInsta(currentUser).readMedia(reference);
+                if (bytes.length > MAX_IMAGE_BYTES) throw new IOException("El sticker supera 3 MB.");
+                return "sticker.png\n" + Base64.getEncoder().encodeToString(bytes);
+            }
+            @Override protected void done() {
+                try { send(ChatMessage.Type.STICKER, get()); }
+                catch (Exception ex) { connectionLabel.setText("No se pudo cargar el sticker."); }
+            }
+        }.execute();
     }
 
     private void importSticker(Component source) {
@@ -423,7 +428,7 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
             return;
         }
         try {
-            instaController.getInstance().getInsta().importSticker(currentUser, selected);
+            instaController.getInstance().getInsta(currentUser).importSticker(currentUser, selected);
             showStickerMenu(source);
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "No se pudo importar", JOptionPane.ERROR_MESSAGE);
@@ -431,14 +436,7 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
     }
 
     private ImageIcon stickerIcon(String path, int size) {
-        try {
-            BufferedImage image = ImageIO.read(new File(path));
-            if (image != null) {
-                return new ImageIcon(image.getScaledInstance(size, size, Image.SCALE_SMOOTH));
-            }
-        } catch (IOException ignored) {
-        }
-        return new ImageIcon();
+        return InstaImages.icon(this, path, size, size, false);
     }
 
     private void chooseImage() {
@@ -607,33 +605,7 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
     }
 
     private ImageIcon avatarFor(String username, int size) {
-        try {
-            instaManager manager = instaController.getInstance().getInsta();
-            String path = manager != null ? manager.getProfilePic(username) : null;
-            if (path != null && new File(path).isFile()) {
-                BufferedImage source = ImageIO.read(new File(path));
-                if (source != null) {
-                    int square = Math.min(source.getWidth(), source.getHeight());
-                    BufferedImage crop = source.getSubimage((source.getWidth() - square) / 2, (source.getHeight() - square) / 2, square, square);
-                    return new ImageIcon(crop.getScaledInstance(size, size, Image.SCALE_SMOOTH));
-                }
-            }
-        } catch (Exception ignored) {
-        }
-        BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D graphics = image.createGraphics();
-        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        int hash = username.hashCode();
-        graphics.setColor(new Color(70 + Math.abs(hash % 160), 50 + Math.abs((hash / 5) % 140), 50 + Math.abs((hash / 11) % 140)));
-        graphics.fill(new Ellipse2D.Double(0, 0, size, size));
-        graphics.setColor(Color.WHITE);
-        graphics.setFont(new Font("Segoe UI", Font.BOLD, size / 2));
-        String initial = username.isEmpty() ? "?" : username.substring(0, 1).toUpperCase();
-        int x = (size - graphics.getFontMetrics().stringWidth(initial)) / 2;
-        int y = (size - graphics.getFontMetrics().getHeight()) / 2 + graphics.getFontMetrics().getAscent();
-        graphics.drawString(initial, x, y);
-        graphics.dispose();
-        return new ImageIcon(image);
+        return avatarCache.computeIfAbsent(username + ":" + size, key -> InstaImages.avatar(this, username, size));
     }
 
     private static String rootMessage(Exception ex) {
@@ -719,22 +691,7 @@ public final class InstaChatUI extends JPanel implements ChatClient.Listener {
         }
 
         private ImageIcon decodeImage(String payload) {
-            try {
-                int separator = payload.indexOf('\n');
-                String encoded = separator >= 0 ? payload.substring(separator + 1) : payload;
-                byte[] bytes = Base64.getDecoder().decode(encoded.getBytes(StandardCharsets.US_ASCII));
-                BufferedImage source = ImageIO.read(new java.io.ByteArrayInputStream(bytes));
-                if (source == null) {
-                    return null;
-                }
-                double scale = Math.min(180d / source.getWidth(), 180d / source.getHeight());
-                scale = Math.min(1d, scale);
-                int width = Math.max(1, (int) (source.getWidth() * scale));
-                int height = Math.max(1, (int) (source.getHeight() * scale));
-                return new ImageIcon(source.getScaledInstance(width, height, Image.SCALE_SMOOTH));
-            } catch (Exception ex) {
-                return null;
-            }
+            return messageImageCache.computeIfAbsent(payload, key -> InstaImages.encoded(InstaChatUI.this, payload, 180));
         }
     }
 

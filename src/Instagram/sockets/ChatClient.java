@@ -43,6 +43,7 @@ public final class ChatClient implements AutoCloseable {
     private final String host;
     private final int port;
     private final String username;
+    private final String token;
     private final List<Listener> listeners = new CopyOnWriteArrayList<>();
     private final AtomicBoolean connected = new AtomicBoolean(false);
     private final Object outputLock = new Object();
@@ -52,6 +53,11 @@ public final class ChatClient implements AutoCloseable {
     private Thread readerThread;
 
     public ChatClient(String host, int port, String username) {
+        this(host, port, username, "");
+    }
+
+    public ChatClient(String host, int port, String username, String token) {
+        this.token = token;
         this.host = host;
         this.port = port;
         this.username = username;
@@ -77,7 +83,7 @@ public final class ChatClient implements AutoCloseable {
         input = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
         output = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
         connected.set(true);
-        sendLine(SocketProtocol.hello(username));
+        sendLine(SocketProtocol.hello(username + "\n" + token));
         readerThread = new Thread(this::readLoop, "instagram-chat-reader-" + username);
         readerThread.setDaemon(true);
         readerThread.start();

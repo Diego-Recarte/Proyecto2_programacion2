@@ -1,5 +1,8 @@
 package Instagram;
 
+import Logica.Ventanas.InstaImages;
+import Logica.Ventanas.InstaWindowLayout;
+
 import Logica.Excepciones.ImageLoadException;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -20,7 +23,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import Logica.Estructuras.ListaEnlazada;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -57,18 +60,21 @@ public final class InstaFeedUI extends JPanel {
     private final JScrollPane feedScroll;
     private final AtomicBoolean refreshInProgress = new AtomicBoolean();
     private final AtomicLong refreshGeneration = new AtomicLong();
-    private volatile ArrayList<String[]> feedPosts = new ArrayList<>();
+    private volatile ListaEnlazada<String[]> feedPosts = new ListaEnlazada<>();
     private volatile ScheduledExecutorService refreshExecutor;
     private volatile boolean feedRendered;
     private static final int PAGE_SIZE = 5;
     private int renderedPosts;
+    private boolean MODO_MOBILE = true;
+    private java.util.Iterator<String[]> feedIterator = feedPosts.iterator();
     private boolean appending;
     private final JLabel feedEnd = new JLabel("", SwingConstants.CENTER);
     private final JButton newPosts = new JButton("Nuevas publicaciones · Ver");
-    private ArrayList<String[]> pendingPosts;
+    private ListaEnlazada<String[]> pendingPosts;
 
     public InstaFeedUI(String currentUser) {
         this.currentUser = currentUser;
+        putClientProperty("insta.manager", instaController.getInstance().getInsta(currentUser));
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(400, 650));
         setBackground(BACKGROUND);
@@ -95,6 +101,16 @@ public final class InstaFeedUI extends JPanel {
 
         add(createNavigation(), BorderLayout.SOUTH);
         showLoadingState();
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override public void componentResized(java.awt.event.ComponentEvent event) {
+                boolean mobile = getWidth() < 650;
+                if (mobile != MODO_MOBILE) {
+                    MODO_MOBILE = mobile;
+                    if (feedRendered) renderFeed(feedPosts);
+                }
+            }
+        });
+        InstaWindowLayout.install(this);
     }
 
     @Override
@@ -133,6 +149,9 @@ public final class InstaFeedUI extends JPanel {
         InstaMessageBadge.install(chat);
         chat.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 23));
         chat.addActionListener(e -> show(new InstaChatUI(currentUser)));
+        JButton mode = iconButton("↔", "Cambiar vista móvil / escritorio");
+        mode.addActionListener(e -> InstaWindowLayout.toggle(this));
+        actions.add(mode);
         actions.add(people);
         actions.add(interactions);
         actions.add(chat);
@@ -191,8 +210,8 @@ public final class InstaFeedUI extends JPanel {
             return;
         }
         try {
-            instaManager manager = instaController.getInstance().getInsta();
-            ArrayList<String[]> latest = manager != null ? manager.getFeedPosts(currentUser) : new ArrayList<>();
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
+            ListaEnlazada<String[]> latest = manager != null ? manager.getFeedPosts(currentUser) : new ListaEnlazada<>();
             if (generation != refreshGeneration.get()) {
                 return;
             }
@@ -220,12 +239,21 @@ public final class InstaFeedUI extends JPanel {
         }
     }
 
-    private void renderFeed(ArrayList<String[]> latest) {
+    void refreshActiveState(java.util.Set<String> activeUsers) {
+        if (feedPosts.stream().anyMatch(post -> !activeUsers.contains(post[1]))) {
+            ListaEnlazada<String[]> visible = new ListaEnlazada<>();
+            for (String[] post : feedPosts) if (activeUsers.contains(post[1])) visible.add(post);
+            renderFeed(visible);
+        }
+    }
+
+    private void renderFeed(ListaEnlazada<String[]> latest) {
         int previousScroll = feedScroll.getVerticalScrollBar().getValue();
         int previousCount = renderedPosts;
         pendingPosts = null;
         newPosts.setVisible(false);
-        feedPosts = new ArrayList<>(latest);
+        feedPosts = new ListaEnlazada<>(latest);
+        feedIterator = feedPosts.iterator();
         feedRendered = true;
         renderedPosts = 0;
         feedPanel.removeAll();
@@ -260,7 +288,7 @@ public final class InstaFeedUI extends JPanel {
         int end = Math.min(feedPosts.size(), renderedPosts + count);
         while (renderedPosts < end) {
             int index = renderedPosts++;
-            JPanel card = createPostCard(feedPosts.get(index), index);
+            JPanel card = createPostCard(feedIterator.next(), index);
             JPanel wrapper = new JPanel(new GridBagLayout());
             wrapper.setBackground(BACKGROUND);
             wrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -296,16 +324,16 @@ public final class InstaFeedUI extends JPanel {
         feedPanel.repaint();
     }
 
-    private boolean samePosts(ArrayList<String[]> current, ArrayList<String[]> latest) {
+    private boolean samePosts(ListaEnlazada<String[]> current, ListaEnlazada<String[]> latest) {
         if (current == latest) {
             return true;
         }
         if (current == null || latest == null || current.size() != latest.size()) {
             return false;
         }
-        for (int row = 0; row < current.size(); row++) {
-            String[] left = current.get(row);
-            String[] right = latest.get(row);
+        java.util.Iterator<String[]> rightPosts = latest.iterator();
+        for (String[] left : current) {
+            String[] right = rightPosts.next();
             int maxLength = Math.max(left != null ? left.length : 0, right != null ? right.length : 0);
             for (int column = 0; column < maxLength; column++) {
                 if (!value(left, column).equals(value(right, column))) {
@@ -317,6 +345,8 @@ public final class InstaFeedUI extends JPanel {
     }
 
     private JPanel createPostCard(String[] post, int index) {
+        int cardWidth = MODO_MOBILE ? 380 : 620;
+        int mediaWidth = cardWidth - 20;
         String imagePath = value(post, 0);
         String author = value(post, 1);
         String date = value(post, 2);
@@ -326,13 +356,13 @@ public final class InstaFeedUI extends JPanel {
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(BACKGROUND);
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
-        card.setMaximumSize(new Dimension(380, Integer.MAX_VALUE));
+        card.setMaximumSize(new Dimension(cardWidth, Integer.MAX_VALUE));
         card.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(45, 45, 45)));
 
         JPanel userHeader = new JPanel(new BorderLayout());
         userHeader.setBackground(BACKGROUND);
         userHeader.setBorder(new EmptyBorder(8, 12, 8, 12));
-        userHeader.setPreferredSize(new Dimension(380, 52));
+        userHeader.setPreferredSize(new Dimension(cardWidth, 52));
         userHeader.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
         userHeader.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
@@ -359,12 +389,12 @@ public final class InstaFeedUI extends JPanel {
 
         List<String> mediaPaths = InstaPostMedia.decode(imagePath);
         if (mediaPaths.size() > 1) {
-            card.add(new InstaMediaCarousel(mediaPaths, 360, 360, () -> openPost(index)));
-        } else {
+            card.add(new InstaMediaCarousel(mediaPaths, mediaWidth, mediaWidth, () -> openPost(index)));
+        } else if (!mediaPaths.isEmpty()) {
             JLabel image = new JLabel("Imagen no disponible", SwingConstants.CENTER);
             image.setForeground(Color.GRAY);
             image.setAlignmentX(Component.CENTER_ALIGNMENT);
-            int imageWidth = 360;
+            int imageWidth = mediaWidth;
             int imageHeight = 240;
             try {
                 String singlePath = mediaPaths.isEmpty() ? "" : mediaPaths.get(0);
@@ -392,12 +422,12 @@ public final class InstaFeedUI extends JPanel {
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 5));
         actions.setOpaque(false);
-        actions.setPreferredSize(new Dimension(380, 42));
+        actions.setPreferredSize(new Dimension(cardWidth, 42));
         actions.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         boolean initiallyLiked = false;
         int initialLikeCount = 0;
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
             initiallyLiked = manager.hasLiked(author, imagePath, currentUser);
             initialLikeCount = manager.getLikeCount(author, imagePath);
         } catch (IOException ignored) {
@@ -415,7 +445,7 @@ public final class InstaFeedUI extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 try {
-                    instaManager manager = instaController.getInstance().getInsta();
+                    instaManager manager = instaController.getInstance().getInsta(currentUser);
                     int count = manager.toggleLike(author, imagePath, currentUser);
                     boolean liked = manager.hasLiked(author, imagePath, currentUser);
                     like.setText(liked ? "♥" : "♡");
@@ -452,13 +482,13 @@ public final class InstaFeedUI extends JPanel {
             captionPanel.setBorder(new EmptyBorder(0, 14, 12, 14));
             captionPanel.add(captionText, BorderLayout.CENTER);
             int captionHeight = Math.max(30, captionText.getPreferredSize().height + 12);
-            captionPanel.setPreferredSize(new Dimension(380, captionHeight));
-            captionPanel.setMaximumSize(new Dimension(380, captionHeight));
+            captionPanel.setPreferredSize(new Dimension(cardWidth, captionHeight));
+            captionPanel.setMaximumSize(new Dimension(cardWidth, captionHeight));
             card.add(captionPanel);
         }
         Dimension preferred = card.getPreferredSize();
-        card.setPreferredSize(new Dimension(380, preferred.height));
-        card.setMaximumSize(new Dimension(380, preferred.height));
+        card.setPreferredSize(new Dimension(cardWidth, preferred.height));
+        card.setMaximumSize(new Dimension(cardWidth, preferred.height));
         return card;
     }
 
@@ -517,7 +547,7 @@ public final class InstaFeedUI extends JPanel {
 
     private String resolveUsername(String username) {
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
             if (manager != null) {
                 for (String candidate : manager.searchUsers(username)) {
                     if (candidate.equalsIgnoreCase(username)) {
@@ -576,58 +606,15 @@ public final class InstaFeedUI extends JPanel {
     }
 
     private ImageIcon squareImage(String path, int size) throws ImageLoadException {
-        try {
-            BufferedImage source = ImageIO.read(new File(path));
-            if (source == null) {
-                throw new IOException("Formato no reconocido");
-            }
-            int square = Math.min(source.getWidth(), source.getHeight());
-            int x = (source.getWidth() - square) / 2;
-            int y = (source.getHeight() - square) / 2;
-            BufferedImage crop = source.getSubimage(x, y, square, square);
-            return new ImageIcon(crop.getScaledInstance(size, size, Image.SCALE_SMOOTH));
-        } catch (IOException ex) {
-            throw new ImageLoadException("No se pudo leer " + path, ex);
-        }
+        return InstaImages.icon(this, path, size, size, true);
     }
 
     private ImageIcon fitFeedImage(String path, int maxWidth, int maxHeight) throws ImageLoadException {
-        try {
-            BufferedImage source = InstaPostMedia.readImage(path);
-            double scale = Math.min((double) maxWidth / source.getWidth(), (double) maxHeight / source.getHeight());
-            int width = Math.max(1, (int) Math.round(source.getWidth() * scale));
-            int height = Math.max(1, (int) Math.round(source.getHeight() * scale));
-            return new ImageIcon(source.getScaledInstance(width, height, Image.SCALE_SMOOTH));
-        } catch (IOException ex) {
-            throw new ImageLoadException("No se pudo leer " + path, ex);
-        }
+        return InstaImages.icon(this, path, maxWidth, maxHeight, false);
     }
 
     private ImageIcon createAvatar(String username, int size) {
-        try {
-            instaManager manager = instaController.getInstance().getInsta();
-            String profile = manager != null ? manager.getProfilePic(username) : null;
-            if (profile != null && new File(profile).isFile()) {
-                return squareImage(profile, size);
-            }
-        } catch (Exception ignored) {
-        }
-
-        BufferedImage avatar = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D graphics = avatar.createGraphics();
-        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        int hash = username.hashCode();
-        Color color = new Color(80 + Math.abs(hash % 150), 50 + Math.abs((hash / 7) % 130), 40 + Math.abs((hash / 13) % 150));
-        graphics.setColor(color);
-        graphics.fill(new Ellipse2D.Double(0, 0, size, size));
-        graphics.setColor(Color.WHITE);
-        graphics.setFont(new Font("Segoe UI", Font.BOLD, size / 2));
-        String initial = username.isEmpty() ? "?" : username.substring(0, 1).toUpperCase();
-        int x = (size - graphics.getFontMetrics().stringWidth(initial)) / 2;
-        int y = (size - graphics.getFontMetrics().getHeight()) / 2 + graphics.getFontMetrics().getAscent();
-        graphics.drawString(initial, x, y);
-        graphics.dispose();
-        return new ImageIcon(avatar);
+        return InstaImages.avatar(this, username, size);
     }
 
     private static String value(String[] values, int index) {

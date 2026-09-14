@@ -1,5 +1,8 @@
 package Instagram;
 
+import Logica.Ventanas.InstaImages;
+import Logica.Ventanas.InstaWindowLayout;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -40,18 +43,20 @@ public final class InstaProfileEditUI extends JPanel {
     private final JLabel avatar = new JLabel("Sin foto", SwingConstants.CENTER);
     private final JTextField nameField = new JTextField();
     private final JTextField ageField = new JTextField();
-    private final JComboBox<String> genderBox = new JComboBox<>(new String[]{"Masculino", "Femenino", "Otro"});
+    private final JComboBox<String> genderBox = new JComboBox<>(new String[]{"Masculino", "Femenino"});
     private final JButton accountButton = new JButton();
     private String selectedPicture;
 
     public InstaProfileEditUI(String username) {
         this.username = username;
+        putClientProperty("insta.manager", instaController.getInstance().getInsta(username));
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(400, 650));
         setBackground(BACKGROUND);
         add(createHeader(), BorderLayout.NORTH);
         add(createForm(), BorderLayout.CENTER);
         loadCurrentData();
+        InstaWindowLayout.install(this);
     }
 
     private JPanel createHeader() {
@@ -145,13 +150,13 @@ public final class InstaProfileEditUI extends JPanel {
 
     private void loadCurrentData() {
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(username);
             nameField.setText(manager.getRealName(username));
             ageField.setText(String.valueOf(manager.getAge(username)));
             char gender = manager.getGender(username);
-            genderBox.setSelectedIndex(gender == 'M' ? 0 : gender == 'F' ? 1 : 2);
+            genderBox.setSelectedIndex(gender == 'M' ? 0 : 1);
             String picture = manager.getProfilePic(username);
-            if (picture != null && new File(picture).isFile()) {
+            if (picture != null && !picture.isBlank()) {
                 showPicture(picture);
             }
             updateAccountButton(manager.getStatusUser(username));
@@ -171,22 +176,8 @@ public final class InstaProfileEditUI extends JPanel {
     }
 
     private void showPicture(String path) {
-        try {
-            BufferedImage source = ImageIO.read(new File(path));
-            if (source == null) {
-                return;
-            }
-            int square = Math.min(source.getWidth(), source.getHeight());
-            BufferedImage crop = source.getSubimage(
-                    (source.getWidth() - square) / 2,
-                    (source.getHeight() - square) / 2,
-                    square,
-                    square);
-            avatar.setIcon(new ImageIcon(crop.getScaledInstance(106, 106, Image.SCALE_SMOOTH)));
-            avatar.setText("");
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "No se pudo leer la imagen.", "Imagen", JOptionPane.WARNING_MESSAGE);
-        }
+        avatar.setIcon(InstaImages.icon(this, path, 106, 106, true));
+        avatar.setText("");
     }
 
     private void saveChanges() {
@@ -200,7 +191,7 @@ public final class InstaProfileEditUI extends JPanel {
         }
         char gender = genderBox.getSelectedIndex() == 0 ? 'M' : genderBox.getSelectedIndex() == 1 ? 'F' : 'O';
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(username);
             if (manager.updateProfile(username, realName, gender, age, selectedPicture)) {
                 JOptionPane.showMessageDialog(this, "Perfil actualizado.");
                 showProfile();
@@ -212,7 +203,7 @@ public final class InstaProfileEditUI extends JPanel {
 
     private void toggleAccount() {
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(username);
             boolean active = manager.getStatusUser(username);
             if (active) {
                 int choice = JOptionPane.showConfirmDialog(this,

@@ -1,5 +1,7 @@
 package Instagram;
 
+import Logica.Ventanas.InstaWindowLayout;
+
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -28,6 +30,7 @@ public class InstaLoginUI extends JPanel {
         setPreferredSize(new Dimension(ANCHO, ALTO));
 
         initComponentes();
+        InstaWindowLayout.install(this);
     }
 
     @Override
@@ -122,71 +125,34 @@ public class InstaLoginUI extends JPanel {
 
     private void realizarLogin() {
         String username = txtUser.getText().trim();
-        String password = new String(txtPass.getPassword()).trim();
-
-        if (username.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "¡Llena todo!", "Error Fatal", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        try {
-            instaManager manager = instaController.getInstance().getInsta();
-
-            if (manager == null) {
-                JOptionPane.showMessageDialog(this, "Error crítico: El sistema no vive.", "Muerte", JOptionPane.ERROR_MESSAGE);
-                return;
+        String password = new String(txtPass.getPassword());
+        if (username.isEmpty() || password.isEmpty()) return;
+        btnLogin.setEnabled(false);
+        new SwingWorker<Boolean, Void>() {
+            @Override protected Boolean doInBackground() throws IOException {
+                return instaController.getInstance().getInsta().authenticate(username, password);
             }
-
-            String storedPass = manager.getPassword(username);
-
-            if (storedPass == null) {
-                JOptionPane.showMessageDialog(this,
-                        "Ese usuario no existe en este plano existencial.",
-                        "Usuario no encontrado",
-                        JOptionPane.ERROR_MESSAGE);
-                txtUser.requestFocusInWindow();
-                return;
-            }
-
-            if (!storedPass.equals(password)) {
-                JOptionPane.showMessageDialog(this,
-                        "Contraseña incorrecta.",
-                        "Login Fallido",
-                        JOptionPane.ERROR_MESSAGE);
-                txtPass.setText("");
-                txtPass.requestFocusInWindow();
-                return;
-            }
-
-            if (!manager.getStatusUser(username)) {
-                int reactivate = JOptionPane.showConfirmDialog(this,
-                        "Esta cuenta está desactivada. ¿Deseas reactivarla e iniciar sesión?",
-                        "Cuenta desactivada", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-                if (reactivate != JOptionPane.YES_OPTION || !manager.activateUser(username)) {
-                    return;
+            @Override protected void done() {
+                btnLogin.setEnabled(true);
+                try {
+                    boolean active = get();
+                    Window window = SwingUtilities.getWindowAncestor(InstaLoginUI.this);
+                    if (window instanceof JFrame frame) {
+                        frame.setContentPane(active ? new InstaFeedUI(username) : new InstaProfileEditUI(username));
+                        frame.pack(); frame.revalidate(); frame.repaint();
+                    }
+                } catch (Exception ex) {
+                    Throwable cause = ex.getCause() == null ? ex : ex.getCause();
+                    int choice = JOptionPane.showOptionDialog(InstaLoginUI.this,
+                            cause.getMessage(), "No se pudo iniciar sesión", JOptionPane.DEFAULT_OPTION,
+                            JOptionPane.ERROR_MESSAGE, null, new String[]{"Reintentar", "Crear cuenta"}, "Reintentar");
+                    txtPass.setText("");
+                    if (choice == 1 && SwingUtilities.getWindowAncestor(InstaLoginUI.this) instanceof JFrame frame) {
+                        frame.setContentPane(new InstaRegisterUI()); frame.pack();
+                    } else txtUser.requestFocusInWindow();
                 }
             }
-
-            try {
-                manager.setLoggedUser(username);
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(this, "Advertencia: no se pudo fijar sesión: " + ex.getMessage());
-            }
-
-            Window window = SwingUtilities.getWindowAncestor(this);
-            if (window instanceof JFrame) {
-                JFrame frame = (JFrame) window;
-                frame.setAlwaysOnTop(true);
-                // El feed es la pantalla principal después de iniciar sesión.
-                frame.setContentPane(new InstaFeedUI(username));
-                frame.pack();
-                frame.revalidate();
-                frame.repaint();
-            }
-
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "Error de base de datos: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        }.execute();
     }
 
     public static void main(String[] args) {

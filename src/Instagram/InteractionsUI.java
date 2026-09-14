@@ -1,10 +1,12 @@
 
 package Instagram;
 
+import Logica.Ventanas.InstaWindowLayout;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
-import java.util.ArrayList;
+import Logica.Estructuras.ListaEnlazada;
 import javax.swing.*;
 
 public class InteractionsUI extends JPanel {
@@ -21,6 +23,7 @@ public class InteractionsUI extends JPanel {
     public InteractionsUI(String currentUser) {
         this.currentUser = currentUser;
 
+        putClientProperty("insta.manager", instaController.getInstance().getInsta(currentUser));
         setLayout(new BorderLayout());
         setBackground(COLOR_BG);
         setPreferredSize(new Dimension(400, 650));
@@ -72,6 +75,13 @@ public class InteractionsUI extends JPanel {
         });
 
         cargarMenciones();
+        InstaWindowLayout.install(this);
+    }
+
+    void refreshActiveState(java.util.Set<String> activeUsers) {
+        for (int i = postsModel.size() - 1; i >= 0; i--) {
+            if (!activeUsers.contains(postsModel.get(i)[1])) { postsModel.remove(i); textModel.remove(i); }
+        }
     }
 
     private void cargarMenciones() {
@@ -79,13 +89,13 @@ public class InteractionsUI extends JPanel {
         postsModel.clear();
 
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
             if (manager == null) {
                 textModel.addElement("Error: manager no disponible");
                 return;
             }
 
-            ArrayList<String[]> posts = manager.findPostsMentioning(currentUser);
+            ListaEnlazada<String[]> posts = manager.findPostsMentioning(currentUser);
 
             if (posts == null || posts.isEmpty()) {
                 textModel.addElement("No te han mencionado todavía.");
@@ -123,15 +133,16 @@ public class InteractionsUI extends JPanel {
             String fecha = postData.length > 2 ? postData[2] : "";
             String owner = postData.length > 4 ? postData[4] : autor;
 
-            instaManager manager = instaController.getInstance().getInsta();
-            ArrayList<String[]> ownerPosts = new ArrayList<>();
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
+            ListaEnlazada<String[]> ownerPosts = new ListaEnlazada<>();
             if (manager != null) {
                 ownerPosts = manager.getPosts(owner);
             }
 
             int startIndex = 0;
-            for (int i = 0; i < ownerPosts.size(); i++) {
-                String[] p = ownerPosts.get(i);
+            int position = 0;
+            for (String[] p : ownerPosts) {
+                int i = position++;
                 String pImg = p.length > 0 ? p[0] : "";
                 String pAutor = p.length > 1 ? p[1] : "";
                 String pFecha = p.length > 2 ? p[2] : "";
