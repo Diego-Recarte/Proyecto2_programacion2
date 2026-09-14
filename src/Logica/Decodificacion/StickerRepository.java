@@ -1,6 +1,5 @@
-package Logica.Persistencia;
+package Logica.Decodificacion;
 
-import Logica.Modelos.Sticker;
 
 import java.awt.Color;
 import java.awt.Font;

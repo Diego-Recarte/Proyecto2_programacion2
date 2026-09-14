@@ -28,8 +28,15 @@ public class instaManager {
     }
 
     public instaManager(String host, int port) {
-        this.host = host; this.port = port; this.embedded = false;
+        this(host, port, false);
     }
+
+    private instaManager(String host, int port, boolean embedded) {
+        this.host = host; this.port = port; this.embedded = embedded;
+    }
+
+    /** Copia la conexión configurada, sin compartir credenciales ni sesión. */
+    public instaManager newClient() { return new instaManager(host, port, embedded); }
 
     private static synchronized void ensureLocal(int port) throws IOException {
         try (Socket probe = new Socket()) {
@@ -62,7 +69,8 @@ public class instaManager {
         }
     }
 
-    public boolean authenticate(String username, String password) throws IOException {
+    public synchronized boolean authenticate(String username, String password) throws IOException {
+        if (!token.isBlank()) throw new IOException("Esta conexión ya tiene una sesión activa.");
         String[] result = (String[]) call("LOGIN", username, password);
         token = result[0]; user = username; chatPort = Integer.parseInt(result[2]);
         instaController.getInstance().remember(username, this);

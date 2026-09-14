@@ -11,6 +11,7 @@ import javax.swing.*;
 
 public class InstaLoginUI extends JPanel {
 
+    private final instaManager manager = instaController.getInstance().newClient();
     private JTextField txtUser;
     private JPasswordField txtPass;
     private JButton btnLogin;
@@ -130,7 +131,7 @@ public class InstaLoginUI extends JPanel {
         btnLogin.setEnabled(false);
         new SwingWorker<Boolean, Void>() {
             @Override protected Boolean doInBackground() throws IOException {
-                return instaController.getInstance().getInsta().authenticate(username, password);
+                return manager.authenticate(username, password);
             }
             @Override protected void done() {
                 btnLogin.setEnabled(true);

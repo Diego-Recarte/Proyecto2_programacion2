@@ -1,11 +1,10 @@
-package Logica.Persistencia;
+package Logica.Decodificacion;
 
 import Instagram.InstaPostMedia;
 import Instagram.InstaSocialText;
 import Logica.Excepciones.ArchivoCorruptoException;
 import Logica.Excepciones.CuentaDesactivadaException;
 import Logica.Excepciones.UsuarioDuplicadoException;
-import Logica.Modelos.Publicacion;
 import Logica.Modelos.Usuario;
 
 import java.io.File;
@@ -29,6 +28,7 @@ import java.util.Set;
 public final class InstaRepository implements AutoCloseable {
 
     private RandomAccessFile users;
+    private long lastPostTime;
     private final String mainRoot;
     private final String usersDir;
     private File loggedUserDir = null;
@@ -95,11 +95,7 @@ public final class InstaRepository implements AutoCloseable {
     }
 
     private void sortPosts(ListaEnlazada<String[]> posts) {
-        SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-        posts.sort((a, b) -> {
-            try { return format.parse(b[2]).compareTo(format.parse(a[2])); }
-            catch (java.text.ParseException ex) { return 0; }
-        });
+        posts.sort((a, b) -> Long.compare(Publicacion.timestamp(b[2]), Publicacion.timestamp(a[2])));
     }
 
     private void seedExamples() throws IOException {
@@ -646,15 +642,16 @@ public final class InstaRepository implements AutoCloseable {
         if (loggedUserDir == null) {
             throw new IOException("No hay usuario loggeado.");
         }
-        int limit = imagRef == null || imagRef.isBlank() ? 140 : 220;
+        int limit = Publicacion.MAX_TEXTO;
         if (contenido == null || contenido.isBlank()) {
             if (imagRef == null || imagRef.isBlank()) throw new IOException("Escribe una publicación o adjunta una imagen.");
         }
-        if (contenido != null && contenido.length() > limit) {
+        if (contenido != null && Publicacion.textLength(contenido) > limit) {
             throw new IOException("El texto no puede superar " + limit + " caracteres.");
         }
-        SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-        String dateFormat = formato.format(Calendar.getInstance().getTime());
+        SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS");
+        lastPostTime = Math.max(System.currentTimeMillis(), lastPostTime + 1);
+        String dateFormat = formato.format(new Date(lastPostTime));
         File postFile = new File(loggedUserDir, "insta.ins");
         if (!postFile.exists()) {
             postFile.createNewFile();
@@ -728,18 +725,7 @@ public final class InstaRepository implements AutoCloseable {
             }
         }
 
-        SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-        format.setLenient(false);
-        Comparator<String[]> newestFirst = (left, right) -> {
-            try {
-                long leftDate = format.parse(left[2]).getTime();
-                long rightDate = format.parse(right[2]).getTime();
-                return Long.compare(rightDate, leftDate);
-            } catch (Exception ex) {
-                return 0;
-            }
-        };
-        feed.sort(newestFirst);
+        sortPosts(feed);
         return feed;
     }
 

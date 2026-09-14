@@ -194,7 +194,7 @@ public class InstaRegisterUI extends JPanel {
                 throw new InvalidDataException("Debes tener al menos 13 años para unirte.");
             }
 
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().newClient();
 
             if (manager.checkUserExistance(username)) {
                 throw new InvalidDataException("Ese alias ya está en uso. Elige otro.");

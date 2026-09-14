@@ -1,4 +1,6 @@
-package Instagram.sockets;
+package Logica.Decodificacion;
+
+import Instagram.sockets.ChatMessage;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -16,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** Bandeja binaria privada: cada usuario conserva su propia copia de los mensajes. */
-final class ChatHistoryStore {
+public final class ChatHistoryStore {
 
     private static final int MAGIC = 0x494E5354; // INST
     private static final int VERSION = 1;
@@ -24,19 +26,19 @@ final class ChatHistoryStore {
 
     private final Path usersRoot;
 
-    ChatHistoryStore(Path usersRoot) throws IOException {
+    public ChatHistoryStore(Path usersRoot) throws IOException {
         this.usersRoot = usersRoot;
         Files.createDirectories(usersRoot);
     }
 
-    synchronized void append(ChatMessage message) throws IOException {
+    public synchronized void append(ChatMessage message) throws IOException {
         appendForUser(message.getSender(), new StoredMessage(message, true));
         if (!message.getSender().equals(message.getRecipient())) {
             appendForUser(message.getRecipient(), new StoredMessage(message, false));
         }
     }
 
-    synchronized List<ChatMessage> between(String viewer, String peer) throws IOException {
+    public synchronized List<ChatMessage> between(String viewer, String peer) throws IOException {
         List<ChatMessage> result = new ArrayList<>();
         for (StoredMessage stored : readAll(viewer)) {
             ChatMessage message = stored.message();
@@ -50,7 +52,7 @@ final class ChatHistoryStore {
         return result;
     }
 
-    synchronized int unreadCount(String viewer) throws IOException {
+    public synchronized int unreadCount(String viewer) throws IOException {
         int total = 0;
         for (StoredMessage stored : readAll(viewer)) {
             if (!stored.read() && viewer.equals(stored.message().getRecipient())) {
@@ -60,7 +62,7 @@ final class ChatHistoryStore {
         return total;
     }
 
-    synchronized void markRead(String viewer, String peer) throws IOException {
+    public synchronized void markRead(String viewer, String peer) throws IOException {
         List<StoredMessage> messages = readAll(viewer);
         boolean changed = false;
         List<StoredMessage> updated = new ArrayList<>(messages.size());
@@ -78,7 +80,7 @@ final class ChatHistoryStore {
         }
     }
 
-    synchronized void deleteConversation(String viewer, String peer) throws IOException {
+    public synchronized void deleteConversation(String viewer, String peer) throws IOException {
         List<StoredMessage> remaining = new ArrayList<>();
         for (StoredMessage stored : readAll(viewer)) {
             ChatMessage message = stored.message();

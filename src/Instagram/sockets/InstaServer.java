@@ -2,7 +2,7 @@ package Instagram.sockets;
 
 import Instagram.InstaPostMedia;
 import Logica.Excepciones.CuentaDesactivadaException;
-import Logica.Persistencia.InstaRepository;
+import Logica.Decodificacion.InstaRepository;
 import Logica.Estructuras.ListaEnlazada;
 import java.io.*;
 import java.net.*;
@@ -144,6 +144,12 @@ public final class InstaServer implements AutoCloseable {
         boolean active = repository.getStatusUser(user);
         if (!active && !Set.of("getStatusUser", "getRealName", "getGender", "getAge", "getEntryDate", "getProfilePic").contains(op)) {
             throw new CuentaDesactivadaException();
+        }
+        if (Set.of("getRealName", "getGender", "getAge", "getEntryDate", "getProfilePic",
+                "getFollowers", "getFollowing", "getFollowersCount", "getFollowingCount", "showFollowers", "showFollows",
+                "getLikeCount", "hasLiked").contains(op) && !user.equals(s(a, 0))
+                && !repository.getStatusUser(s(a, 0))) {
+            throw new IOException("La cuenta no está disponible.");
         }
         return switch (op) {
             case "getRealName" -> repository.getRealName(s(a, 0));

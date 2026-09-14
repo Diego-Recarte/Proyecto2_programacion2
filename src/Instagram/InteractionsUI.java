@@ -139,20 +139,20 @@ public class InteractionsUI extends JPanel {
                 ownerPosts = manager.getPosts(owner);
             }
 
-            int startIndex = 0;
+            int startIndex = -1;
             int position = 0;
             for (String[] p : ownerPosts) {
                 int i = position++;
-                String pImg = p.length > 0 ? p[0] : "";
-                String pAutor = p.length > 1 ? p[1] : "";
-                String pFecha = p.length > 2 ? p[2] : "";
-                if ((imagRef != null && !imagRef.isEmpty() && imagRef.equals(pImg))
-                        || (autor != null && autor.equals(pAutor) && fecha != null && fecha.equals(pFecha))) {
+                if (Logica.Decodificacion.Publicacion.sameRow(postData, p)) {
                     startIndex = i;
                     break;
                 }
             }
 
+            if (startIndex < 0) {
+                cargarMenciones();
+                return;
+            }
             final int si = startIndex;
             Runnable backAction = () -> {
                 f.setContentPane(this);

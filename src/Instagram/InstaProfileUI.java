@@ -456,7 +456,7 @@ public class InstaProfileUI extends JPanel {
     void refreshActiveState(java.util.Set<String> activeUsers) {
         if (!activeUsers.contains(username)) {
             lblName.setText("Cuenta no disponible");
-            lblInfo.setText("Inactiva"); lblStats.setText(""); lblFoto.setIcon(null);
+            lblInfo.setText(""); lblStats.setText(""); lblFoto.setIcon(null); lblFoto.setText("");
             gridFotos.removeAll(); gridFotos.revalidate(); gridFotos.repaint();
         }
     }
@@ -468,6 +468,10 @@ public class InstaProfileUI extends JPanel {
                 return;
             }
 
+            if (!manager.getStatusUser(username)) {
+                refreshActiveState(java.util.Set.of());
+                return;
+            }
             String rutaFoto = manager.getProfilePic(username);
             if (rutaFoto != null && !rutaFoto.isEmpty() && !rutaFoto.equals("futura referencia de imagen aqui")) {
                 ImageIcon icon = null;
@@ -507,7 +511,7 @@ public class InstaProfileUI extends JPanel {
             lblStats.setText(statsHtml(Publicaciones, Seguidores, Seguidos));
 
         } catch (IOException e) {
-            lblName.setText("Error de conexión.");
+            refreshActiveState(java.util.Set.of());
         }
     }
 

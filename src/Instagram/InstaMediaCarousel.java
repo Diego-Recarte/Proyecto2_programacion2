@@ -40,7 +40,8 @@ final class InstaMediaCarousel extends JPanel {
     private final DotsPanel dots = new DotsPanel();
     private int currentIndex;
 
-    InstaMediaCarousel(List<String> imagePaths, int imageWidth, int imageHeight, Runnable imageAction) {
+    InstaMediaCarousel(List<String> imagePaths, int imageWidth, int imageHeight, Runnable imageAction, instaManager manager) {
+        putClientProperty("insta.manager", manager);
         this.imagePaths = imagePaths == null ? List.of() : new ArrayList<>(imagePaths);
         this.imageWidth = imageWidth;
         this.imageHeight = imageHeight;

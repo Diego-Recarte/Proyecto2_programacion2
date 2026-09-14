@@ -389,7 +389,7 @@ public final class InstaFeedUI extends JPanel {
 
         List<String> mediaPaths = InstaPostMedia.decode(imagePath);
         if (mediaPaths.size() > 1) {
-            card.add(new InstaMediaCarousel(mediaPaths, mediaWidth, mediaWidth, () -> openPost(index)));
+            card.add(new InstaMediaCarousel(mediaPaths, mediaWidth, mediaWidth, () -> openPost(index), instaController.getInstance().getInsta(currentUser)));
         } else if (!mediaPaths.isEmpty()) {
             JLabel image = new JLabel("Imagen no disponible", SwingConstants.CENTER);
             image.setForeground(Color.GRAY);

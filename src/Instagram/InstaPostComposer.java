@@ -1,5 +1,6 @@
 package Instagram;
 
+import Logica.Decodificacion.Publicacion;
 import Logica.Ventanas.InstaImages;
 import Logica.Ventanas.InstaWindowLayout;
 
@@ -13,12 +14,12 @@ import proyecto2_programacion2.GUISelector;
 
 /** Editor integrado para texto, imagenes, stickers y carpetas personales. */
 final class InstaPostComposer extends JPanel {
-    static final int MAX_DESCRIPTION_LENGTH = 220;
+    static final int MAX_DESCRIPTION_LENGTH = Publicacion.MAX_TEXTO;
     static final int MAX_IMAGES_PER_POST = 20;
     private final String user;
     private final Runnable back;
     private final JTextArea description = new JTextArea(5, 25);
-    private final JLabel status = new JLabel("Texto: 0/140");
+    private final JLabel status = new JLabel("Texto: 0/220");
     private final JPanel mediaPreview = new JPanel(new GridLayout(0, 3, 6, 6)) {
         @Override public Dimension getMaximumSize() { return new Dimension(Integer.MAX_VALUE, Math.max(0, getPreferredSize().height)); }
     };
@@ -107,10 +108,10 @@ final class InstaPostComposer extends JPanel {
     }
 
     private void updateCount() {
-        int limit = images.isEmpty() && stickers.isEmpty() ? 140 : 220;
-        status.setText(description.getText().length() + "/" + limit + " · #" + InstaSocialText.countHashtags(description.getText())
+        int limit = MAX_DESCRIPTION_LENGTH;
+        status.setText(Publicacion.textLength(description.getText()) + "/" + limit + " · #" + InstaSocialText.countHashtags(description.getText())
                 + " · @" + InstaSocialText.countMentions(description.getText()));
-        publish.setEnabled(!publishing && description.getText().length() <= limit);
+        publish.setEnabled(!publishing && Publicacion.textLength(description.getText()) <= limit);
     }
 
     private void loadFolders() {
@@ -156,6 +157,7 @@ final class InstaPostComposer extends JPanel {
     private void publish(Runnable afterPublish) {
         String text = description.getText().trim();
         if (text.isBlank() && images.isEmpty() && stickers.isEmpty()) { status.setText("Escribe texto o agrega un adjunto."); return; }
+        if (Publicacion.textLength(text) > MAX_DESCRIPTION_LENGTH) { updateCount(); return; }
         String folder = folders.getSelectedIndex() <= 0 ? "" : String.valueOf(folders.getSelectedItem());
         ListaEnlazada<File> selectedImages = new ListaEnlazada<>(images);
         ListaEnlazada<String> selectedStickers = new ListaEnlazada<>(stickers);

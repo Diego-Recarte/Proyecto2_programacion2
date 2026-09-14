@@ -317,7 +317,7 @@ public class VisibilidadProfileUI extends JPanel {
     void refreshActiveState(java.util.Set<String> activeUsers) {
         if (!activeUsers.contains(profileUser)) {
             lblName.setText("Cuenta no disponible");
-            lblInfo.setText("Inactiva"); lblStats.setText(""); lblFoto.setIcon(null);
+            lblInfo.setText(""); lblStats.setText(""); lblFoto.setIcon(null); lblFoto.setText("");
             gridFotos.removeAll(); gridFotos.revalidate(); gridFotos.repaint();
         }
     }
@@ -329,6 +329,10 @@ public class VisibilidadProfileUI extends JPanel {
                 return;
             }
 
+            if (!manager.getStatusUser(profileUser)) {
+                refreshActiveState(java.util.Set.of());
+                return;
+            }
             String rutaFoto = manager.getProfilePic(profileUser);
             if (rutaFoto != null && !rutaFoto.isEmpty() && !rutaFoto.equals("futura referencia de imagen aqui")) {
                 ImageIcon icon = null;
@@ -373,7 +377,7 @@ public class VisibilidadProfileUI extends JPanel {
             findAndSetFollowText(this, sigo ? "Dejar de seguir" : "Seguir");
 
         } catch (IOException e) {
-            lblName.setText("Error de conexión.");
+            refreshActiveState(java.util.Set.of());
         }
     }
 

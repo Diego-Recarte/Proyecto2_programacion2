@@ -1,4 +1,7 @@
-package Instagram.sockets;
+package Logica.Decodificacion;
+
+import Instagram.sockets.ChatContact;
+import Instagram.sockets.ChatSticker;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -16,14 +19,14 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 /** Acceso del servidor a contactos, avatares y stickers del chat. */
-final class ChatAssetStore {
+public final class ChatAssetStore {
 
     private static final int MAX_IMAGE_BYTES = 3 * 1024 * 1024;
 
     private final Path usersRoot;
     private final Path instagramRoot;
 
-    ChatAssetStore(Path usersRoot) throws IOException {
+    public ChatAssetStore(Path usersRoot) throws IOException {
         this.usersRoot = usersRoot.toAbsolutePath().normalize();
         Path parent = this.usersRoot.getParent();
         if (parent == null) {
@@ -33,7 +36,7 @@ final class ChatAssetStore {
         Files.createDirectories(this.usersRoot);
     }
 
-    synchronized List<ChatContact> contacts() throws IOException {
+    public synchronized List<ChatContact> contacts() throws IOException {
         List<ChatContact> contacts = new ArrayList<>();
         Path registry = instagramRoot.resolve("users.ins");
         if (!Files.isRegularFile(registry)) {
@@ -62,7 +65,7 @@ final class ChatAssetStore {
         return contacts;
     }
 
-    synchronized boolean isActiveUser(String username) throws IOException {
+    public synchronized boolean isActiveUser(String username) throws IOException {
         for (ChatContact contact : contacts()) {
             if (contact.getUsername().equals(username)) {
                 return true;
@@ -71,7 +74,7 @@ final class ChatAssetStore {
         return false;
     }
 
-    synchronized List<ChatSticker> stickers(String username) throws IOException {
+    public synchronized List<ChatSticker> stickers(String username) throws IOException {
         Path userDirectory = safeUserDirectory(username);
         Path registry = userDirectory.resolve("stickers.ins");
         List<ChatSticker> result = new ArrayList<>();
@@ -94,7 +97,7 @@ final class ChatAssetStore {
         return result;
     }
 
-    synchronized void importSticker(String username, String fileName, byte[] imageBytes) throws IOException {
+    public synchronized void importSticker(String username, String fileName, byte[] imageBytes) throws IOException {
         if (imageBytes == null || imageBytes.length == 0 || imageBytes.length > MAX_IMAGE_BYTES) {
             throw new IOException("El sticker debe ser una imagen de hasta 3 MB.");
         }

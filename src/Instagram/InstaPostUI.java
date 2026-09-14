@@ -354,7 +354,7 @@ public class InstaPostUI extends JLayeredPane {
             JPanel carouselContainer = new JPanel(new GridBagLayout());
             carouselContainer.setBackground(COLOR_BG);
             carouselContainer.setAlignmentX(Component.CENTER_ALIGNMENT);
-            InstaMediaCarousel carousel = new InstaMediaCarousel(mediaPaths, 360, 400, null);
+            InstaMediaCarousel carousel = new InstaMediaCarousel(mediaPaths, 360, 400, null, instaController.getInstance().getInsta(currentUser));
             carouselContainer.add(carousel);
             carouselContainer.setPreferredSize(new Dimension(380, 422));
             carouselContainer.setMaximumSize(new Dimension(380, 422));

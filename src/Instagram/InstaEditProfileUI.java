@@ -276,7 +276,7 @@ public class InstaEditProfileUI extends JPanel {
                 return;
             }
 
-            if (!manager.checkUserExistance(username)) {
+            if (!manager.getStatusUser(username)) {
                 JOptionPane.showMessageDialog(this, "Ese usuario no existe o está desactivado.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }

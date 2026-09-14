@@ -1,4 +1,4 @@
-package Logica.Modelos;
+package Logica.Decodificacion;
 
 import java.io.DataInput;
 import java.io.DataOutput;

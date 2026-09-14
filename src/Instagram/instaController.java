@@ -9,7 +9,11 @@ public final class instaController {
     public static instaController getInstance() { return INSTANCE; }
     public void setInsta(instaManager manager) { insta = manager; }
     public instaManager getInsta() { return insta; }
-    public instaManager getInsta(String user) { return sessions.getOrDefault(user, insta); }
+    public instaManager getInsta(String user) { return user == null ? null : sessions.get(user); }
+    public instaManager newClient() {
+        instaManager configured = insta;
+        return configured == null ? new instaManager() : configured.newClient();
+    }
     void remember(String user, instaManager manager) { sessions.put(user, manager); }
     void forget(String user, instaManager manager) { if (user != null) sessions.remove(user, manager); }
 }
