@@ -103,8 +103,16 @@ public class Buscador extends JDialog {
         comboOrden = new JComboBox<>(new String[]{"Nombre", "Fecha", "Tipo", "Tamaño"});
         comboOrden.setFont(new Font("Arial", Font.PLAIN, 13));
         
-        comboOrden.addActionListener(e -> cambiarOrden());
-        
+       
+            comboOrden.addActionListener(e -> {
+                 try{
+                            cambiarOrden();
+                  } catch (BuscadorException  ex){
+                    mostrarMensaje(ex.getMessage(), true);
+                  }
+
+            });
+
         
 
         panelOrden.add(labelOrden);
@@ -509,14 +517,12 @@ public class Buscador extends JDialog {
         add(exploradorPanel, BorderLayout.EAST);
     }
 
-    private void cambiarOrden(){
+    private void cambiarOrden() throws BuscadorException{
         String seleccion = (String) comboOrden.getSelectedItem();
         if (seleccion == null) {
-            try{
-                throw new BuscadorException("El archivo seleccionado no es un documento válido.");
-            }catch (BuscadorException e){
-                
-            }
+            
+            throw new BuscadorException("El archivo seleccionado no es un documento válido.");
+            
             
             
         }

@@ -299,7 +299,7 @@ public class GUIArchivosPanel extends JPanel {
             try{
             Files.move(temporal.getRuta().toPath(), temporal.getdestino().toPath(), StandardCopyOption.REPLACE_EXISTING);
             }catch(IOException e ){
-            
+                buscador.mostrarMensaje("Error de organizador", true);
             }
             carpetaImagenes.mkdirs();
             temporal = temporal.getSiguiente();
@@ -311,7 +311,7 @@ public class GUIArchivosPanel extends JPanel {
             try{
             Files.move(temporal.getRuta().toPath(), temporal.getdestino().toPath(), StandardCopyOption.REPLACE_EXISTING);
             }catch(IOException e ){
-            
+            buscador.mostrarMensaje("Error de organizador", true);
             }
             carpetaDocumentos.mkdirs();
             temporal = temporal.getSiguiente();
@@ -322,7 +322,7 @@ public class GUIArchivosPanel extends JPanel {
             try{
             Files.move(temporal.getRuta().toPath(), temporal.getdestino().toPath(), StandardCopyOption.REPLACE_EXISTING);
             }catch(IOException e ){
-            
+            buscador.mostrarMensaje("Error de organizador", true);
             }
             carpetaMusica.mkdirs();
             temporal = temporal.getSiguiente();
