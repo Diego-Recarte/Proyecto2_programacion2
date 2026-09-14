@@ -14,11 +14,9 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -111,10 +109,12 @@ final class InstaMediaCarousel extends JPanel {
         currentIndex = Math.max(0, Math.min(requestedIndex, imagePaths.size() - 1));
         imageLabel.setIcon(null);
         imageLabel.setText("");
+        imageLabel.setToolTipText(null);
         try {
             imageLabel.setIcon(fitImage(imagePaths.get(currentIndex), imageWidth, imageHeight));
         } catch (ImageLoadException ex) {
             imageLabel.setText("Imagen no disponible");
+            imageLabel.setToolTipText(ex.getCause() == null ? ex.getMessage() : ex.getCause().getMessage());
         }
 
         boolean multiple = imagePaths.size() > 1;
@@ -127,10 +127,7 @@ final class InstaMediaCarousel extends JPanel {
 
     private ImageIcon fitImage(String path, int maxWidth, int maxHeight) throws ImageLoadException {
         try {
-            BufferedImage source = ImageIO.read(new File(Logica.RutasSistema.resolverRutaAnterior(path)));
-            if (source == null) {
-                throw new IOException("Formato no reconocido");
-            }
+            BufferedImage source = InstaPostMedia.readImage(path);
             double scale = Math.min((double) maxWidth / source.getWidth(), (double) maxHeight / source.getHeight());
             int width = Math.max(1, (int) Math.round(source.getWidth() * scale));
             int height = Math.max(1, (int) Math.round(source.getHeight() * scale));

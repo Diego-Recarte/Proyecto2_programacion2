@@ -4,10 +4,6 @@
  */
 package Logica.Excepciones;
 
-/**
- *
- * @author David
- */
 public class nullSelected extends Exception{
     public nullSelected(String message){
         super(message);

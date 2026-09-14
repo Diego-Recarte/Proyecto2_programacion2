@@ -1,10 +1,15 @@
 package Instagram;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import javax.imageio.ImageIO;
 
 /** Codifica varias imágenes dentro del campo de imagen existente del post. */
 final class InstaPostMedia {
@@ -66,7 +71,40 @@ final class InstaPostMedia {
 
     static String coverPath(String mediaReference) {
         List<String> paths = decode(mediaReference);
-        return paths.isEmpty() ? "" : Logica.RutasSistema.resolverRutaAnterior(paths.get(0));
+        return paths.isEmpty() ? "" : resolvePath(paths.get(0));
+    }
+
+    /** Recupera referencias guardadas desde otra ubicación del proyecto. */
+    static String resolvePath(String path) {
+        String resolved = Logica.RutasSistema.resolverRutaAnterior(path);
+        if (resolved == null || resolved.isBlank() || new File(resolved).isFile()) {
+            return resolved;
+        }
+        String normalized = resolved.replace('\\', '/');
+        for (String root : List.of("Instagram/users/", "src/datos/windows/Z/infoUsuarios/")) {
+            int start = normalized.lastIndexOf(root);
+            if (start < 0 || (start > 0 && normalized.charAt(start - 1) != '/')) {
+                continue;
+            }
+            Path localRoot = Path.of(root).toAbsolutePath().normalize();
+            Path candidate = localRoot.resolve(normalized.substring(start + root.length())).normalize();
+            if (candidate.startsWith(localRoot) && candidate.toFile().isFile()) {
+                return candidate.toString();
+            }
+        }
+        return resolved;
+    }
+
+    static BufferedImage readImage(String path) throws IOException {
+        String resolved = resolvePath(path);
+        if (resolved == null || resolved.isBlank() || !new File(resolved).isFile()) {
+            throw new IOException("No se encontró el archivo de imagen: " + resolved);
+        }
+        BufferedImage image = ImageIO.read(new File(resolved));
+        if (image == null) {
+            throw new IOException("Formato de imagen no compatible: " + new File(resolved).getName());
+        }
+        return image;
     }
 
     static boolean isCarousel(String mediaReference) {

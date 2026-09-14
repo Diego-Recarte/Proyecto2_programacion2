@@ -81,7 +81,7 @@ public class instaManager {
             String ext = (dot > 0) ? profilePicPath.substring(dot + 1) : "jpg";
             File destino = new File(userDir, "profile." + ext);
             Files.copy(new File(profilePicPath).toPath(), destino.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            finalPath = destino.getAbsolutePath();
+            finalPath = destino.toPath().normalize().toString().replace('\\', '/');
         }
 
         users.writeUTF(finalPath);
@@ -177,7 +177,7 @@ public class instaManager {
             if (!source.getCanonicalFile().equals(destination.getCanonicalFile())) {
                 Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
-            selected.profilePicture = destination.getAbsolutePath();
+            selected.profilePicture = destination.toPath().normalize().toString().replace('\\', '/');
         }
 
         rewriteUsers(records);
@@ -350,7 +350,7 @@ public class instaManager {
             users.readBoolean();
             String pic = users.readUTF();
             if (uname.equals(username)) {
-                return Logica.RutasSistema.resolverRutaAnterior(pic);
+                return InstaPostMedia.resolvePath(pic);
             }
         }
         return null;
