@@ -75,6 +75,8 @@ public class VisibilidadProfileUI extends JPanel {
         JPanel panel = new JPanel(null);
         panel.setBackground(COLOR_BG);
         panel.setPreferredSize(new Dimension(400, 260));
+        panel.setMinimumSize(new Dimension(400, 260));
+        panel.setMaximumSize(new Dimension(400, 260));
         panel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, COLOR_BORDER));
 
         JLabel lblBack = new JLabel("←");
@@ -210,7 +212,10 @@ public class VisibilidadProfileUI extends JPanel {
             if (posts == null || posts.isEmpty()) {
                 JLabel lblVacio = new JLabel("Nada que ver aqui...", SwingConstants.CENTER);
                 lblVacio.setForeground(Color.GRAY);
-                lblVacio.setPreferredSize(new Dimension(380, 50));
+                gridFotos.setPreferredSize(new Dimension (400, 300));
+                gridFotos.setMaximumSize(new Dimension (400, 300));
+                gridFotos.setMinimumSize(new Dimension (400, 300));
+               
                 gridFotos.add(lblVacio);
             } else {
                 int position = 0;

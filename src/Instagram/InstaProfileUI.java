@@ -266,7 +266,10 @@ public class InstaProfileUI extends JPanel {
             if (posts == null || posts.isEmpty()) {
                 JLabel lblVacio = new JLabel("Nada que ver aqui...", SwingConstants.CENTER);
                 lblVacio.setForeground(Color.GRAY);
-                lblVacio.setPreferredSize(new Dimension(380, 50));
+                
+                gridFotos.setPreferredSize(new Dimension (400, 300));
+                gridFotos.setMaximumSize(new Dimension (400, 300));
+                gridFotos.setMinimumSize(new Dimension (400, 300));
                 gridFotos.add(lblVacio);
             } else {
                 int position = 0;
