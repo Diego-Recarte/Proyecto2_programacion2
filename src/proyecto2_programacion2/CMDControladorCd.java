@@ -21,8 +21,11 @@ public class CMDControladorCd implements CMDComando{
     
     @Override
     public String ejecutar(String[] argumentos){
-  
+        if (argumentos == null || argumentos.length == 0) {
+            return "Uso: cd <nombre_carpeta>";
+        }
         String nombre;
+            
         if (argumentos[argumentos.length-1].endsWith("\"")){
             String textoCompleto= "";
             for (String texto: argumentos){
@@ -34,6 +37,9 @@ public class CMDControladorCd implements CMDComando{
             
         }else{
             nombre = argumentos[0];
+        }
+        if (nombre.equals("..") || nombre.equals(".")) {
+            return "Carpeta '" + nombre + "' no encontrada";
         }
         
         
