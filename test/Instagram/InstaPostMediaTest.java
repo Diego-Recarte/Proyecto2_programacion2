@@ -24,7 +24,7 @@ public final class InstaPostMediaTest {
                 "El carrusel no conservó todas las rutas en orden.");
         require(InstaPostMedia.coverPath(encoded).equals(carousel.get(0)),
                 "La portada del carrusel no es la primera imagen.");
-        InstaMediaCarousel carouselView = new InstaMediaCarousel(carousel, 360, 360, null);
+        InstaMediaCarousel carouselView = new InstaMediaCarousel(carousel, 360, 360, null, null);
         require(carouselView.getImageCount() == 3,
                 "El componente visual no recibió todas las imágenes.");
 

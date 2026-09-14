@@ -3,7 +3,7 @@ package Instagram;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-/** Vista manual del timeline para revisar el layout sin pasar por autenticación. */
+/** Vista manual de INSTA+ con autenticacion en el servidor. */
 public final class InstaFeedPreview {
 
     private InstaFeedPreview() {
@@ -15,12 +15,12 @@ public final class InstaFeedPreview {
             try {
                 instaManager manager = new instaManager();
                 instaController.getInstance().setInsta(manager);
-                manager.setLoggedUser(username);
+
 
                 JFrame frame = new JFrame("INSTA+ Feed Preview — " + username);
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 frame.setResizable(false);
-                frame.setContentPane(new InstaFeedUI(username));
+                frame.setContentPane(new InstaLoginUI());
                 frame.pack();
                 frame.setLocationRelativeTo(null);
                 frame.setVisible(true);

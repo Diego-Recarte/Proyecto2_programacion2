@@ -1,5 +1,7 @@
 package Instagram;
 
+import Instagram.sockets.InstaServer;
+
 import Instagram.sockets.ChatClient;
 import Instagram.sockets.ChatMessage;
 import Instagram.sockets.ChatServer;
@@ -32,22 +34,23 @@ public final class InstaRealtimeIntegrationTest {
         int port;
         try (ServerSocket available = new ServerSocket(0)) { port = available.getLocalPort(); }
         System.setProperty("instagram.chat.port", Integer.toString(port));
-        instaManager manager = new instaManager();
+        InstaServer central = new InstaServer(0, port, Path.of("Instagram"), false);
+        instaManager manager = new instaManager("127.0.0.1", central.port());
+        instaManager anaManager = new instaManager("127.0.0.1", central.port());
         instaController.getInstance().setInsta(manager);
         manager.addNewUser("Ana", 'F', "ana", "Clave123", 20, null);
         manager.addNewUser("Luis", 'M', "luis", "Clave123", 20, null);
-        manager.setLoggedUser("luis");
+        manager.authenticate("luis", "Clave123");
+        anaManager.authenticate("ana", "Clave123");
         manager.addFollow("ana");
         BufferedImage picture = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
         for (int i = 0; i < 13; i++) {
             File file = new File("post-" + i + ".png");
             ImageIO.write(picture, "png", file);
-            manager.addPost(file.getAbsolutePath(), "luis", "Publicación de prueba " + i);
+            manager.addPost(manager.uploadImage("luis", file, ""), "luis", "Publicación de prueba " + i);
         }
         InstaFeedUI[] feed = new InstaFeedUI[1];
-        try (ChatServer server = new ChatServer(port, Path.of("Instagram", "users"));
-                ChatClient ana = new ChatClient("127.0.0.1", port, "ana")) {
-            server.start();
+        try (ChatClient ana = new ChatClient("127.0.0.1", port, "ana", anaManager.sessionToken())) {
             edt(() -> {
                 frame = new JFrame("Prueba Insta+");
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -90,8 +93,7 @@ public final class InstaRealtimeIntegrationTest {
             await(() -> number(feed[0], "renderedPosts") == 10, "No se cargó la segunda página.");
             edt(() -> scroll.getVerticalScrollBar().setValue(scroll.getVerticalScrollBar().getMaximum()));
             await(() -> number(feed[0], "renderedPosts") == 13, "No se cargó la última página.");
-            manager.setLoggedUser("ana");
-            manager.addPost(new File("post-0.png").getAbsolutePath(), "ana", "Nueva publicación seguida");
+            anaManager.addPost(anaManager.uploadImage("ana", new File("post-0.png"), ""), "ana", "Nueva publicación seguida");
             await(() -> ((JButton) field(feed[0], "newPosts")).isVisible(), "Falta el aviso de nuevos posts al leer abajo.");
             require(number(feed[0], "renderedPosts") == 13, "Un post nuevo alteró la página que se estaba leyendo.");
             await(() -> toastCount() == 2, "Falta la notificación de publicación seguida.");
@@ -106,6 +108,7 @@ public final class InstaRealtimeIntegrationTest {
             System.out.println("OK: paginación, avisos, historial, contador entre pestañas y cierre de sesión.");
         } finally {
             edt(() -> { if (frame != null) frame.dispose(); });
+            central.close();
         }
     }
 

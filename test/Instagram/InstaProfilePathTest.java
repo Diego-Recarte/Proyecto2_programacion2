@@ -1,5 +1,7 @@
 package Instagram;
 
+import Logica.Decodificacion.InstaRepository;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.RandomAccessFile;
@@ -27,7 +29,7 @@ public final class InstaProfilePathTest {
             users.writeUTF("C:\\otro-equipo\\proyecto\\Instagram\\users\\anterior\\profile.png");
         }
 
-        instaManager manager = new instaManager();
+        InstaRepository manager = new InstaRepository(java.nio.file.Path.of("Instagram"), false);
         require(new File(manager.getProfilePic("anterior")).isFile(),
                 "No se recuperó la foto de perfil guardada desde otro equipo.");
         Path source = Path.of("foto seleccionada.png");
@@ -45,7 +47,7 @@ public final class InstaProfilePathTest {
         System.out.println("OK: foto de perfil relativa al registrar y editar, y compatibilidad con rutas antiguas.");
     }
 
-    private static void verifyStoredPhoto(instaManager manager, String expected) throws Exception {
+    private static void verifyStoredPhoto(InstaRepository manager, String expected) throws Exception {
         require(expected.equals(manager.getProfilePic("ana")), "La carga no conserva la ruta relativa.");
         require(ImageIO.read(new File(manager.getProfilePic("ana"))) != null, "La foto no se puede leer.");
         try (RandomAccessFile users = new RandomAccessFile("Instagram/users.ins", "r")) {
