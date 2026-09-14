@@ -202,6 +202,6 @@ final class ChatHistoryStore {
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
-    private record StoredMessage(ChatMessage message, boolean read) {
+    private record StoredMessage(ChatMessage message, boolean read) implements java.io.Serializable {
     }
 }

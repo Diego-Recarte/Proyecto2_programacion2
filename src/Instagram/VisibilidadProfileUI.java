@@ -1,5 +1,8 @@
 package Instagram;
 
+import Logica.Ventanas.InstaImages;
+import Logica.Ventanas.InstaWindowLayout;
+
 
 
 import java.awt.*;
@@ -8,7 +11,7 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import Logica.Estructuras.ListaEnlazada;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -38,6 +41,7 @@ public class VisibilidadProfileUI extends JPanel {
         this.profileUser = profileUser;
         this.viewer = viewer != null ? viewer : profileUser;
 
+        putClientProperty("insta.manager", instaController.getInstance().getInsta(viewer));
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(400, 650));
         setBackground(COLOR_BG);
@@ -64,6 +68,7 @@ public class VisibilidadProfileUI extends JPanel {
         add(crearBarraNavegacionInferior(), BorderLayout.SOUTH);
 
         cargarDatosPerfil();
+        InstaWindowLayout.install(this);
     }
 
     private JPanel crearPanelSuperior() {
@@ -144,7 +149,7 @@ public class VisibilidadProfileUI extends JPanel {
 
         btnFollow.addActionListener(e -> {
             try {
-                instaManager manager = instaController.getInstance().getInsta();
+                instaManager manager = instaController.getInstance().getInsta(viewer);
                 if (manager == null) {
                     return;
                 }
@@ -199,8 +204,8 @@ public class VisibilidadProfileUI extends JPanel {
     private void cargarPostsEnGrid() {
         gridFotos.removeAll();
         try {
-            instaManager manager = instaController.getInstance().getInsta();
-            ArrayList<String[]> posts = manager.getPosts(profileUser);
+            instaManager manager = instaController.getInstance().getInsta(viewer);
+            ListaEnlazada<String[]> posts = manager.getPosts(profileUser);
 
             if (posts == null || posts.isEmpty()) {
                 JLabel lblVacio = new JLabel("Nada que ver aqui...", SwingConstants.CENTER);
@@ -208,8 +213,9 @@ public class VisibilidadProfileUI extends JPanel {
                 lblVacio.setPreferredSize(new Dimension(380, 50));
                 gridFotos.add(lblVacio);
             } else {
-                for (int i = 0; i < posts.size(); i++) {
-                    String[] post = posts.get(i);
+                int position = 0;
+                for (String[] post : posts) {
+                    final int i = position++;
                     final int index = i;
                     String mediaReference = post.length > 0 ? post[0] : "";
                     int mediaCount = InstaPostMedia.decode(mediaReference).size();
@@ -257,8 +263,8 @@ public class VisibilidadProfileUI extends JPanel {
                             if (window instanceof JFrame) {
                                 JFrame frame = (JFrame) window;
                                 try {
-                                    instaManager manager = instaController.getInstance().getInsta();
-                                    ArrayList<String[]> allPosts = manager.getPosts(profileUser);
+                                    instaManager manager = instaController.getInstance().getInsta(viewer);
+                                    ListaEnlazada<String[]> allPosts = manager.getPosts(profileUser);
 
                                     Runnable backAction = () -> {
                                         frame.setContentPane(VisibilidadProfileUI.this);
@@ -290,30 +296,7 @@ public class VisibilidadProfileUI extends JPanel {
     }
 
     private ImageIcon recortarImagenCuadrada(String ruta, int size) throws ImageLoadException {
-        try {
-            File f = new File(ruta);
-            if (!f.exists()) {
-                throw new ImageLoadException("Archivo no existe: " + ruta);
-            }
-            BufferedImage original = ImageIO.read(f);
-            if (original == null) {
-                throw new ImageLoadException("No se pudo leer la imagen: " + ruta);
-            }
-            int w = original.getWidth();
-            int h = original.getHeight();
-            int cropSize = Math.min(w, h);
-            int x = (w - cropSize) / 2;
-            int y = (h - cropSize) / 2;
-            BufferedImage cropped = original.getSubimage(x, y, cropSize, cropSize);
-            Image scaled = cropped.getScaledInstance(size, size, Image.SCALE_SMOOTH);
-            return new ImageIcon(scaled);
-        } catch (IOException e) {
-            throw new ImageLoadException("Error I/O al leer imagen: " + ruta, e);
-        } catch (ImageLoadException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new ImageLoadException("Error procesando imagen: " + ruta, e);
-        }
+        return InstaImages.icon(this, ruta, size, size, true);
     }
 
     private JLabel crearIndicadorCarrusel(int total) {
@@ -326,9 +309,17 @@ public class VisibilidadProfileUI extends JPanel {
         return badge;
     }
 
+    void refreshActiveState(java.util.Set<String> activeUsers) {
+        if (!activeUsers.contains(profileUser)) {
+            lblName.setText("Cuenta no disponible");
+            lblInfo.setText("Inactiva"); lblStats.setText(""); lblFoto.setIcon(null);
+            gridFotos.removeAll(); gridFotos.revalidate(); gridFotos.repaint();
+        }
+    }
+
     private void cargarDatosPerfil() {
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(viewer);
             if (manager == null) {
                 return;
             }
@@ -360,14 +351,14 @@ public class VisibilidadProfileUI extends JPanel {
             int edad = manager.getAge(profileUser);
             char genero = manager.getGender(profileUser);
             String fecha = manager.getEntryDate(profileUser);
-            String generoStr = (genero == 'M') ? "Demonio" : (genero == 'F' ? "Bruja" : "Ente");
+            String generoStr = (genero == 'M') ? "M" : "F";
 
-            lblInfo.setText("<html>Edad: " + edad + " años<br>Clase: " + generoStr + "<br>Desde: " + fecha + "</html>");
+            lblInfo.setText("<html>Edad: " + edad + " años<br>Género: " + generoStr + "<br>Desde: " + fecha + " · " + (manager.getStatusUser(profileUser) ? "Activa" : "Inactiva") + "</html>");
 
             int followers = manager.getFollowersCount(profileUser);
             int following = manager.getFollowingCount(profileUser);
 
-            ArrayList<String[]> posts = manager.getPosts(profileUser);
+            ListaEnlazada<String[]> posts = manager.getPosts(profileUser);
             int evidencias = (posts == null) ? 0 : posts.size();
 
             lblStats.setText(statsHtml(evidencias, followers, following));

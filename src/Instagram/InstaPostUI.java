@@ -1,5 +1,8 @@
 package Instagram;
 
+import Logica.Ventanas.InstaImages;
+import Logica.Ventanas.InstaWindowLayout;
+
 import Logica.Excepciones.ImageLoadException;
 import java.awt.*;
 import java.awt.event.*;
@@ -7,7 +10,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import Logica.Estructuras.ListaEnlazada;
 import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -17,7 +20,7 @@ import javax.swing.border.LineBorder;
 public class InstaPostUI extends JLayeredPane {
 
     private final String currentUser;
-    private final ArrayList<String[]> feedPosts;
+    private final ListaEnlazada<String[]> feedPosts;
     private final int startIndex;
     private final Runnable backAction;
 
@@ -43,16 +46,17 @@ public class InstaPostUI extends JLayeredPane {
     private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 14);
     private final Font FONT_PLAIN = new Font("Segoe UI", Font.PLAIN, 13);
 
-    public InstaPostUI(String currentUser, ArrayList<String[]> posts, int startIndex) {
+    public InstaPostUI(String currentUser, ListaEnlazada<String[]> posts, int startIndex) {
         this(currentUser, posts, startIndex, null);
     }
 
-    public InstaPostUI(String currentUser, ArrayList<String[]> posts, int startIndex, Runnable backAction) {
+    public InstaPostUI(String currentUser, ListaEnlazada<String[]> posts, int startIndex, Runnable backAction) {
         this.currentUser = currentUser;
-        this.feedPosts = posts != null ? posts : new ArrayList<>();
+        this.feedPosts = posts != null ? posts : new ListaEnlazada<>();
         this.startIndex = Math.max(0, startIndex);
         this.backAction = backAction;
         initOnce();
+        InstaWindowLayout.install(this);
     }
 
     public InstaPostUI(String currentUser, String authorToShowAll) {
@@ -61,22 +65,24 @@ public class InstaPostUI extends JLayeredPane {
 
     public InstaPostUI(String currentUser, String authorToShowAll, Runnable backAction) {
         this.currentUser = currentUser;
-        ArrayList<String[]> loaded = new ArrayList<>();
+        ListaEnlazada<String[]> loaded = new ListaEnlazada<>();
         Runnable ba = backAction;
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
             if (manager != null && authorToShowAll != null) {
                 loaded = manager.getPosts(authorToShowAll);
             }
         } catch (IOException e) {
         }
-        this.feedPosts = loaded != null ? loaded : new ArrayList<>();
+        this.feedPosts = loaded != null ? loaded : new ListaEnlazada<>();
         this.startIndex = 0;
         this.backAction = ba;
         initOnce();
+        InstaWindowLayout.install(this);
     }
 
     private void initOnce() {
+        putClientProperty("insta.manager", instaController.getInstance().getInsta(currentUser));
         setLayout(null);
         setBackground(COLOR_BG);
         setOpaque(true);
@@ -185,14 +191,30 @@ public class InstaPostUI extends JLayeredPane {
         add(topBarPanel, JLayeredPane.PALETTE_LAYER);
     }
 
+    void refreshActiveState(java.util.Set<String> activeUsers) {
+        for (Component wrapper : mainContentPanel.getComponents()) {
+            if (!(wrapper instanceof Container container)) continue;
+            for (Component child : container.getComponents()) {
+                if (child instanceof JPanel card && card.getClientProperty("insta.author") instanceof String author) {
+                    wrapper.setVisible(activeUsers.contains(author));
+                }
+            }
+        }
+        if (currentPostAuthor != null && !activeUsers.contains(currentPostAuthor)) mostrarComentarios(false);
+        for (int i = listModelComentarios.size() - 1; i >= 0; i--) {
+            if (!activeUsers.contains(listModelComentarios.get(i).usuario)) listModelComentarios.remove(i);
+        }
+        if (commentsVisible && labelContadorSeleccionado != null) labelContadorSeleccionado.setText(String.valueOf(listModelComentarios.size()));
+        mainContentPanel.revalidate(); mainContentPanel.repaint();
+    }
+
     private void crearInterfazFeed() {
         mainContentPanel = new JPanel();
         mainContentPanel.setLayout(new BoxLayout(mainContentPanel, BoxLayout.Y_AXIS));
         mainContentPanel.setBackground(COLOR_BG);
         mainContentPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        for (int i = 0; i < feedPosts.size(); i++) {
-            String[] post = feedPosts.get(i);
+        for (String[] post : feedPosts) {
             JPanel tarjeta = crearTarjetaPost(post);
 
             JPanel wrapper = new JPanel(new GridBagLayout());
@@ -234,62 +256,27 @@ public class InstaPostUI extends JLayeredPane {
     }
 
     private JPanel crearTarjetaPost(String[] post) {
-        String author = "Desconocido";
-        String imgPath = "";
-        String caption = "";
-
-        if (post != null) {
-            if (post.length > 3 && post[3] != null) {
-                caption = post[3];
-            }
-            if (post.length > 1) {
-                boolean firstIsPath = looksLikePath(post[0]);
-                boolean secondIsPath = looksLikePath(post[1]);
-                if (firstIsPath && !secondIsPath) {
-                    imgPath = post[0];
-                    author = post[1];
-                } else if (secondIsPath && !firstIsPath) {
-                    imgPath = post[1];
-                    author = post[0];
-                } else {
-                    if (!firstIsPath && secondIsPath) {
-                        author = post[0];
-                        imgPath = post[1];
-                    } else {
-                        author = post[0];
-                        imgPath = post.length > 1 ? post[1] : "";
-                    }
-                }
-            } else if (post.length == 1) {
-                author = post[0];
-            }
-        }
-
-        File check = new File(imgPath);
-        if (!check.exists() && post != null && post.length > 1) {
-            if (looksLikePath(post[1]) && !looksLikePath(post[0])) {
-                imgPath = post[1];
-                author = post[0];
-            } else if (looksLikePath(post[0]) && !looksLikePath(post[1])) {
-                imgPath = post[0];
-                author = post.length > 1 ? post[1] : author;
-            }
-        }
+        String author = post != null && post.length > 1 ? post[1] : "Desconocido";
+        String imgPath = post != null && post.length > 0 ? post[0] : "";
+        String caption = post != null && post.length > 3 ? post[3] : "";
 
         JPanel card = new JPanel();
+        card.putClientProperty("insta.author", author);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(COLOR_BG);
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
         card.setMaximumSize(new Dimension(380, Integer.MAX_VALUE));
 
         card.add(crearHeaderPostIndividual(author));
-        card.add(crearImagenPost(imgPath));
+        if (!InstaPostMedia.decode(imgPath).isEmpty()) card.add(crearImagenPost(imgPath));
+        JLabel date = new JLabel(post != null && post.length > 2 ? post[2] : "");
+        date.setForeground(Color.GRAY); card.add(date);
 
         int commentCount = 0;
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
             if (manager != null) {
-                ArrayList<String[]> comments = manager.getComments(author, imgPath);
+                java.util.List<String[]> comments = manager.getComments(author, imgPath);
                 if ((comments == null || comments.isEmpty()) && looksLikePath(author)) {
                     comments = manager.getComments(imgPath, author);
                 }
@@ -426,7 +413,7 @@ public class InstaPostUI extends JLayeredPane {
         boolean initiallyLiked = false;
         int initialLikeCount = 0;
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
             if (manager != null) {
                 initiallyLiked = manager.hasLiked(author, path, currentUser);
                 initialLikeCount = manager.getLikeCount(author, path);
@@ -448,7 +435,7 @@ public class InstaPostUI extends JLayeredPane {
             @Override
             public void mouseClicked(MouseEvent e) {
                 try {
-                    instaManager manager = instaController.getInstance().getInsta();
+                    instaManager manager = instaController.getInstance().getInsta(currentUser);
                     int total = manager.toggleLike(author, path, currentUser);
                     boolean liked = manager.hasLiked(author, path, currentUser);
                     lblLike.setText(liked ? "♥" : "♡");
@@ -520,7 +507,7 @@ public class InstaPostUI extends JLayeredPane {
             return;
         }
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
             if (manager != null && manager.deletePost(author, path)) {
                 Window window = SwingUtilities.getWindowAncestor(this);
                 if (window instanceof JFrame frame) {
@@ -610,8 +597,8 @@ public class InstaPostUI extends JLayeredPane {
         listModelComentarios.clear();
 
         try {
-            instaManager manager = instaController.getInstance().getInsta();
-            ArrayList<String[]> comments = null;
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
+            java.util.List<String[]> comments = null;
             if (manager != null) {
                 comments = manager.getComments(author, path);
                 if ((comments == null || comments.isEmpty()) && looksLikePath(author)) {
@@ -648,7 +635,7 @@ public class InstaPostUI extends JLayeredPane {
         String texto = txtComentario.getText().trim();
         if (!texto.isEmpty() && currentPostAuthor != null) {
             try {
-                instaManager manager = instaController.getInstance().getInsta();
+                instaManager manager = instaController.getInstance().getInsta(currentUser);
                 if (manager != null) {
                     manager.addComment(currentPostAuthor, currentImagePath, currentUser, texto);
                 }
@@ -749,54 +736,11 @@ public class InstaPostUI extends JLayeredPane {
     }
 
     private ImageIcon recortarImagenCuadrada(String ruta, int size) throws ImageLoadException {
-        try {
-            File f = new File(ruta);
-            if (!f.exists()) {
-                throw new ImageLoadException("Archivo de imagen no existe: " + ruta);
-            }
-
-            BufferedImage original = ImageIO.read(f);
-            if (original == null) {
-                throw new ImageLoadException("No se pudo leer la imagen (null): " + ruta);
-            }
-
-            int w = original.getWidth();
-            int h = original.getHeight();
-            int cropSize = Math.min(w, h);
-            int x = (w - cropSize) / 2;
-            int y = (h - cropSize) / 2;
-
-            BufferedImage cropped = original.getSubimage(x, y, cropSize, cropSize);
-            Image scaled = cropped.getScaledInstance(size, size, Image.SCALE_SMOOTH);
-
-            return new ImageIcon(scaled);
-
-        } catch (IOException e) {
-            throw new ImageLoadException("Error leyendo la imagen: " + ruta, e);
-        } catch (Exception e) {
-            throw new ImageLoadException("Error al procesar la imagen: " + ruta, e);
-        }
+        return InstaImages.icon(this, ruta, size, size, true);
     }
 
     private ImageIcon ajustarImagenAlFeed(String ruta, int maxWidth, int maxHeight) throws ImageLoadException {
-        try {
-            File file = new File(ruta);
-            if (!file.isFile()) {
-                throw new ImageLoadException("Archivo de imagen no existe: " + ruta);
-            }
-            BufferedImage original = ImageIO.read(file);
-            if (original == null) {
-                throw new ImageLoadException("No se pudo leer la imagen: " + ruta);
-            }
-            double scale = Math.min((double) maxWidth / original.getWidth(), (double) maxHeight / original.getHeight());
-            int width = Math.max(1, (int) Math.round(original.getWidth() * scale));
-            int height = Math.max(1, (int) Math.round(original.getHeight() * scale));
-            return new ImageIcon(original.getScaledInstance(width, height, Image.SCALE_SMOOTH));
-        } catch (ImageLoadException ex) {
-            throw ex;
-        } catch (IOException ex) {
-            throw new ImageLoadException("Error leyendo la imagen: " + ruta, ex);
-        }
+        return InstaImages.icon(this, ruta, maxWidth, maxHeight, false);
     }
 
     private void regresarAlPerfil() {
@@ -843,7 +787,7 @@ public class InstaPostUI extends JLayeredPane {
 
     private String resolveUsername(String username) {
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
             if (manager != null) {
                 for (String candidate : manager.searchUsers(username)) {
                     if (candidate.equalsIgnoreCase(username)) {

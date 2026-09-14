@@ -1,227 +1,181 @@
 package Instagram;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import javax.swing.BorderFactory;
-import proyecto2_programacion2.GUISelector;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.SwingUtilities;
-import javax.swing.JTextPane;
+import Logica.Ventanas.InstaImages;
+import Logica.Ventanas.InstaWindowLayout;
 
+import Logica.Estructuras.ListaEnlazada;
+import java.awt.*;
+import java.io.File;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.text.AbstractDocument;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultHighlighter;
-import javax.swing.text.DocumentFilter;
-import javax.swing.text.Highlighter;
+import proyecto2_programacion2.GUISelector;
 
-/** Flujo común para publicar una imagen con descripción, hashtags y menciones. */
-final class InstaPostComposer {
-
+/** Editor integrado para texto, imagenes, stickers y carpetas personales. */
+final class InstaPostComposer extends JPanel {
     static final int MAX_DESCRIPTION_LENGTH = 220;
     static final int MAX_IMAGES_PER_POST = 20;
-    private static final Highlighter.HighlightPainter HASHTAG_PAINTER
-            = new DefaultHighlighter.DefaultHighlightPainter(new Color(110, 48, 25));
-    private static final Highlighter.HighlightPainter MENTION_PAINTER
-            = new DefaultHighlighter.DefaultHighlightPainter(new Color(20, 70, 110));
+    private final String user;
+    private final Runnable back;
+    private final JTextArea description = new JTextArea(5, 25);
+    private final JLabel status = new JLabel("Texto: 0/140");
+    private final JPanel mediaPreview = new JPanel(new GridLayout(0, 3, 6, 6)) {
+        @Override public Dimension getMaximumSize() { return new Dimension(Integer.MAX_VALUE, Math.max(0, getPreferredSize().height)); }
+    };
+    private final JPanel stickersPanel = new JPanel(new GridLayout(0, 3, 6, 6)) {
+        @Override public Dimension getMaximumSize() { return new Dimension(Integer.MAX_VALUE, Math.max(0, getPreferredSize().height)); }
+    };
+    private final JComboBox<String> folders = new JComboBox<>();
+    private final ListaEnlazada<File> images = new ListaEnlazada<>();
+    private final ListaEnlazada<String> stickers = new ListaEnlazada<>();
+    private final JButton publish = new JButton("Publicar");
+    private final JPanel actions = new JPanel(new GridLayout(0, 2, 6, 6));
+    private boolean publishing;
 
-    private InstaPostComposer() {
+    static void open(Component parent, String user, Runnable afterPublish) {
+        if (!(SwingUtilities.getWindowAncestor(parent) instanceof JFrame frame)) return;
+        Container previous = frame.getContentPane();
+        Runnable back = () -> { frame.setContentPane(previous); frame.revalidate(); frame.repaint(); };
+        InstaPostComposer editor = new InstaPostComposer(user, back, () -> {
+            back.run(); if (afterPublish != null) afterPublish.run();
+        });
+        frame.setContentPane(editor); frame.revalidate(); frame.repaint();
     }
 
-    static void open(Component parent, String username, Runnable afterPublish) {
-        File[] selectedImages = GUISelector.seleccionarArchivos(parent,
-                "Selecciona una o varias imágenes", "jpg", "jpeg", "png", "gif", "bmp", "webp");
-        if (selectedImages.length == 0) {
-            return;
-        }
-        if (selectedImages.length > MAX_IMAGES_PER_POST) {
-            JOptionPane.showMessageDialog(parent, "Puedes agregar hasta " + MAX_IMAGES_PER_POST
-                    + " imágenes en una publicación.", "Nueva publicación", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        for (File selectedImage : selectedImages) {
-            if (selectedImage == null || !selectedImage.isFile()) {
-                JOptionPane.showMessageDialog(parent, "Una de las imágenes seleccionadas no es válida.",
-                        "Nueva publicación", JOptionPane.WARNING_MESSAGE);
-                return;
+    InstaPostComposer(String user, Runnable back, Runnable afterPublish) {
+        this.user = user; this.back = back;
+        putClientProperty("insta.manager", instaController.getInstance().getInsta(user));
+        setLayout(new BorderLayout(10, 10)); setBackground(Color.BLACK);
+        setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        setPreferredSize(new Dimension(400, 650));
+        JPanel header = new JPanel(new BorderLayout(12, 0));
+        JButton cancel = new JButton("Volver"); cancel.addActionListener(e -> { if (!publishing) back.run(); });
+        header.add(cancel, BorderLayout.WEST); header.add(new JLabel("Nueva publicación", SwingConstants.CENTER));
+        add(header, BorderLayout.NORTH);
+        JPanel content = new JPanel(); content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setBackground(Color.BLACK);
+        description.setLineWrap(true); description.setWrapStyleWord(true);
+        description.setBackground(new Color(30, 30, 30)); description.setForeground(Color.WHITE);
+        description.setCaretColor(Color.WHITE); description.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        description.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { updateCount(); }
+            public void removeUpdate(DocumentEvent e) { updateCount(); }
+            public void changedUpdate(DocumentEvent e) { updateCount(); }
+        });
+        JScrollPane textScroll = new JScrollPane(description);
+        textScroll.setPreferredSize(new Dimension(340, 140));
+        textScroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 140));
+        content.add(textScroll); content.add(Box.createVerticalStrut(10));
+        JButton photo = new JButton("Agregar imágenes"); photo.addActionListener(e -> selectImages()); actions.add(photo);
+        JButton sticker = new JButton("Agregar sticker"); sticker.addActionListener(e -> loadStickers()); actions.add(sticker);
+        JButton clear = new JButton("Quitar adjuntos"); clear.addActionListener(e -> {
+            images.clear(); stickers.clear(); mediaPreview.removeAll(); mediaPreview.revalidate(); mediaPreview.repaint(); updateCount();
+        }); actions.add(clear); actions.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+        content.add(actions); content.add(Box.createVerticalStrut(10));
+        mediaPreview.setBackground(Color.BLACK); content.add(mediaPreview);
+        stickersPanel.setBackground(Color.BLACK); content.add(stickersPanel);
+        JPanel folderRow = new JPanel(new BorderLayout(6, 6));
+        folderRow.add(new JLabel("Carpeta de las imágenes:"), BorderLayout.NORTH);
+        folders.addItem("Sin carpeta personal"); folderRow.add(folders, BorderLayout.CENTER);
+        JButton manage = new JButton("Mis carpetas"); manage.addActionListener(e -> {
+            if (SwingUtilities.getWindowAncestor(this) instanceof JFrame frame) {
+                frame.setContentPane(new InstaFoldersUI(user, () -> { frame.setContentPane(this); loadFolders(); frame.revalidate(); }));
+                frame.revalidate();
             }
-            try {
-                InstaPostMedia.readImage(selectedImage.getAbsolutePath());
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(parent, "No se puede publicar " + selectedImage.getName()
-                        + ": " + ex.getMessage(), "Nueva publicación", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-        }
-
-        File userDirectory = new File(new File("Instagram", "users"), username);
-        File imagesDirectory = new File(userDirectory, "imagenes");
-
-        JTextPane description = new JTextPane();
-        description.setBackground(new Color(30, 30, 30));
-        description.setForeground(Color.WHITE);
-        description.setCaretColor(Color.WHITE);
-        description.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        description.setBorder(BorderFactory.createEmptyBorder(7, 7, 7, 7));
-        ((AbstractDocument) description.getDocument()).setDocumentFilter(new LengthFilter(MAX_DESCRIPTION_LENGTH));
-
-        JLabel recognitionStatus = new JLabel();
-        recognitionStatus.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        installSocialHighlighting(description, recognitionStatus);
-
-        List<String> previewPaths = Arrays.stream(selectedImages)
-                .map(File::getAbsolutePath).toList();
-        InstaMediaCarousel previewCarousel = new InstaMediaCarousel(previewPaths, 360, 230, null);
-        JPanel previewPanel = new JPanel(new BorderLayout(0, 4));
-        previewPanel.add(new JLabel(selectedImages.length == 1
-                ? "Vista previa de la imagen"
-                : "Vista previa · " + selectedImages.length + " imágenes (usa las flechas)"), BorderLayout.NORTH);
-        previewPanel.add(previewCarousel, BorderLayout.CENTER);
-
-        JPanel form = new JPanel(new BorderLayout(0, 10));
-        JScrollPane descriptionScroll = new JScrollPane(description);
-        descriptionScroll.setPreferredSize(new Dimension(360, 150));
-        JPanel descriptionPanel = new JPanel(new BorderLayout(4, 4));
-        JPanel descriptionHeader = new JPanel(new BorderLayout());
-        descriptionHeader.add(new JLabel("Descripción:"), BorderLayout.WEST);
-        descriptionHeader.add(recognitionStatus, BorderLayout.EAST);
-        descriptionPanel.add(descriptionHeader, BorderLayout.NORTH);
-        descriptionPanel.add(descriptionScroll, BorderLayout.CENTER);
-        descriptionPanel.add(new JLabel("Los #hashtags se marcan en naranja y las @menciones en azul."),
-                BorderLayout.SOUTH);
-        form.add(previewPanel, BorderLayout.NORTH);
-        form.add(descriptionPanel, BorderLayout.CENTER);
-
-        SwingUtilities.invokeLater(description::requestFocusInWindow);
-        int answer = JOptionPane.showConfirmDialog(parent, form, "Descripción de la publicación",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        if (answer != JOptionPane.OK_OPTION) {
-            return;
-        }
-
-        try {
-            Files.createDirectories(imagesDirectory.toPath());
-
-            ArrayList<String> storedPaths = new ArrayList<>();
-            long postId = System.currentTimeMillis();
-            for (int index = 0; index < selectedImages.length; index++) {
-                File selected = selectedImages[index];
-                String cleanFileName = selected.getName().replaceAll("[^a-zA-Z0-9._-]", "_");
-                File destination = new File(imagesDirectory,
-                        postId + "_" + (index + 1) + "_" + cleanFileName);
-                Files.copy(selected.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                storedPaths.add(destination.toPath().normalize().toString().replace('\\', '/'));
-            }
-
-            instaManager manager = instaController.getInstance().getInsta();
-            manager.setLoggedUser(username);
-            String finalDescription = description.getText().trim();
-            manager.addPost(InstaPostMedia.encode(storedPaths), username, finalDescription);
-            int hashtags = InstaSocialText.countHashtags(finalDescription);
-            int mentions = InstaSocialText.countMentions(finalDescription);
-            JOptionPane.showMessageDialog(parent, "Publicación creada con " + selectedImages.length
-                    + " imagen" + (selectedImages.length == 1 ? "" : "es") + ".\nDescripción guardada · "
-                    + hashtags + " hashtag" + (hashtags == 1 ? "" : "s") + " · "
-                    + mentions + " mención" + (mentions == 1 ? "" : "es") + ".");
-            if (afterPublish != null) {
-                afterPublish.run();
-            }
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(parent, "No se pudo publicar: " + ex.getMessage(),
-                    "Nueva publicación", JOptionPane.ERROR_MESSAGE);
-        }
+        }); folderRow.add(manage, BorderLayout.SOUTH);
+        folderRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 95));
+        content.add(Box.createVerticalStrut(10)); content.add(folderRow);
+        content.add(Box.createVerticalGlue());
+        JScrollPane scroll = new JScrollPane(content); scroll.setBorder(null); scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.getVerticalScrollBar().setUnitIncrement(16); add(scroll, BorderLayout.CENTER);
+        JPanel footer = new JPanel(new BorderLayout(6, 6)); footer.add(status, BorderLayout.CENTER); footer.add(publish, BorderLayout.EAST);
+        publish.addActionListener(e -> publish(afterPublish)); add(footer, BorderLayout.SOUTH);
+        style(this);
+        for (Component component : content.getComponents()) if (component instanceof JComponent jc) jc.setAlignmentX(Component.LEFT_ALIGNMENT);
+        loadFolders();
+        InstaWindowLayout.install(this);
     }
 
-    private static void installSocialHighlighting(JTextPane description, JLabel status) {
-        DocumentListener listener = new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent event) {
-                refreshSocialHighlighting(description, status);
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent event) {
-                refreshSocialHighlighting(description, status);
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent event) {
-                refreshSocialHighlighting(description, status);
-            }
-        };
-        description.getDocument().addDocumentListener(listener);
-        refreshSocialHighlighting(description, status);
+    static void style(Component component) {
+        if (component instanceof JPanel || component instanceof JViewport) component.setBackground(Color.BLACK);
+        if (component instanceof JLabel) component.setForeground(Color.WHITE);
+        if (component instanceof JButton button) {
+            button.setBackground(new Color(220, 80, 0)); button.setForeground(Color.WHITE);
+            button.setFocusPainted(false);
+        }
+        if (component instanceof Container container) for (Component child : container.getComponents()) style(child);
     }
 
-    private static void refreshSocialHighlighting(JTextPane description, JLabel status) {
-        String text = description.getText();
-        Highlighter highlighter = description.getHighlighter();
-        highlighter.removeAllHighlights();
-        int hashtags = 0;
-        int mentions = 0;
-        java.util.regex.Matcher matcher = InstaSocialText.TOKEN_PATTERN.matcher(text);
-        while (matcher.find()) {
-            boolean isHashtag = "#".equals(matcher.group(1));
-            try {
-                highlighter.addHighlight(matcher.start(), matcher.end(),
-                        isHashtag ? HASHTAG_PAINTER : MENTION_PAINTER);
-            } catch (BadLocationException ignored) {
-            }
-            if (isHashtag) {
-                hashtags++;
-            } else {
-                mentions++;
-            }
-        }
-        status.setText(text.length() + "/" + MAX_DESCRIPTION_LENGTH + " · #" + hashtags + " · @" + mentions);
-        status.setForeground((hashtags + mentions) > 0 ? new Color(190, 85, 45) : Color.DARK_GRAY);
+    private void updateCount() {
+        int limit = images.isEmpty() && stickers.isEmpty() ? 140 : 220;
+        status.setText(description.getText().length() + "/" + limit + " · #" + InstaSocialText.countHashtags(description.getText())
+                + " · @" + InstaSocialText.countMentions(description.getText()));
+        publish.setEnabled(!publishing && description.getText().length() <= limit);
     }
 
-    private static final class LengthFilter extends DocumentFilter {
-        private final int maximum;
-
-        private LengthFilter(int maximum) {
-            this.maximum = maximum;
-        }
-
-        @Override
-        public void insertString(FilterBypass bypass, int offset, String string, AttributeSet attributes)
-                throws BadLocationException {
-            if (string == null) {
-                return;
+    private void loadFolders() {
+        new SwingWorker<ListaEnlazada<String>, Void>() {
+            protected ListaEnlazada<String> doInBackground() throws Exception { return instaController.getInstance().getInsta(user).getPersonalFolders(user); }
+            protected void done() {
+                try { folders.removeAllItems(); folders.addItem("Sin carpeta personal"); for (String name : get()) folders.addItem(name); }
+                catch (Exception ex) { status.setText("No se pudieron cargar las carpetas."); }
             }
-            int available = maximum - bypass.getDocument().getLength();
-            if (available > 0) {
-                super.insertString(bypass, offset, string.substring(0, Math.min(available, string.length())), attributes);
-            }
-        }
+        }.execute();
+    }
 
-        @Override
-        public void replace(FilterBypass bypass, int offset, int length, String text, AttributeSet attributes)
-                throws BadLocationException {
-            int replacementLength = text == null ? 0 : text.length();
-            int available = maximum - (bypass.getDocument().getLength() - length);
-            if (replacementLength == 0) {
-                super.replace(bypass, offset, length, "", attributes);
-            } else if (available > 0) {
-                super.replace(bypass, offset, length,
-                        text.substring(0, Math.min(available, replacementLength)), attributes);
-            }
+    private void selectImages() {
+        File[] selected = GUISelector.seleccionarArchivos(this, "Agregar imágenes", "png", "jpg", "jpeg");
+        if (images.size() + stickers.size() + selected.length > MAX_IMAGES_PER_POST) { status.setText("Máximo 20 adjuntos."); return; }
+        for (File file : selected) {
+            images.add(file); mediaPreview.add(new JLabel(InstaImages.icon(this, file.getPath(), 105, 105, false)));
         }
+        mediaPreview.revalidate(); updateCount();
+    }
+
+    private void loadStickers() {
+        stickersPanel.removeAll();
+        new SwingWorker<java.util.ArrayList<String[]>, Void>() {
+            protected java.util.ArrayList<String[]> doInBackground() throws Exception { return instaController.getInstance().getInsta(user).getStickers(user); }
+            protected void done() {
+                try {
+                    for (String[] item : get()) {
+                        JButton button = new JButton(item[0], InstaImages.icon(InstaPostComposer.this, item[1], 60, 60, false));
+                        button.setVerticalTextPosition(SwingConstants.BOTTOM); button.setHorizontalTextPosition(SwingConstants.CENTER);
+                        button.addActionListener(e -> {
+                            if (images.size() + stickers.size() >= 20) { status.setText("Máximo 20 adjuntos."); return; }
+                            stickers.add(item[1]); mediaPreview.add(new JLabel(InstaImages.icon(InstaPostComposer.this, item[1], 105, 105, false)));
+                            stickersPanel.removeAll(); mediaPreview.revalidate(); stickersPanel.revalidate(); repaint(); updateCount();
+                        }); stickersPanel.add(button);
+                    }
+                    style(stickersPanel); stickersPanel.revalidate(); repaint();
+                } catch (Exception ex) { status.setText("No se pudieron cargar los stickers."); }
+            }
+        }.execute();
+    }
+
+    private void publish(Runnable afterPublish) {
+        String text = description.getText().trim();
+        if (text.isBlank() && images.isEmpty() && stickers.isEmpty()) { status.setText("Escribe texto o agrega un adjunto."); return; }
+        String folder = folders.getSelectedIndex() <= 0 ? "" : String.valueOf(folders.getSelectedItem());
+        ListaEnlazada<File> selectedImages = new ListaEnlazada<>(images);
+        ListaEnlazada<String> selectedStickers = new ListaEnlazada<>(stickers);
+        publishing = true; publish.setEnabled(false); description.setEditable(false);
+        for (Component component : actions.getComponents()) component.setEnabled(false);
+        status.setText("Publicando...");
+        new SwingWorker<Void, Void>() {
+            protected Void doInBackground() throws Exception {
+                instaManager manager = instaController.getInstance().getInsta(user);
+                ListaEnlazada<String> references = new ListaEnlazada<>();
+                for (File image : selectedImages) references.add(manager.uploadImage(user, image, folder));
+                references.addAll(selectedStickers);
+                manager.addPost(InstaPostMedia.encode(references), user, text); return null;
+            }
+            protected void done() {
+                publishing = false; publish.setEnabled(true); description.setEditable(true);
+                for (Component component : actions.getComponents()) component.setEnabled(true);
+                try { get(); afterPublish.run(); }
+                catch (Exception ex) { status.setText(ex.getCause() == null ? ex.getMessage() : ex.getCause().getMessage()); }
+            }
+        }.execute();
     }
 }

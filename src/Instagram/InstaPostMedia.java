@@ -12,14 +12,14 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 /** Codifica varias imágenes dentro del campo de imagen existente del post. */
-final class InstaPostMedia {
+public final class InstaPostMedia {
 
     private static final String CAROUSEL_PREFIX = "carousel:v1:";
 
     private InstaPostMedia() {
     }
 
-    static String encode(List<String> imagePaths) {
+    public static String encode(List<String> imagePaths) {
         ArrayList<String> validPaths = new ArrayList<>();
         if (imagePaths != null) {
             for (String path : imagePaths) {
@@ -46,8 +46,8 @@ final class InstaPostMedia {
         return encoded.toString();
     }
 
-    static List<String> decode(String mediaReference) {
-        if (mediaReference == null || mediaReference.isBlank()) {
+    public static List<String> decode(String mediaReference) {
+        if (mediaReference == null || mediaReference.isBlank() || mediaReference.startsWith("text:v1:")) {
             return Collections.emptyList();
         }
         if (!mediaReference.startsWith(CAROUSEL_PREFIX)) {
@@ -75,7 +75,8 @@ final class InstaPostMedia {
     }
 
     /** Recupera referencias guardadas desde otra ubicación del proyecto. */
-    static String resolvePath(String path) {
+    public static String resolvePath(String path) {
+        if (path != null && path.startsWith("insta://")) return path;
         String resolved = Logica.RutasSistema.resolverRutaAnterior(path);
         if (resolved == null || resolved.isBlank() || new File(resolved).isFile()) {
             return resolved;
@@ -95,7 +96,17 @@ final class InstaPostMedia {
         return resolved;
     }
 
-    static BufferedImage readImage(String path) throws IOException {
+    public static BufferedImage readImage(String path) throws IOException {
+        return readImage(path, instaController.getInstance().getInsta());
+    }
+
+    public static BufferedImage readImage(String path, instaManager manager) throws IOException {
+        if (path != null && path.startsWith("insta://")) {
+            if (manager == null) throw new IOException("No hay conexión con INSTA+.");
+            BufferedImage image = ImageIO.read(new java.io.ByteArrayInputStream(manager.readMedia(path)));
+            if (image == null) throw new IOException("Imagen remota inválida.");
+            return image;
+        }
         String resolved = resolvePath(path);
         if (resolved == null || resolved.isBlank() || !new File(resolved).isFile()) {
             throw new IOException("No se encontró el archivo de imagen: " + resolved);

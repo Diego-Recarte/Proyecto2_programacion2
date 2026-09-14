@@ -1,9 +1,11 @@
 package Instagram;
 
+import Logica.Ventanas.InstaWindowLayout;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
-import java.util.ArrayList;
+import Logica.Estructuras.ListaEnlazada;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -35,6 +37,7 @@ public class InstaEditProfileUI extends JPanel {
     public InstaEditProfileUI(String currentUser) {
         this.currentUser = currentUser;
 
+        putClientProperty("insta.manager", instaController.getInstance().getInsta(currentUser));
         setLayout(new BorderLayout());
         setBackground(COLOR_BG);
         setPreferredSize(new Dimension(400, 650));
@@ -52,6 +55,14 @@ public class InstaEditProfileUI extends JPanel {
         add(crearBarraInferior(), BorderLayout.SOUTH);
 
         SwingUtilities.invokeLater(this::actualizarEstadoCuenta);
+        InstaWindowLayout.install(this);
+    }
+
+    void refreshActiveState(java.util.Set<String> activeUsers) {
+        for (int i = listModel.size() - 1; i >= 0; i--) {
+            String line = listModel.get(i); int separator = line.indexOf(" - ");
+            if (separator > 0 && !activeUsers.contains(line.substring(0, separator))) listModel.remove(i);
+        }
     }
 
     private JPanel crearHeader() {
@@ -227,12 +238,12 @@ public class InstaEditProfileUI extends JPanel {
 
         listModel.clear();
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
             if (manager == null) {
                 return;
             }
 
-            ArrayList<String> res = manager.searchUsers(q);
+            ListaEnlazada<String> res = manager.searchUsers(q);
             if (res == null || res.isEmpty()) {
                 listModel.addElement("No se encontraron usuarios");
                 return;
@@ -260,7 +271,7 @@ public class InstaEditProfileUI extends JPanel {
 
     private void abrirPerfilExternoconRetroceso(String username) {
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
             if (manager == null) {
                 return;
             }
@@ -289,7 +300,7 @@ public class InstaEditProfileUI extends JPanel {
 
     private void actualizarEstadoCuenta() {
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
             if (manager == null) {
                 return;
             }
@@ -312,7 +323,7 @@ public class InstaEditProfileUI extends JPanel {
 
     private void toggleCuenta() {
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(currentUser);
             if (manager == null) {
                 return;
             }

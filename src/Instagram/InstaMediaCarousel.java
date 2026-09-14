@@ -1,5 +1,7 @@
 package Instagram;
 
+import Logica.Ventanas.InstaImages;
+
 import Logica.Excepciones.ImageLoadException;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
@@ -126,16 +128,7 @@ final class InstaMediaCarousel extends JPanel {
     }
 
     private ImageIcon fitImage(String path, int maxWidth, int maxHeight) throws ImageLoadException {
-        try {
-            BufferedImage source = InstaPostMedia.readImage(path);
-            double scale = Math.min((double) maxWidth / source.getWidth(), (double) maxHeight / source.getHeight());
-            int width = Math.max(1, (int) Math.round(source.getWidth() * scale));
-            int height = Math.max(1, (int) Math.round(source.getHeight() * scale));
-            Image scaled = source.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-            return new ImageIcon(scaled);
-        } catch (IOException ex) {
-            throw new ImageLoadException("No se pudo cargar " + path, ex);
-        }
+        return InstaImages.icon(this, path, maxWidth, maxHeight, false);
     }
 
     private static JButton arrowButton(String text, String tooltip) {

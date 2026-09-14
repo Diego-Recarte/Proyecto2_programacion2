@@ -12,12 +12,20 @@ import javax.swing.JEditorPane;
 import javax.swing.event.HyperlinkEvent;
 
 /** Renderiza descripciones con hashtags y menciones reconocibles y navegables. */
-final class InstaSocialText {
+public final class InstaSocialText {
 
     static final Pattern TOKEN_PATTERN = Pattern.compile(
             "(?<![\\p{L}\\p{N}_])([#@])([\\p{L}\\p{N}_]+)");
 
     private InstaSocialText() {
+    }
+
+    public static boolean containsToken(String text, char prefix, String value) {
+        Matcher matcher = TOKEN_PATTERN.matcher(text == null ? "" : text);
+        while (matcher.find()) {
+            if (matcher.group(1).charAt(0) == prefix && matcher.group(2).equalsIgnoreCase(value)) return true;
+        }
+        return false;
     }
 
     static JEditorPane createCaption(String author, String caption, int width,

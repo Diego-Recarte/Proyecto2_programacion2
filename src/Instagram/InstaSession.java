@@ -85,13 +85,22 @@ final class InstaSession implements ChatClient.Listener, AutoCloseable {
 
     private void refresh() {
         if (closed) return;
+        instaManager account = instaController.getInstance().getInsta(user);
+        if (account == null) return;
+        try {
+            if (!account.getStatusUser(user)) {
+                if (client != null) client.close();
+                SwingUtilities.invokeLater(() -> {
+                    if (!closed && !(frame.getContentPane() instanceof InstaProfileEditUI)) navigate(new InstaProfileEditUI(user));
+                });
+                return;
+            }
+        } catch (Exception unavailable) { return; }
         if (!replaced && (client == null || !client.isConnected())) {
             ChatClient next = null;
             try {
-                String host = System.getProperty("instagram.chat.host", "127.0.0.1");
-                int port = Integer.getInteger("instagram.chat.port", ChatServer.DEFAULT_PORT);
-                LocalChatServer.ensureAvailable(host, port);
-                next = new ChatClient(host, port, user);
+                instaManager manager = instaController.getInstance().getInsta(user);
+                next = new ChatClient(manager.serverHost(), manager.chatPort(), user, manager.sessionToken());
                 next.addListener(this);
                 client = next;
                 history = false;
@@ -103,10 +112,21 @@ final class InstaSession implements ChatClient.Listener, AutoCloseable {
             }
         }
         try {
-            instaManager manager = instaController.getInstance().getInsta();
+            instaManager manager = instaController.getInstance().getInsta(user);
             if (manager == null) return;
+            Set<String> activeUsers = new HashSet<>(manager.searchUsers(""));
+            SwingUtilities.invokeLater(() -> {
+                if (closed) return;
+                if (frame.getContentPane() instanceof InstaProfileUI profile) profile.refreshActiveState(activeUsers);
+                if (frame.getContentPane() instanceof VisibilidadProfileUI profile) profile.refreshActiveState(activeUsers);
+                if (frame.getContentPane() instanceof InstaPostUI detail) detail.refreshActiveState(activeUsers);
+                if (frame.getContentPane() instanceof InstaFeedUI feed) feed.refreshActiveState(activeUsers);
+                if (frame.getContentPane() instanceof HashtagSearchUI search) search.refreshActiveState(activeUsers);
+                if (frame.getContentPane() instanceof InteractionsUI mentions) mentions.refreshActiveState(activeUsers);
+                if (frame.getContentPane() instanceof InstaEditProfileUI search) search.refreshActiveState(activeUsers);
+            });
             List<String[]> posts = manager.getFeedPosts(user);
-            List<String[]> added = new java.util.ArrayList<>();
+            List<String[]> added = new Logica.Estructuras.ListaEnlazada<>();
             for (String[] post : posts) {
                 String owner = post.length > 4 ? post[4] : post[1];
                 String id = owner + "\n" + post[0];

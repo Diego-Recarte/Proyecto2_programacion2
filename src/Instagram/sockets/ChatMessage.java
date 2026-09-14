@@ -4,7 +4,8 @@ import java.util.Objects;
 import java.util.UUID;
 
 /** Mensaje inmutable que viaja entre los clientes del chat. */
-public final class ChatMessage {
+public final class ChatMessage implements java.io.Serializable {
+    private static final long serialVersionUID = 1L;
 
     public enum Type {
         TEXT,

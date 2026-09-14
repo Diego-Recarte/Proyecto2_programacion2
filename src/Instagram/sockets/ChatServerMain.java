@@ -1,17 +1,10 @@
 package Instagram.sockets;
 
-/** Punto de entrada para ejecutar el servidor en otra computadora de la red. */
+/** Entrada compatible que inicia ahora todos los servicios de INSTA+. */
 public final class ChatServerMain {
-
-    private ChatServerMain() {
-    }
-
+    private ChatServerMain() { }
     public static void main(String[] args) throws Exception {
-        int port = args.length > 0 ? Integer.parseInt(args[0]) : ChatServer.DEFAULT_PORT;
-        ChatServer server = new ChatServer(port);
-        server.start();
-        Runtime.getRuntime().addShutdownHook(new Thread(server::close));
-        System.out.println("Servidor de chat escuchando en el puerto " + port);
-        Thread.currentThread().join();
+        if (args.length > 0) System.setProperty("instagram.chat.port", args[0]);
+        Instagram.sockets.InstaServer.main(new String[0]);
     }
 }

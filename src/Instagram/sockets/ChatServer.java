@@ -22,6 +22,10 @@ public final class ChatServer implements AutoCloseable {
 
     private final int port;
     private final ChatHistoryStore historyStore;
+    private final java.util.function.BiPredicate<String, String> authentication;
+    private final java.util.concurrent.ScheduledExecutorService inboxPoller = Executors.newSingleThreadScheduledExecutor(task -> {
+        Thread thread = new Thread(task, "insta-inbox-poller"); thread.setDaemon(true); return thread;
+    });
     private final Map<String, ClientHandler> clients = new ConcurrentHashMap<>();
     private final ExecutorService clientPool = Executors.newCachedThreadPool(r -> {
         Thread thread = new Thread(r, "instagram-chat-client");
@@ -37,6 +41,11 @@ public final class ChatServer implements AutoCloseable {
     }
 
     public ChatServer(int port, Path historyDirectory) throws IOException {
+        this(port, historyDirectory, (user, token) -> true);
+    }
+
+    public ChatServer(int port, Path historyDirectory, java.util.function.BiPredicate<String, String> authentication) throws IOException {
+        this.authentication = authentication;
         this.port = port;
         this.historyStore = new ChatHistoryStore(historyDirectory);
     }
@@ -50,6 +59,22 @@ public final class ChatServer implements AutoCloseable {
         acceptThread = new Thread(this::acceptLoop, "instagram-chat-server");
         acceptThread.setDaemon(true);
         acceptThread.start();
+        inboxPoller.scheduleWithFixedDelay(this::pollInboxes, 1, 1, java.util.concurrent.TimeUnit.SECONDS);
+    }
+
+    public int getPort() { return serverSocket == null ? port : serverSocket.getLocalPort(); }
+
+    private void pollInboxes() {
+        for (ClientHandler client : clients.values()) {
+            try {
+                if (!authentication.test(client.username, client.token)) { client.close(); continue; }
+                int unread = historyStore.unreadCount(client.username);
+                if (unread != client.lastUnread) {
+                    client.lastUnread = unread;
+                    client.send(SocketProtocol.unread(unread));
+                }
+            } catch (IOException ex) { client.send(SocketProtocol.error("No se pudo consultar el Inbox.")); }
+        }
     }
 
     public boolean isRunning() {
@@ -122,6 +147,7 @@ public final class ChatServer implements AutoCloseable {
             }
         }
         clientPool.shutdownNow();
+        inboxPoller.shutdownNow();
     }
 
     private final class ClientHandler implements Runnable {
@@ -131,6 +157,8 @@ public final class ChatServer implements AutoCloseable {
         private BufferedReader input;
         private PrintWriter output;
         private String username;
+        private String token = "";
+        private volatile int lastUnread = -1;
 
         private ClientHandler(Socket socket) {
             this.socket = socket;
@@ -148,7 +176,12 @@ public final class ChatServer implements AutoCloseable {
                     return;
                 }
 
-                username = SocketProtocol.argument(firstLine).trim();
+                String[] identity = SocketProtocol.argument(firstLine).split("\\n", -1);
+                username = identity[0].trim();
+                token = identity.length > 1 ? identity[1] : "";
+                if (!authentication.test(username, token)) {
+                    send(SocketProtocol.error("Inicia sesión antes de conectar el chat.")); return;
+                }
                 if (username.isEmpty()) {
                     send(SocketProtocol.error("Usuario inválido."));
                     return;
@@ -169,6 +202,7 @@ public final class ChatServer implements AutoCloseable {
         }
 
         private void handle(String line) throws IOException {
+            if (!authentication.test(username, token)) { close(); return; }
             String command = SocketProtocol.command(line);
             switch (command) {
                 case SocketProtocol.SEND -> {
