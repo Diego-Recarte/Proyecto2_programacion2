@@ -3,30 +3,20 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/wordFragmento.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/GUIWordEditor.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/WordArchivos.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/GUIWordNuevo.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/GUIWordGuardarComo.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/GUIpantallaWord.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/Proyecto2_programacion2.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/WordException.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/TablaEditor.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/TablaCelda.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/Buscador.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/GUIArchivosPanel.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/CMDControladorRm.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/CMDSistemaArchivo.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/CMDControladorCd.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/CMDControlador.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/CMDControladorMkdir.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/GUIReproductorMenu.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/GUIPantallaPrincipal.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/GUIReproductorPrincipal.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/GUIReproductor.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/PanelCMD.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/musica.java</file>
-            <file>file:/C:/Users/denam/Documents/programas/Proyecto2_programacion2/src/proyecto2_programacion2/GUIEscritorio.java</file>
+            <file>file:/C:/Users/denam/Documents/programas2/Proyecto2_programacion2/src/proyecto2_programacion2/GUIPantallaPrincipal.java</file>
+            <file>file:/C:/Users/denam/Documents/programas2/Proyecto2_programacion2/src/proyecto2_programacion2/Proyecto2_programacion2.java</file>
+            <file>file:/C:/Users/denam/Documents/programas2/Proyecto2_programacion2/src/proyecto2_programacion2/GUILogin.java</file>
+            <file>file:/C:/Users/denam/Documents/programas2/Proyecto2_programacion2/src/Logica/ManejoUsuarios/User.java</file>
+            <file>file:/C:/Users/denam/Documents/programas2/Proyecto2_programacion2/src/Logica/ManejoUsuarios/UserLogged.java</file>
+            <file>file:/C:/Users/denam/Documents/programas2/Proyecto2_programacion2/src/Logica/ManejoUsuarios/UserManager.java</file>
+            <file>file:/C:/Users/denam/Documents/programas2/Proyecto2_programacion2/src/Logica/ManejoUsuarios/UserUtilities.java</file>
+            <file>file:/C:/Users/denam/Documents/programas2/Proyecto2_programacion2/src/Instagram/instaManager.java</file>
+            <file>file:/C:/Users/denam/Documents/programas2/Proyecto2_programacion2/src/Instagram/instaController.java</file>
+            <file>file:/C:/Users/denam/Documents/programas2/Proyecto2_programacion2/src/proyecto2_programacion2/Buscador.java</file>
+            <file>file:/C:/Users/denam/Documents/programas2/Proyecto2_programacion2/src/proyecto2_programacion2/GUIArchivosPanel.java</file>
+            <file>file:/C:/Users/denam/Documents/programas2/Proyecto2_programacion2/src/proyecto2_programacion2/BuscadorNodo.java</file>
+            <file>file:/C:/Users/denam/Documents/programas2/Proyecto2_programacion2/src/proyecto2_programacion2/BuscadorLista.java</file>
+            <file>file:/C:/Users/denam/Documents/programas2/Proyecto2_programacion2/src/proyecto2_programacion2/CMDSistemaArchivo.java</file>
         </group>
     </open-files>
 </project-private>
