@@ -1,5 +1,7 @@
 package Instagram.sockets;
 
+import Logica.Decodificacion.ChatHistoryStore;
+
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -13,7 +15,8 @@ public final class ChatSocketIntegrationTest {
     }
 
     public static void main(String[] args) throws Exception {
-        int port = 15050;
+        int port;
+        try (java.net.ServerSocket available = new java.net.ServerSocket(0)) { port = available.getLocalPort(); }
         Path history = Path.of(System.getProperty("java.io.tmpdir"), "instagram-chat-test-" + System.nanoTime());
         ChatServer server = new ChatServer(port, history);
         ChatClient ana = new ChatClient("127.0.0.1", port, "ana");
@@ -108,7 +111,15 @@ public final class ChatSocketIntegrationTest {
             require(new ChatHistoryStore(history).between("luis", "ana").isEmpty(),
                     "La conversación eliminada sigue en la bandeja del usuario.");
 
-            System.out.println("OK: sockets, UTF-8, no leídos, historial binario y eliminación verificados.");
+            CountDownLatch polled = new CountDownLatch(1);
+            luisReconnected.addListener(new ChatClient.Listener() {
+                @Override public void onUnreadCount(int count) { if (count == 1) polled.countDown(); }
+            });
+            java.lang.reflect.Field storage = ChatServer.class.getDeclaredField("historyStore"); storage.setAccessible(true);
+            // Escritura sin enviar un evento: solo el sondeo periódico puede descubrirla.
+            ((ChatHistoryStore) storage.get(server)).append(new ChatMessage("ana", "luis", ChatMessage.Type.TEXT, "Llegó al archivo"));
+            require(polled.await(4, TimeUnit.SECONDS), "El hilo no consultó el Inbox binario.");
+            System.out.println("OK: sockets, UTF-8, no leídos, historial, eliminación y sondeo periódico del Inbox.");
         } finally {
             ana.close();
             luis.close();

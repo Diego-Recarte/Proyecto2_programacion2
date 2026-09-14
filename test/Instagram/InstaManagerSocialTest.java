@@ -1,5 +1,7 @@
 package Instagram;
 
+import Logica.Decodificacion.InstaRepository;
+
 /** Prueba ejecutable de edición, corazones y eliminación de publicaciones. */
 public final class InstaManagerSocialTest {
 
@@ -7,7 +9,7 @@ public final class InstaManagerSocialTest {
     }
 
     public static void main(String[] args) throws Exception {
-        instaManager manager = new instaManager();
+        InstaRepository manager = new InstaRepository(java.nio.file.Path.of("Instagram"), false);
         manager.addNewUser("Ana Inicial", 'F', "ana", "Clave123", 20, null);
         manager.addNewUser("Luis", 'M', "luis", "Clave456", 22, null);
 
@@ -28,9 +30,9 @@ public final class InstaManagerSocialTest {
         require(manager.hasLiked("ana", "imagen-prueba.png", "luis"), "El corazón no quedó registrado.");
         require(manager.toggleLike("ana", "imagen-prueba.png", "luis") == 0, "No se retiró el corazón.");
 
-        require(manager.updateProfile("ana", "Ana Editada", 'O', 25, null), "No se actualizó el perfil.");
+        require(manager.updateProfile("ana", "Ana Editada", 'F', 25, null), "No se actualizó el perfil.");
         require("Ana Editada".equals(manager.getRealName("ana")), "No cambió el nombre.");
-        require(manager.getAge("ana") == 25 && manager.getGender("ana") == 'O', "No cambiaron edad/género.");
+        require(manager.getAge("ana") == 25 && manager.getGender("ana") == 'F', "No cambiaron edad/género.");
         require("Clave123".equals(manager.getPassword("ana")), "La edición alteró la contraseña.");
 
         manager.addComment("ana", "imagen-prueba.png", "luis", "Comentario");
