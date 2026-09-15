@@ -31,8 +31,6 @@ public class InstaEditProfileUI extends JPanel {
     private JList<String> resultList;
 
     private JTextField txtEntrar;
-    private JButton btnToggleCuenta;
-    private JButton btnQuickToggle;
 
     public InstaEditProfileUI(String currentUser) {
         this.currentUser = currentUser;
@@ -49,12 +47,10 @@ public class InstaEditProfileUI extends JPanel {
 
         panelCentral.add(crearPanelBuscar(), "BUSCAR");
         panelCentral.add(crearPanelEntrar(), "ENTRAR");
-        panelCentral.add(crearPanelDesactivar(), "CUENTA");
 
         add(panelCentral, BorderLayout.CENTER);
         add(crearBarraInferior(), BorderLayout.SOUTH);
 
-        SwingUtilities.invokeLater(this::actualizarEstadoCuenta);
         InstaWindowLayout.install(this);
     }
 
@@ -88,12 +84,6 @@ public class InstaEditProfileUI extends JPanel {
         title.setForeground(COLOR_TEXT);
         title.setBounds(50, 12, 180, 30);
         p.add(title);
-
-        // USAMOS EL NUEVO BOTÓN ROJO
-        btnQuickToggle = new BotonRojo("Desactivar");
-        btnQuickToggle.setBounds(240, 12, 130, 30);
-        btnQuickToggle.addActionListener(e -> toggleCuenta());
-        p.add(btnQuickToggle);
 
         return p;
     }
@@ -181,28 +171,6 @@ public class InstaEditProfileUI extends JPanel {
         infoHolder.add(hint);
 
         p.add(infoHolder, BorderLayout.CENTER);
-
-        return p;
-    }
-
-    private JPanel crearPanelDesactivar() {
-        JPanel p = new JPanel(null);
-        p.setBackground(COLOR_BG);
-
-        // USAMOS EL NUEVO BOTÓN ROJO
-        btnToggleCuenta = new BotonRojo("Desactivar / Activar cuenta");
-        btnToggleCuenta.setBounds(40, 80, 320, 40);
-        btnToggleCuenta.addActionListener(e -> toggleCuenta());
-        p.add(btnToggleCuenta);
-
-        JLabel lblInfo = new JLabel("<html><div style='width:320px;color:lightgray'>"
-                + "Desactivar ocultará tu cuenta de búsquedas y hará que otros no vean tus comentarios. "
-                + "Si la cuenta está desactivada, este botón la reactivará automáticamente."
-                + "</div></html>");
-        lblInfo.setBounds(40, 140, 320, 80);
-        lblInfo.setForeground(Color.LIGHT_GRAY);
-        lblInfo.setFont(FONT_CAOS);
-        p.add(lblInfo);
 
         return p;
     }
@@ -295,69 +263,6 @@ public class InstaEditProfileUI extends JPanel {
 
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, "Error al abrir perfil: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void actualizarEstadoCuenta() {
-        try {
-            instaManager manager = instaController.getInstance().getInsta(currentUser);
-            if (manager == null) {
-                return;
-            }
-            boolean estado = manager.getStatusUser(currentUser);
-            if (btnToggleCuenta != null) {
-                btnToggleCuenta.setText(estado ? "Desactivar cuenta" : "Reactivar cuenta");
-            }
-            if (btnQuickToggle != null) {
-                btnQuickToggle.setText(estado ? "Desactivar" : "Reactivar");
-            }
-        } catch (IOException ex) {
-            if (btnToggleCuenta != null) {
-                btnToggleCuenta.setText("Desactivar / Activar cuenta");
-            }
-            if (btnQuickToggle != null) {
-                btnQuickToggle.setText("Desactivar");
-            }
-        }
-    }
-
-    private void toggleCuenta() {
-        try {
-            instaManager manager = instaController.getInstance().getInsta(currentUser);
-            if (manager == null) {
-                return;
-            }
-
-            boolean estado = manager.getStatusUser(currentUser);
-
-            if (estado) {
-                int resp = JOptionPane.showConfirmDialog(this,
-                        "¿Deseas desactivar tu cuenta? (se ocultará de búsquedas y comentarios)",
-                        "Confirmar desactivación",
-                        JOptionPane.YES_NO_OPTION);
-                if (resp == JOptionPane.YES_OPTION) {
-                    boolean ok = manager.desactivateUser(currentUser);
-                    if (ok) {
-                        JOptionPane.showMessageDialog(this, "Cuenta desactivada.");
-                    } else {
-                        JOptionPane.showMessageDialog(this, "No se pudo desactivar la cuenta.", "Error", JOptionPane.ERROR_MESSAGE);
-                    }
-                } else {
-                    return;
-                }
-            } else {
-                boolean ok = manager.activateUser(currentUser);
-                if (ok) {
-                    JOptionPane.showMessageDialog(this, "Cuenta reactivada.");
-                } else {
-                    JOptionPane.showMessageDialog(this, "No se pudo reactivar la cuenta.", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-
-            actualizarEstadoCuenta();
-
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "Error en operación de cuenta: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
